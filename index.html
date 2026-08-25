@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -136,11 +137,41 @@
   .spinner { border: 3px solid rgba(255,255,255,0.3); border-top: 3px solid #fff; border-radius: 50%; width: 16px; height: 16px; animation: spin 1s linear infinite; display:inline-block;}
   @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
   
-  #db-loader { position: fixed; top:0; left:0; right:0; bottom:0; background:var(--bg); z-index:99999; display:flex; flex-direction:column; justify-content:center; align-items:center; transition: opacity 0.5s ease;}
+  #db-loader { position: fixed; top:0; left:0; right:0; bottom:0; background:var(--bg); z-index:100001; display:flex; flex-direction:column; justify-content:center; align-items:center; transition: opacity 0.5s ease;}
   .db-loader-spinner { border: 4px solid var(--line); border-top: 4px solid var(--navy); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin-bottom:16px;}
+
+  /* ====== PRINT STYLES ====== */
+  @media print {
+    @page { size: A4 portrait; margin: 15mm; }
+    body { background: #fff !important; color: #000 !important; font-size: 11px !important; }
+    #login-screen, #db-loader, .sidebar, .header-actions, .add-row-btn, .del-btn, .toast, .nav-group, .sidebar-foot, .modal-overlay, button.btn { display: none !important; }
+    .app { display: block !important; }
+    main { padding: 0 !important; margin: 0 !important; max-width: 100% !important; }
+    .block { border: 1px solid #ccc !important; box-shadow: none !important; padding: 15px !important; margin-bottom: 20px !important; break-inside: avoid; }
+    .view { display: none !important; }
+    .view.active { display: block !important; }
+    input, select, textarea { border: none !important; background: transparent !important; color: #000 !important; -webkit-appearance: none; outline: none; resize: none; box-shadow: none !important; }
+    input::placeholder, textarea::placeholder { color: transparent !important; }
+  }
 </style>
 </head>
 <body>
+
+<div id="login-screen" style="position:fixed; top:0; left:0; width:100%; height:100%; background:var(--navy); display:flex; justify-content:center; align-items:center; z-index:100000; transition: opacity 0.5s ease;">
+  <div style="background:#fff; padding:40px 30px; border-radius:8px; width:90%; max-width:400px; text-align:center; box-shadow: 0 10px 25px rgba(0,0,0,0.3);">
+    <div style="font-weight:800; font-size:16px; color:var(--navy); margin-bottom:5px; letter-spacing:1px; line-height:1.4;">GERENCIAL DE SUPRIMENTOS<br>CASAGRANDE URBANISMO</div>
+    <hr style="border:none; border-top:1px solid var(--line); margin: 20px 0;">
+    <div class="field" style="text-align:left; margin-bottom:15px;">
+      <label style="font-size:11px; margin-bottom:8px;">Usuário:</label>
+      <input type="text" id="login-user" placeholder="Digite seu usuário" onkeypress="if(event.key === 'Enter') efetuarLogin()" style="width:100%; padding:12px; border:1px solid var(--line); border-radius:4px; font-family:'Montserrat', sans-serif; outline:none;">
+    </div>
+    <div class="field" style="text-align:left; margin-bottom:25px;">
+      <label style="font-size:11px; margin-bottom:8px;">Senha:</label>
+      <input type="password" id="login-pass" placeholder="Digite sua senha" onkeypress="if(event.key === 'Enter') efetuarLogin()" style="width:100%; padding:12px; border:1px solid var(--line); border-radius:4px; font-family:'Montserrat', sans-serif; outline:none;">
+    </div>
+    <button class="btn btn-solid" style="width:100%; padding:14px; font-size:13px;" onclick="efetuarLogin()">Acessar Painel</button>
+  </div>
+</div>
 
 <div id="db-loader">
   <div class="db-loader-spinner"></div>
@@ -151,20 +182,23 @@
   <!-- ====== SIDEBAR ====== -->
   <aside class="sidebar">
     <div class="brand">
-      <div class="mark">Gestão AI</div>
-      <div class="sub">Suprimentos GRP</div>
+      <div class="mark" style="font-size:20px;">Gestão de Suprimentos</div>
+      <div class="sub">Plataforma integrada</div>
     </div>
 
     <div class="nav-group">
-      <div class="nav-label">Plataforma</div>
-      <button class="nav-btn active" onclick="App.nav('dashboard', this)">📊 Dashboard</button>
-      <button class="nav-btn" onclick="App.nav('processos', this)">🔄 Processos</button>
-      <button class="nav-btn" onclick="App.nav('fornecedores', this)">🏢 Fornecedores</button>
-      <button class="nav-btn" onclick="App.nav('recebimento', this)">📥 Inbox & IA Real</button>
+      <div class="nav-label">Navegação</div>
+      <button class="nav-btn active" onclick="App.nav('dashboard', this)">Dashboard</button>
+      <button class="nav-btn" onclick="App.nav('processos', this)">Processos</button>
+      <button class="nav-btn" onclick="App.nav('fornecedores', this)">Fornecedores</button>
+      <button class="nav-btn" onclick="App.nav('recebimento', this)">Inbox & IA Real</button>
+
+      <div class="nav-label" style="margin-top:24px;">Ações Globais</div>
+      <button class="nav-btn" onclick="imprimirTela()">Imprimir Tela Atual</button>
     </div>
 
     <div class="sidebar-foot">
-      GRP — Inteligência e Automação<br>v3.0 (Integração Gemini & Vercel)
+      GRP — Inteligência e Automação<br>v4.2 (Correções OC & Navegação)
     </div>
   </aside>
 
@@ -203,8 +237,8 @@
       <section class="block">
         <h2>Atalhos Rápidos</h2>
         <div style="display:flex; flex-direction:column; gap:12px;">
-          <button class="btn btn-solid" style="padding:16px; font-size:14px;" onclick="App.novoProcesso()">＋ Nova Requisição (Processo)</button>
-          <button class="btn btn-ai" style="padding:16px; font-size:14px;" onclick="App.nav('recebimento')">📥 Testar Extração com Gemini (Real)</button>
+          <button class="btn btn-solid" style="padding:16px; font-size:14px;" onclick="App.novoProcesso()">Nova Requisição (Processo)</button>
+          <button class="btn btn-ai" style="padding:16px; font-size:14px;" onclick="App.nav('recebimento')">Verificar Caixa de Propostas</button>
         </div>
       </section>
     </div>
@@ -213,7 +247,7 @@
     <div id="view-processos" class="view">
       <div class="doc-head">
         <div class="doc-title">Gestão de Processos<small>Acompanhamento de compras, contratações e cotações</small></div>
-        <button class="btn btn-solid" onclick="App.novoProcesso()">＋ Novo Processo</button>
+        <button class="btn btn-solid" onclick="App.novoProcesso()">Novo Processo</button>
       </div>
       <section class="block">
         <table class="items" id="dash-table">
@@ -235,14 +269,14 @@
     <div id="view-fornecedores" class="view">
       <div class="doc-head">
         <div class="doc-title">Banco de Fornecedores<small>Base de dados e score de performance</small></div>
-        <button class="btn btn-outline" onclick="App.resetDB()">⚠️ Resetar Sistema (Dados Padrão)</button>
+        <button class="btn btn-outline" onclick="App.resetDB()">Resetar Sistema (Dados Padrão)</button>
       </div>
       <section class="block">
         <table class="items">
           <thead>
             <tr>
               <th>Razão Social</th>
-              <th>CNPJ</th>
+              <th>CNPJ / E-mail</th>
               <th>Categoria Principal</th>
               <th>Score IA</th>
               <th>Prazo Médio</th>
@@ -268,13 +302,6 @@
           <!-- Rendered by JS -->
           <div style="padding:20px; text-align:center; color:var(--muted); font-size:12px; font-weight:600;">Selecione um processo cotando para verificar emails na Locaweb.</div>
         </div>
-
-        <div style="margin-top:30px; border-top:1px solid var(--line); padding-top:20px;">
-          <h2 style="color:var(--ai-color)">Teste Imediato da Inteligência Artificial (Fallback)</h2>
-          <p style="font-size:12px; color:var(--muted); margin-bottom:10px;">Caso a Locaweb não retorne os e-mails agora, cole abaixo o texto de uma proposta real sua para testarmos o Gemini extraindo os preços e jogando no seu Mapa!</p>
-          <textarea id="fallback-ai-text" style="width:100%; height:100px; padding:10px; border:1px solid var(--ai-color); border-radius:6px;" placeholder="Cole o texto de uma proposta comercial aqui..."></textarea>
-          <button class="btn btn-ai" style="margin-top:10px; width:100%; padding:15px;" onclick="Email.testAIFallback()">🚀 Extrair Dados com Gemini Agora</button>
-        </div>
       </section>
     </div>
 
@@ -285,8 +312,8 @@
         <div class="header-actions">
           <button class="btn btn-outline" onclick="App.nav('processos')">Voltar</button>
           <button class="btn btn-solid" onclick="Req.save()">Salvar / Atualizar</button>
-          <button class="btn btn-ai" id="btn-sugerir-forn" onclick="AI.openSupplierSuggestion()">🤖 Sugerir Fornecedores</button>
-          <button class="btn btn-success" id="btn-enviar-cot" style="display:none;" onclick="Req.enviarCotacao()">✉️ Disparar Cotação</button>
+          <button class="btn btn-ai" id="btn-sugerir-forn" onclick="AI.openSupplierSuggestion()">Sugerir Fornecedores</button>
+          <button class="btn btn-success" id="btn-enviar-cot" style="display:none;" onclick="Req.enviarCotacao()">Disparar Cotação</button>
         </div>
       </div>
 
@@ -297,8 +324,14 @@
             <div class="grid cols-2">
               <div class="field"><label>Data de emissão</label><input type="text" id="rcEmissao" placeholder="DD/MM/AAAA" oninput="Util.maskDate(this)"></div>
               <div class="field"><label>Prazo resposta</label><input type="text" id="rcPrazo" placeholder="DD/MM/AAAA" oninput="Util.maskDate(this)"></div>
-              <div class="field"><label>Responsável</label><select id="rcResp"><option value="">Selecione...</option><option value="Gustavo">Gustavo</option><option value="Laismara">Laismara</option></select></div>
-              <div class="field"><label>E-mail p/ envio</label><select id="rcEmail"><option value="">Selecione...</option><option value="gustavocosta@casagrandeurbanismo.com.br">gustavocosta</option><option value="laismara@casagrandeurbanismo.com.br">laismara</option></select></div>
+              <div class="field"><label>Responsável</label><select id="rcResp"><option value="">Selecione...</option><option value="Gustavo">Gustavo</option><option value="Lais Mara">Lais Mara</option></select></div>
+              <div class="field"><label>E-mail p/ envio</label>
+                <select id="rcEmail">
+                  <option value="">Selecione...</option>
+                  <option value="gustavocosta@casagrandeurbanismo.com.br">gustavocosta@casagrandeurbanismo.com.br</option>
+                  <option value="laismara@casagrandeurbanismo.com.br">laismara@casagrandeurbanismo.com.br</option>
+                </select>
+              </div>
               <div class="field full"><label>Categoria Predominante (Para IA)</label><input type="text" id="rcCat" placeholder="Ex: Cimento, Hidráulica, EPI..."></div>
             </div>
           </section>
@@ -327,7 +360,7 @@
           </thead>
           <tbody id="rcItemsBody"></tbody>
         </table>
-        <button class="add-row-btn" onclick="Req.addItem()">＋ Adicionar item</button>
+        <button class="add-row-btn" onclick="Req.addItem()">Adicionar item</button>
         <div class="totals"><div class="box"><div class="label">Total Estimado</div><div class="value" id="rcTotal">R$ 0,00</div></div></div>
       </section>
 
@@ -345,13 +378,13 @@
       <div class="doc-head">
         <div class="doc-title">2. Mapa de Preços & Equalização<small id="map-subtitle">Processo</small></div>
         <div class="header-actions">
-          <button class="btn btn-outline" onclick="App.nav('req-form', true)">← Voltar à Requisição</button>
+          <button class="btn btn-outline" onclick="editarRequisicao()">← Editar Requisição de Compra</button>
         </div>
       </div>
 
       <section class="block">
         <h2>Mapa Comparativo
-          <button class="btn btn-outline" style="font-size:10px; padding:4px 10px; border-color:var(--success); color:var(--success);" onclick="MapaPrecos.markBest()">⭐ Marcar melhores</button>
+          <button class="btn btn-outline" style="font-size:10px; padding:4px 10px; border-color:var(--success); color:var(--success);" onclick="MapaPrecos.markBest()">Marcar melhores</button>
         </h2>
         <div style="overflow-x:auto;">
           <table class="items table-comp" id="map-table">
@@ -392,7 +425,8 @@
       <div class="doc-head">
         <div class="doc-title">3. Ordem de Compra<small>Aprovado e Fechado</small></div>
         <div class="header-actions">
-          <button class="btn btn-outline" onclick="voltarParaMapa()">← Refazer Comparação</button>
+          <button class="btn btn-outline" onclick="voltarParaMapa()">← Cancelar OC e Voltar ao Mapa</button>
+          <button class="btn btn-outline" onclick="imprimirTela()">🖨️ Imprimir OC</button>
           <button class="btn btn-success" onclick="OC.save()">Salvar OC</button>
         </div>
       </div>
@@ -416,6 +450,15 @@
           </div>
         </section>
       </div>
+      
+      <section class="block">
+        <h2>Empresa Faturada (SPE Solicitante)</h2>
+        <div style="background:#F9FAFB; border:1px solid var(--line); border-radius:4px; padding:12px;">
+           <div style="margin-bottom:6px;"><strong style="font-size:10px; color:var(--muted); text-transform:uppercase;">Razão Social:</strong> <span id="ocSpeNome" style="font-size:12px; font-weight:600;">—</span></div>
+           <div style="margin-bottom:6px;"><strong style="font-size:10px; color:var(--muted); text-transform:uppercase;">CNPJ:</strong> <span id="ocSpeCnpj" style="font-size:12px; font-weight:600;">—</span></div>
+           <div><strong style="font-size:10px; color:var(--muted); text-transform:uppercase;">Endereço de Faturamento:</strong> <span id="ocSpeEnd" style="font-size:12px; font-weight:600;">—</span></div>
+        </div>
+      </section>
 
       <section class="block">
         <h2>Itens Adquiridos</h2>
@@ -434,7 +477,7 @@
 <div class="modal-overlay" id="modal-ia-forn">
   <div class="modal">
     <div class="modal-header">
-      <span>🤖 Sugestão Inteligente de Fornecedores</span>
+      <span>Sugestão Inteligente de Fornecedores</span>
       <button class="del-btn" onclick="UI.closeModal('modal-ia-forn')" style="font-size:24px;">&times;</button>
     </div>
     <div style="font-size:12px; color:var(--muted); margin-bottom:16px;">Baseado na categoria da requisição e histórico de compras.</div>
@@ -446,7 +489,7 @@
 <div class="modal-overlay" id="modal-ia-email">
   <div class="modal">
     <div class="modal-header">
-      <span>🤖 Extração de Proposta via Gemini</span>
+      <span>Extração de Proposta via Gemini</span>
       <button class="del-btn" onclick="UI.closeModal('modal-ia-email')" style="font-size:24px;">&times;</button>
     </div>
     <div style="font-size:12px; margin-bottom:16px;" id="ia-email-status">Aguarde... Conectando à Inteligência Artificial do Google...</div>
@@ -541,10 +584,10 @@ const DB = {
   reset: async () => { DB.seed(); await DB.save(); location.reload(); },
   seed: () => {
     DB.data.fornecedores = [
-      { id: 'f1', nome: 'Votorantim Cimentos', cnpj: '01.000.000/0001-01', cats: 'Cimento, Concreto', score: 95, prazo: '5 dias', contato: 'vendas@voto.com', tel: '11 3000-0000', precoHist: 'Baixo' },
-      { id: 'f2', nome: 'Tigre Tubos e Conexões', cnpj: '02.000.000/0001-02', cats: 'Hidráulica, Tubos', score: 92, prazo: '7 dias', contato: 'vendas@tigre.com', tel: '11 3111-0000', precoHist: 'Médio' },
-      { id: 'f3', nome: 'Amanco Wavin', cnpj: '03.000.000/0001-03', cats: 'Hidráulica, Tubos', score: 88, prazo: '10 dias', contato: 'vendas@amanco.com', tel: '11 3222-0000', precoHist: 'Baixo' },
-      { id: 'f4', nome: 'Gerdau Aços', cnpj: '04.000.000/0001-04', cats: 'Aço, Ferragem', score: 94, prazo: '8 dias', contato: 'vendas@gerdau.com', tel: '11 3333-0000', precoHist: 'Médio' }
+      { id: 'f1', nome: 'Votorantim Cimentos', cnpj: '01.000.000/0001-01', cats: 'Cimento, Concreto', score: 95, prazo: '5 dias', contato: 'vendas@voto.com', email: '', tel: '11 3000-0000', precoHist: 'Baixo' },
+      { id: 'f2', nome: 'Tigre Tubos e Conexões', cnpj: '02.000.000/0001-02', cats: 'Hidráulica, Tubos', score: 92, prazo: '7 dias', contato: 'vendas@tigre.com', email: '', tel: '11 3111-0000', precoHist: 'Médio' },
+      { id: 'f3', nome: 'Amanco Wavin', cnpj: '03.000.000/0001-03', cats: 'Hidráulica, Tubos', score: 88, prazo: '10 dias', contato: 'vendas@amanco.com', email: '', tel: '11 3222-0000', precoHist: 'Baixo' },
+      { id: 'f4', nome: 'Gerdau Aços', cnpj: '04.000.000/0001-04', cats: 'Aço, Ferragem', score: 94, prazo: '8 dias', contato: 'vendas@gerdau.com', email: '', tel: '11 3333-0000', precoHist: 'Médio' }
     ];
     DB.data.processos = [];
   },
@@ -559,7 +602,7 @@ let currentCompFornId = null;
 const App = {
   init: async () => {
     await DB.init();
-    document.getElementById('db-loader').style.opacity = 0;
+    document.getElementById('db-loader').style.opacity = '0';
     setTimeout(()=> document.getElementById('db-loader').style.display = 'none', 500);
     
     const sel = document.getElementById('rcSpe');
@@ -606,16 +649,31 @@ const App = {
     const tbody = document.getElementById('lista-processos-body'); tbody.innerHTML = '';
     [...DB.data.processos].reverse().forEach(p => {
       let stHtml = '', acHtml = '';
-      if(p.status==='rascunho') { stHtml = '<span class="status-badge s-req">Rascunho</span>'; acHtml=`<button class="btn btn-outline" onclick="App.abrir('${p.id}', 'req-form')">Editar</button>`; }
-      else if(p.status==='cotando') { stHtml = '<span class="status-badge s-cot">Cotando</span>'; acHtml=`<button class="btn btn-solid" onclick="App.nav('recebimento')">Inbox</button>`; }
-      else if(p.status==='analise') { stHtml = '<span class="status-badge s-analise">Análise</span>'; acHtml=`<button class="btn btn-ai" onclick="App.abrir('${p.id}', 'mapa')">Mapa IA</button>`; }
-      else if(p.status==='aprovado') { stHtml = '<span class="status-badge s-aprov">OC Emitida</span>'; acHtml=`<button class="btn btn-success" onclick="App.abrir('${p.id}', 'oc')">Ver OC</button>`; }
+      if(p.status==='rascunho') { 
+        stHtml = '<span class="status-badge s-req">RC CRIADA</span>'; 
+        acHtml=`<button class="btn btn-outline" onclick="App.abrir('${p.id}', 'req-form')">Editar</button>`; 
+      }
+      else if(p.status==='cotando') { 
+        stHtml = '<span class="status-badge s-cot">Cotando</span>'; 
+        acHtml=`<button class="btn btn-outline" onclick="App.nav('recebimento')">Inbox</button> <button class="btn btn-ai" onclick="App.abrir('${p.id}', 'mapa')">Ver Mapa</button>`; 
+      }
+      else if(p.status==='analise') { 
+        stHtml = '<span class="status-badge s-analise">Análise</span>'; 
+        acHtml=`<button class="btn btn-ai" onclick="App.abrir('${p.id}', 'mapa')">Mapa IA</button>`; 
+      }
+      else if(p.status==='aprovado') { 
+        stHtml = '<span class="status-badge s-aprov">OC Emitida</span>'; 
+        acHtml=`<button class="btn btn-success" onclick="App.abrir('${p.id}', 'oc')">Ver OC</button>`; 
+      }
       tbody.innerHTML += `<tr><td><strong style="color:var(--navy)">${p.id}</strong></td><td>${p.criadoEm}</td><td>${p.spe ? SPES[p.spe].prefixo : '-'}</td><td>${stHtml}</td><td style="text-align:right">${acHtml} <button class="del-btn" onclick="App.del('${p.id}')">×</button></td></tr>`;
     });
   },
   renderForn: () => {
     const tb = document.getElementById('lista-fornecedores-body'); tb.innerHTML = '';
-    DB.data.fornecedores.forEach(f => { tb.innerHTML += `<tr><td><strong>${f.nome}</strong></td><td>${f.cnpj}</td><td>${f.cats}</td><td><span style="color:var(--success); font-weight:800">${f.score}/100</span></td><td>${f.prazo}</td></tr>`; });
+    DB.data.fornecedores.forEach(f => { 
+      const mailDisp = f.email ? f.email : f.contato;
+      tb.innerHTML += `<tr><td><strong>${f.nome}</strong></td><td>${f.cnpj}<br><small>${mailDisp}</small></td><td>${f.cats}</td><td><span style="color:var(--success); font-weight:800">${f.score}/100</span></td><td>${f.prazo}</td></tr>`; 
+    });
   },
   abrir: (id, tela) => {
     currentPID = id; const p = DB.getProcess(id);
@@ -625,7 +683,6 @@ const App = {
   del: (id) => { if(confirm("Excluir?")) { DB.data.processos = DB.data.processos.filter(x=>x.id!==id); DB.save(); App.renderProcessos(); } },
   logHistory: (pid, msg) => { const p = DB.getProcess(pid); if(p) { p.historico.push({data: Util.today(), txt: msg}); DB.save(); } },
   
-  // INBOX & REAL EMAIL READING
   initInbox: () => {
     const sel = document.getElementById('inbox-process-select');
     sel.innerHTML = '<option value="">Selecione o processo...</option>';
@@ -645,7 +702,6 @@ const App = {
     cont.innerHTML = `<div style="padding:20px; text-align:center;"><div class="spinner" style="border-color:var(--navy); border-top-color:transparent"></div> Lendo Locaweb...</div>`;
     
     try {
-      // API call to the new Locaweb script on Vercel
       const res = await fetch('/api/ler-emails');
       const data = await res.json();
       
@@ -658,11 +714,10 @@ const App = {
               <span class="em-sender">${mail.remetente}</span>
               <span class="em-subject">${mail.assunto}</span>
             </div>
-            <div><button class="btn btn-ai" onclick="Email.readAI(null, null, \`${encodeURIComponent(mail.texto_proposta)}\`)">🤖 Extrair com Gemini</button></div>
+            <div><button class="btn btn-ai" onclick="Email.readAI(null, null, \`${encodeURIComponent(mail.texto_proposta)}\`)">Extrair com Gemini</button></div>
           </div>`;
         });
       } else {
-        // Fallback layout when inbox is empty
         p.propostas.forEach(prop => {
           const f = DB.data.fornecedores.find(x => x.id === prop.fornId);
           if(prop.status === 'pendente') {
@@ -682,7 +737,7 @@ const App = {
         }
       }
     } catch (err) {
-      cont.innerHTML = `<div style="padding:20px; text-align:center; color:var(--danger); font-size:12px;">Erro ao acessar Locaweb. Use o teste de IA abaixo.</div>`;
+      cont.innerHTML = `<div style="padding:20px; text-align:center; color:var(--danger); font-size:12px;">Erro ao acessar Locaweb.</div>`;
     }
   }
 };
@@ -692,8 +747,9 @@ const Req = {
   load: (p) => {
     document.getElementById('rc-subtitle').textContent = `PROCESSO ${p.id}`;
     document.getElementById('rcNum').textContent = p.req.numero;
-    ['Emissao','Prazo','Resp','Email','Cat','Spe','Cond','Obs'].forEach(k => {
-      if(document.getElementById('rc'+k)) document.getElementById('rc'+k).value = p.req[k.toLowerCase()] || p[k.toLowerCase()] || '';
+    ['Emissao','Prazo','Resp','Email','Cat','Spe','Local'].forEach(k => {
+      const el = document.getElementById('rc'+k);
+      if(el) el.value = p.req[k.toLowerCase()] || p[k.toLowerCase()] || '';
     });
     Req.updateSPE(p.req.local);
 
@@ -705,18 +761,22 @@ const Req = {
     document.getElementById('btn-enviar-cot').style.display = (p.status === 'rascunho' && p.fornecedoresSelecionados.length>0) ? 'inline-flex' : 'none';
   },
   updateSPE: (valLocal = '') => {
-    const k = document.getElementById('rcSpe').value;
+    const speEl = document.getElementById('rcSpe');
+    if(!speEl) return;
+    const k = speEl.value;
     const card = document.getElementById('rcSpeCard');
     const loc = document.getElementById('rcLocal');
-    loc.innerHTML = '<option value="">Selecione...</option>';
-    if(!k) { card.classList.remove('show'); return; }
+    if(loc) loc.innerHTML = '<option value="">Selecione...</option>';
+    if(!k) { if(card) card.classList.remove('show'); return; }
     
-    document.getElementById('rcSpeNome').textContent = SPES[k].nome;
-    document.getElementById('rcSpeCnpj').textContent = SPES[k].cnpj;
-    document.getElementById('rcSpeEnd').textContent = SPES[k].endereco;
-    card.classList.add('show');
-    SPES[k].locais.forEach(l => loc.innerHTML += `<option value="${l}">${l}</option>`);
-    if(valLocal) loc.value = valLocal;
+    if(document.getElementById('rcSpeNome')) document.getElementById('rcSpeNome').textContent = SPES[k].nome;
+    if(document.getElementById('rcSpeCnpj')) document.getElementById('rcSpeCnpj').textContent = SPES[k].cnpj;
+    if(document.getElementById('rcSpeEnd')) document.getElementById('rcSpeEnd').textContent = SPES[k].endereco;
+    if(card) card.classList.add('show');
+    if(loc) {
+      SPES[k].locais.forEach(l => loc.innerHTML += `<option value="${l}">${l}</option>`);
+      if(valLocal) loc.value = valLocal;
+    }
   },
   addItem: (d=null) => {
     const id = d ? d.id : Util.genId();
@@ -745,10 +805,13 @@ const Req = {
   },
   save: () => {
     const p = DB.getProcess(currentPID);
-    ['Emissao','Prazo','Resp','Email','Cat','Local','Cond','Obs'].forEach(k => {
-      p.req[k.toLowerCase()] = document.getElementById('rc'+k).value;
+    ['Emissao','Prazo','Resp','Email','Cat','Local'].forEach(k => {
+      const el = document.getElementById('rc'+k);
+      if(el) p.req[k.toLowerCase()] = el.value;
     });
-    p.spe = document.getElementById('rcSpe').value;
+    const speEl = document.getElementById('rcSpe');
+    if(speEl) p.spe = speEl.value;
+    
     p.req.itens = [];
     document.querySelectorAll('#rcItemsBody tr').forEach(tr=>{
       const desc = tr.querySelector('.desc').value;
@@ -766,11 +829,50 @@ const Req = {
       if(f) tb.innerHTML += `<tr><td><strong>${f.nome}</strong></td><td style="color:var(--success); font-weight:800">${f.score}</td><td>${f.precoHist}</td></tr>`;
     });
   },
-  enviarCotacao: () => {
-    Req.save(); const p = DB.getProcess(currentPID);
-    p.status = 'cotando'; App.logHistory(p.id, "Cotação enviada para " + p.fornecedoresSelecionados.length + " fornecedores.");
+  enviarCotacao: async () => {
+    Req.save(); 
+    const p = DB.getProcess(currentPID);
+    
+    if (p.fornecedoresSelecionados.length < 2) {
+      return alert("É obrigatório selecionar no mínimo 2 fornecedores para disparar a cotação.");
+    }
+
+    const fornecedoresData = p.fornecedoresSelecionados.map(fid => DB.data.fornecedores.find(x => x.id === fid)).filter(Boolean);
+    const semEmail = fornecedoresData.filter(f => !f.email && !f.contato);
+    
+    if (semEmail.length > 0) {
+       alert(`Atenção: ${semEmail.length} fornecedor(es) não possuem e-mail cadastrado. A requisição deverá ser enviada a eles manualmente via WhatsApp.`);
+    }
+
+    UI.toast("Disparando e-mails...");
+    document.getElementById('db-loader').style.display = 'flex';
+    document.getElementById('db-loader').style.opacity = '1';
+
+    try {
+      const selectResp = document.getElementById('rcResp');
+      const respNome = selectResp.options[selectResp.selectedIndex].text;
+      
+      await fetch('/api/enviar-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          fornecedores: fornecedoresData.map(f => ({ nome: f.nome, email: f.email || f.contato })),
+          rcData: { ...p.req, respNome: respNome }
+        })
+      });
+    } catch (err) {
+      console.error("Aviso: Falha ao acionar API de e-mail.", err);
+    }
+
+    document.getElementById('db-loader').style.opacity = '0';
+    setTimeout(()=> document.getElementById('db-loader').style.display = 'none', 500);
+
+    p.status = 'cotando'; 
+    App.logHistory(p.id, "Cotação disparada para " + p.fornecedoresSelecionados.length + " fornecedores.");
     p.propostas = p.fornecedoresSelecionados.map(fid => ({ fornId: fid, nome:'', doc:'', tel:'', email:'', status: 'pendente', itens: {}, frete: 0, imposto: 0, prazo: '', cond: '' }));
-    DB.save(); UI.toast("Cotações disparadas por E-mail!"); App.nav('dashboard');
+    DB.save(); 
+    UI.toast("Cotações iniciadas!"); 
+    App.nav('processos'); 
   }
 };
 
@@ -778,7 +880,8 @@ const Req = {
 const AI = {
   openSupplierSuggestion: () => {
     Req.save(); 
-    const cat = document.getElementById('rcCat').value.toLowerCase();
+    const catEl = document.getElementById('rcCat');
+    const cat = catEl ? catEl.value.toLowerCase() : '';
     const list = document.getElementById('ia-forn-list'); list.innerHTML = '';
     let sorted = [...DB.data.fornecedores].sort((a,b)=>b.score - a.score);
     if(cat) { const filtered = sorted.filter(f => f.cats.toLowerCase().includes(cat)); if(filtered.length > 0) sorted = filtered; }
@@ -799,13 +902,6 @@ const AI = {
 
 // ==================== MODULO: EMAIL & GEMINI EXTRACTION ====================
 const Email = {
-  testAIFallback: () => {
-    const text = document.getElementById('fallback-ai-text').value;
-    if(!text || text.length < 10) return alert("Cole uma proposta válida para a IA ler.");
-    if(!currentPID) return alert("Selecione um processo cotando no select acima primeiro.");
-    Email.readAI(null, null, encodeURIComponent(text));
-  },
-
   readAI: async (pid, fornId, urlEncodedText = null) => {
     UI.openModal('modal-ia-email');
     const tb = document.getElementById('ia-email-data');
@@ -816,7 +912,6 @@ const Email = {
     try {
       const textoReal = urlEncodedText ? decodeURIComponent(urlEncodedText) : "Proposta Simulação Gemini...";
       
-      // Chamada REAL para a API da Vercel (que conecta ao Google Gemini)
       const res = await fetch('/api/analisar-proposta', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -824,10 +919,8 @@ const Email = {
       });
 
       const data = await res.json();
-      
       if(data.error) throw new Error(data.error);
 
-      // Save global state
       currentEmailParsing = { pid: currentPID, parsed: data };
 
       document.getElementById('ia-email-status').innerHTML = `<strong style="color:var(--success)">Extração Concluída com Sucesso!</strong>`;
@@ -858,7 +951,6 @@ const Email = {
     const { parsed } = currentEmailParsing;
     const p = DB.getProcess(currentPID);
     
-    // Create new proposal block for this supplier
     const propId = Util.genId();
     const newProp = {
       fornId: propId, nome: parsed.fornecedor, doc: parsed.cnpj, tel: '', email: '',
@@ -866,7 +958,6 @@ const Email = {
       prazo: parsed.prazo, cond: parsed.condicao
     };
 
-    // Try to match items by order or name (simplified matching for prototype)
     if(parsed.itens && parsed.itens.length > 0) {
       p.req.itens.forEach((reqItem, idx) => {
         if(parsed.itens[idx]) {
@@ -890,7 +981,8 @@ const MapaPrecos = {
   load: (p) => {
     document.getElementById('map-subtitle').textContent = `PROCESSO ${p.id}`;
     document.getElementById('comp-form-forn').style.display = 'none';
-    document.getElementById('compObs').value = p.compObs || '';
+    const obsEl = document.getElementById('compObs');
+    if(obsEl) obsEl.value = p.compObs || '';
     currentCompFornId = null;
 
     const thead = document.getElementById('map-head');
@@ -994,7 +1086,8 @@ const OC = {
       document.getElementById('ocFornTel').value = f.tel || '';
     }
 
-    document.getElementById('ocCond').value = p.oc.cond || prop?.cond || p.req.cond;
+    const condEl = document.getElementById('ocCond');
+    if(condEl) condEl.value = p.oc.cond || prop?.cond || p.req.cond || '';
     
     const tb = document.getElementById('ocItemsBody'); tb.innerHTML = '';
     let tot = 0;
@@ -1013,12 +1106,95 @@ const OC = {
     p.oc.numero = `OC-${p.id}`;
     p.oc.emissao = document.getElementById('ocEmissao').value;
     p.oc.entrega = document.getElementById('ocEntrega').value;
-    p.oc.cond = document.getElementById('ocCond').value;
+    const condEl = document.getElementById('ocCond');
+    if(condEl) p.oc.cond = condEl.value;
     DB.save(); UI.toast("Ordem de Compra Salva!");
   }
 };
 
 window.App = App; window.Req = Req; window.MapaPrecos = MapaPrecos; window.OC = OC; window.AI = AI; window.Email = Email; window.UI = UI; window.Util = Util; window.DB = DB;
+
+// ==================== FUNÇÕES DE INTERFACE GLOBAIS ====================
+window.efetuarLogin = () => {
+  const u = document.getElementById('login-user').value.trim();
+  const p = document.getElementById('login-pass').value.trim();
+  if((u === 'Gustavo' && p === 'gustavocgvga') || (u === 'Lais Mara' && p === 'laiscgvga')) {
+    document.getElementById('login-screen').style.opacity = '0';
+    setTimeout(() => document.getElementById('login-screen').style.display = 'none', 500);
+  } else {
+    UI.toast('Usuário ou senha incorretos.');
+  }
+};
+
+window.imprimirTela = () => {
+  const view = document.querySelector('.view.active');
+  if(!view) return;
+  
+  const tables = view.querySelectorAll('table.items');
+  const splits = [];
+  
+  tables.forEach(table => {
+    const rows = Array.from(table.querySelectorAll('tbody tr'));
+    if(rows.length > 10) {
+      const wrapper = document.createElement('div');
+      wrapper.className = 'print-split-wrapper';
+      wrapper.style.display = 'flex';
+      wrapper.style.gap = '15px';
+      
+      const col1 = document.createElement('table');
+      col1.className = table.className;
+      col1.innerHTML = `<thead>${table.querySelector('thead').innerHTML}</thead><tbody></tbody>`;
+      col1.style.flex = '1';
+      
+      const col2 = document.createElement('table');
+      col2.className = table.className;
+      col2.innerHTML = `<thead>${table.querySelector('thead').innerHTML}</thead><tbody></tbody>`;
+      col2.style.flex = '1';
+      
+      const mid = Math.ceil(rows.length / 2);
+      rows.forEach((row, i) => {
+         if(i < mid) col1.querySelector('tbody').appendChild(row);
+         else col2.querySelector('tbody').appendChild(row);
+      });
+      
+      wrapper.appendChild(col1);
+      wrapper.appendChild(col2);
+      table.parentNode.insertBefore(wrapper, table);
+      table.style.display = 'none';
+      splits.push({ original: table, wrapper: wrapper, rows: rows });
+    }
+  });
+  
+  window.print();
+  
+  splits.forEach(s => {
+     const tbody = s.original.querySelector('tbody');
+     s.rows.forEach(r => tbody.appendChild(r));
+     s.original.style.display = '';
+     s.wrapper.remove();
+  });
+};
+
+window.voltarParaMapa = () => { 
+  if(!confirm('Isso irá cancelar a Ordem de Compra atual para você refazer o mapa. Continuar?')) return;
+  const p = DB.getProcess(currentPID); 
+  if(p) { 
+    p.status = 'analise'; 
+    p.vencedorId = null;
+    DB.save(); 
+    App.abrir(p.id, 'mapa'); 
+  } 
+};
+
+window.editarRequisicao = () => {
+  if(!confirm('Atenção: Voltar para a Requisição mudará o status para Rascunho, permitindo alterar itens e disparar nova cotação. Continuar?')) return;
+  const p = DB.getProcess(currentPID);
+  if(p) {
+    p.status = 'rascunho';
+    DB.save();
+    App.abrir(p.id, 'req-form');
+  }
+};
 
 window.addFornecedorComp = () => { const p = DB.getProcess(currentPID); p.propostas.push({ fornId: Util.genId(), nome: 'Novo Forn', doc:'', tel:'', email:'', status:'recebida', itens:{}, frete:0, imposto:0, prazo:'', cond:'' }); DB.save(); MapaPrecos.load(p); };
 window.removeFornecedorComp = (propId) => { if(!confirm('Remover fornecedor?')) return; const p = DB.getProcess(currentPID); p.propostas = p.propostas.filter(x => x.fornId !== propId); if(p.vencedorId === propId) p.vencedorId = null; DB.save(); MapaPrecos.load(p); document.getElementById('comp-form-forn').style.display = 'none'; };
@@ -1027,9 +1203,8 @@ window.updatePropPreco = (propId, itemId, valStr) => { const p = DB.getProcess(c
 window.updatePropFreco = (propId, valStr) => { const p = DB.getProcess(currentPID); const prop = p.propostas.find(x => x.fornId === propId); if(prop) prop.frete = Util.unmaskCur(valStr); DB.save(); MapaPrecos.load(p); };
 window.editFornDetails = (propId) => { currentCompFornId = propId; const p = DB.getProcess(currentPID); const prop = p.propostas.find(x => x.fornId === propId); const f = DB.data.fornecedores.find(x => x.id === propId) || prop; document.getElementById('comp-form-forn').style.display = 'block'; document.getElementById('comp-form-title').textContent = `- ${f.nome||'Novo'}`; document.getElementById('cfNome').value = f.nome || ''; document.getElementById('cfDoc').value = f.cnpj || f.doc || ''; document.getElementById('cfTel').value = f.tel || ''; document.getElementById('cfEmail').value = f.email || f.contato || ''; document.getElementById('cfCond').value = prop.cond || ''; document.getElementById('cfPrazo').value = prop.prazo || ''; };
 window.updateFornData = (field, val) => { if(!currentCompFornId) return; const p = DB.getProcess(currentPID); const prop = p.propostas.find(x => x.fornId === currentCompFornId); if(prop) prop[field] = val; DB.save(); if(field === 'nome') MapaPrecos.load(p); };
-window.salvarCompObs = () => { const p = DB.getProcess(currentPID); if(p) { p.compObs = document.getElementById('compObs').value; DB.save(); } };
+window.salvarCompObs = () => { const p = DB.getProcess(currentPID); const obsEl = document.getElementById('compObs'); if(p && obsEl) { p.compObs = obsEl.value; DB.save(); } };
 window.selecionarVencedor = (propId) => { if(!confirm('Deseja aprovar esta proposta e gerar a Ordem de Compra?')) return; const p = DB.getProcess(currentPID); p.vencedorId = propId; p.status = 'aprovado'; App.logHistory(p.id, `Fornecedor Vencedor Aprovado. Gerando OC.`); DB.save(); UI.toast('Fornecedor vencedor selecionado!'); App.abrir(p.id, 'oc'); };
-window.voltarParaMapa = () => { const p = DB.getProcess(currentPID); if(p) { p.status = 'analise'; DB.save(); App.abrir(p.id, 'mapa'); } };
 
 window.onload = App.init;
 </script>
