@@ -1,0 +1,1377 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Inteligência de Suprimentos · GRP</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy: #0B1F3B; --navy-2: #163B6B; --ink: #0A0A0A; --paper: #FFFFFF;
+    --bg: #F4F5F7; --line: #DDE1E6; --muted: #6B7280; --danger: #8A2E2E;
+    --success: #2E8A5B; --highlight: #F0F4FA; --ai-color: #6366F1; --ai-light: #E0E7FF;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body { font-family: 'Montserrat', sans-serif; background: var(--bg); color: var(--ink); -webkit-font-smoothing: antialiased; }
+  .app { display: grid; grid-template-columns: 260px 1fr; min-height: 100vh; }
+
+  /* ====== SIDEBAR ====== */
+  .sidebar { background: var(--navy); color: #fff; padding: 32px 24px; display: flex; flex-direction: column; gap: 32px; position: sticky; top:0; height: 100vh; overflow-y: auto;}
+  .brand { display: flex; flex-direction: column; gap: 2px; }
+  .brand .mark { font-weight: 800; font-size: 24px; letter-spacing: 1px; line-height: 1.1; }
+  .brand .sub { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: #9FB1CC; font-weight: 600; margin-top: 6px; }
+  .nav-group { display: flex; flex-direction: column; gap: 8px; }
+  .nav-label { font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: #7C93B8; font-weight: 700; margin-bottom: 6px; }
+  .nav-btn { all: unset; cursor: pointer; display: flex; align-items: center; gap: 10px; padding: 11px 12px; border-radius: 6px; font-size: 13px; font-weight: 600; color: #E7ECF4; border: 1px solid transparent; transition: all .15s ease; }
+  .nav-btn:hover, .nav-btn.active { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.15); }
+  .nav-btn.primary { background: #fff; color: var(--navy); }
+  .nav-btn.primary:hover { background: #E7ECF4; }
+  .nav-btn.ai-btn { background: linear-gradient(135deg, #6366F1, #4F46E5); color: #fff; border: none; }
+  .sidebar-foot { margin-top: auto; font-size: 10px; color: #5E7396; letter-spacing: .5px; line-height: 1.6; }
+
+  /* ====== MAIN & VIEWS ====== */
+  main { padding: 40px 48px 80px; max-width: 1200px; margin: 0 auto; width: 100%; }
+  .view { display: none; animation: fadeIn 0.3s ease; }
+  .view.active { display: block; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* ====== HEADER ====== */
+  .doc-head { display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 2px solid var(--navy); padding-bottom: 20px; margin-bottom: 28px; }
+  .doc-title { font-size: 24px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; color: var(--navy); }
+  .doc-title small { display: block; font-size: 11px; font-weight: 600; letter-spacing: 1.5px; color: var(--muted); text-transform: uppercase; margin-top: 4px; }
+  .header-actions { display: flex; gap: 12px; align-items: center; }
+  
+  .btn { all: unset; cursor: pointer; font-size: 12px; font-weight: 700; padding: 10px 16px; border-radius: 4px; transition: 0.2s; letter-spacing: .5px; text-transform: uppercase; display: inline-flex; align-items: center; justify-content: center; gap:6px; text-align:center;}
+  .btn-outline { border: 1px solid var(--navy); color: var(--navy); }
+  .btn-outline:hover { background: var(--highlight); }
+  .btn-solid { background: var(--navy); color: #fff; }
+  .btn-solid:hover { background: var(--navy-2); }
+  .btn-success { background: var(--success); color: #fff; }
+  .btn-ai { background: var(--ai-color); color: #fff; }
+  .btn-ai:hover { background: #4F46E5; }
+  
+  /* ====== TAGS ====== */
+  .status-badge { padding: 4px 8px; border-radius: 4px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
+  .s-req { background: #F3F4F6; color: #374151; } /* Rascunho */
+  .s-cot { background: #FEF3C7; color: #92400E; } /* Cotando */
+  .s-analise { background: #DBEAFE; color: #1E40AF; } /* Análise */
+  .s-aprov { background: #D1FAE5; color: #065F46; } /* Aprovado / OC */
+
+  /* ====== GRIDS & BLOCKS ====== */
+  section.block { background: var(--paper); border: 1px solid var(--line); border-radius: 6px; padding: 24px 26px; margin-bottom: 20px; position:relative;}
+  .block h2 { font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; font-weight: 700; color: var(--navy); margin: 0 0 18px; padding-bottom: 10px; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; align-items: center;}
+  .grid { display: grid; gap: 16px; }
+  .cols-2 { grid-template-columns: 1fr 1fr; }
+  .cols-3 { grid-template-columns: 1fr 1fr 1fr; }
+  .cols-4 { grid-template-columns: 1fr 1fr 1fr 1fr; }
+  
+  .field label { display: block; font-size: 10px; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); font-weight: 700; margin-bottom: 6px; }
+  .field input, .field select, .field textarea { width: 100%; font-family: 'Montserrat', sans-serif; font-size: 13.5px; font-weight: 500; color: var(--ink); border: 1px solid var(--line); border-radius: 4px; padding: 10px 11px; outline: none; background: #fff; transition: border-color .15s ease; }
+  .field input:focus, .field select:focus, .field textarea:focus { border-color: var(--navy); }
+  .field input:disabled, .field textarea:disabled, .field select:disabled { background: var(--bg); color: var(--muted); }
+  .field textarea { resize: vertical; min-height: 64px; }
+
+  /* ====== DASHBOARD KPIs ====== */
+  .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom:24px;}
+  .kpi-card { background: var(--paper); border: 1px solid var(--line); border-radius: 6px; padding: 16px; display:flex; flex-direction:column; gap:8px;}
+  .kpi-card .kpi-title { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); }
+  .kpi-card .kpi-value { font-size: 24px; font-weight: 800; color: var(--navy); }
+  .kpi-card .kpi-sub { font-size: 10px; font-weight: 600; color: var(--success); }
+
+  /* ====== CHARTS (Pure HTML/CSS simulation) ====== */
+  .chart-container { display:flex; align-items:flex-end; gap:12px; height:120px; padding-top:20px; border-bottom:1px solid var(--line); margin-bottom:10px;}
+  .chart-bar { background: var(--navy); width:100%; border-radius:4px 4px 0 0; position:relative; transition: height 0.5s ease;}
+  .chart-bar:hover { background: var(--ai-color); }
+  .chart-bar span { position:absolute; top:-18px; left:50%; transform:translateX(-50%); font-size:9px; font-weight:700; color:var(--muted);}
+  .chart-labels { display:flex; justify-content:space-between; gap:12px; }
+  .chart-labels div { width:100%; text-align:center; font-size:9px; font-weight:700; color:var(--muted); text-transform:uppercase;}
+
+  /* ====== EMAIL INBOX ====== */
+  .email-list { border: 1px solid var(--line); border-radius:6px; overflow:hidden;}
+  .email-item { display:flex; justify-content:space-between; align-items:center; padding: 16px; border-bottom: 1px solid var(--line); background:#fff; transition:0.2s;}
+  .email-item:hover { background: var(--highlight); }
+  .email-item:last-child { border-bottom:none;}
+  .em-info { display:flex; flex-direction:column; gap:4px;}
+  .em-sender { font-size:13px; font-weight:700; color:var(--navy);}
+  .em-subject { font-size:12px; font-weight:500; color:var(--ink);}
+  .em-meta { font-size:10px; font-weight:600; color:var(--muted);}
+  .em-att { display:inline-flex; align-items:center; gap:4px; font-size:10px; background:var(--bg); padding:4px 8px; border-radius:4px; border:1px solid var(--line); margin-top:4px; width:fit-content; font-weight:600;}
+
+  /* ====== TABLES ====== */
+  table.items { width: 100%; border-collapse: collapse; }
+  table.items th { font-size: 9.5px; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); font-weight: 700; text-align: left; padding: 10px 8px; border-bottom: 1px solid var(--line); background: #FBFBFC;}
+  table.items td { padding: 10px 8px; border-bottom: 1px solid var(--line); vertical-align: middle; font-size: 13px;}
+  table.items input { width: 100%; border: 1px solid var(--line); border-radius: 4px; padding: 8px 9px; font-family: 'Montserrat', sans-serif; font-size: 13px; font-weight: 500; outline: none; }
+  table.items input:focus { border-color: var(--navy); }
+  table.items input.num { text-align: right; }
+  
+  .del-btn { all: unset; cursor: pointer; color: var(--danger); font-weight: 800; font-size: 18px; line-height: 1; padding: 4px 8px; }
+  .totals { display: flex; justify-content: flex-end; margin-top: 16px; padding-top: 14px; border-top: 2px solid var(--navy); }
+  .totals .box { text-align: right; }
+  .totals .label { font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); font-weight: 700; }
+  .totals .value { font-size: 22px; font-weight: 800; color: var(--navy); }
+
+  /* MAPA DE PREÇOS / COMPARAÇÃO */
+  .table-comp th, .table-comp td { border: 1px solid var(--line); text-align: center; }
+  .table-comp td:nth-child(1), .table-comp th:nth-child(1) { text-align: left; }
+  .winner-col { background-color: #ECFDF5; border: 2px solid var(--success) !important; }
+  .best-price { background-color: #D1FAE5 !important; border: 1px solid var(--success) !important; color: var(--success) !important; font-weight: 800; }
+  .ai-summary-box { background: var(--ai-light); border:1px solid var(--ai-color); border-radius:6px; padding:16px; margin-top:16px; font-size:12px; line-height:1.5;}
+  .ai-summary-box h4 { margin:0 0 8px 0; color:var(--ai-color); font-size:11px; text-transform:uppercase; letter-spacing:1px;}
+  
+  /* ====== MODALS & OVERLAYS ====== */
+  .modal-overlay { position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(11,31,59,0.7); display:flex; justify-content:center; align-items:center; z-index:100; opacity:0; pointer-events:none; transition:0.2s;}
+  .modal-overlay.show { opacity:1; pointer-events:all;}
+  .modal { background:#fff; border-radius:8px; width:90%; max-width:600px; padding:24px; transform:translateY(20px); transition:0.3s; max-height:90vh; overflow-y:auto;}
+  .modal-overlay.show .modal { transform:translateY(0);}
+  .modal-header { font-size:16px; font-weight:800; color:var(--navy); border-bottom:1px solid var(--line); padding-bottom:12px; margin-bottom:16px; display:flex; justify-content:space-between;}
+  
+  /* ====== TIMELINE ====== */
+  .timeline { display:flex; flex-direction:column; gap:16px; border-left:2px solid var(--line); padding-left:16px; margin-left:8px;}
+  .tl-item { position:relative; font-size:12px; }
+  .tl-item::before { content:''; position:absolute; left:-23px; top:2px; width:10px; height:10px; border-radius:50%; background:var(--navy); border:2px solid #fff;}
+  .tl-date { font-size:10px; font-weight:700; color:var(--muted); margin-bottom:2px;}
+  .tl-content { font-weight:600; color:var(--ink);}
+
+  /* ====== AI CHAT ====== */
+  .chat-container { border:1px solid var(--line); border-radius:6px; background:#fff; display:flex; flex-direction:column; height:500px;}
+  .chat-history { flex:1; padding:20px; overflow-y:auto; display:flex; flex-direction:column; gap:16px;}
+  .chat-bubble { max-width:80%; padding:12px 16px; border-radius:8px; font-size:13px; line-height:1.5; font-weight:500;}
+  .chat-user { align-self:flex-end; background:var(--navy); color:#fff; border-bottom-right-radius:0;}
+  .chat-ai { align-self:flex-start; background:var(--bg); border:1px solid var(--line); color:var(--ink); border-bottom-left-radius:0;}
+  .chat-ai strong { color:var(--ai-color);}
+  .chat-input-area { padding:16px; border-top:1px solid var(--line); display:flex; gap:12px;}
+  .chat-input-area input { flex:1; padding:12px; border:1px solid var(--line); border-radius:6px; outline:none; font-family:'Montserrat';}
+
+  /* ====== TOAST ====== */
+  .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(20px); background: var(--navy); color: #fff; padding: 12px 22px; border-radius: 6px; font-size: 12.5px; font-weight: 600; letter-spacing: .3px; opacity: 0; pointer-events: none; transition: opacity .2s ease, transform .2s ease; z-index: 9999; }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* SPINNER */
+  .spinner { border: 3px solid rgba(255,255,255,0.3); border-top: 3px solid #fff; border-radius: 50%; width: 16px; height: 16px; animation: spin 1s linear infinite; display:inline-block;}
+  @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+  
+  /* LOADING OVERLAY */
+  #db-loader { position: fixed; top:0; left:0; right:0; bottom:0; background:var(--bg); z-index:99999; display:flex; flex-direction:column; justify-content:center; align-items:center; transition: opacity 0.5s ease;}
+  .db-loader-spinner { border: 4px solid var(--line); border-top: 4px solid var(--navy); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin-bottom:16px;}
+</style>
+</head>
+<body>
+
+<div id="db-loader">
+  <div class="db-loader-spinner"></div>
+  <div style="font-weight:700; color:var(--navy); font-size:14px; letter-spacing:1px; text-transform:uppercase;">Conectando ao Firebase...</div>
+</div>
+
+<div class="app">
+  <!-- ====== SIDEBAR ====== -->
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="mark">Gestão AI</div>
+      <div class="sub">Suprimentos GRP</div>
+    </div>
+
+    <div class="nav-group">
+      <div class="nav-label">Plataforma</div>
+      <button class="nav-btn active" onclick="App.nav('dashboard', this)">📊 Dashboard</button>
+      <button class="nav-btn" onclick="App.nav('processos', this)">🔄 Processos</button>
+      <button class="nav-btn" onclick="App.nav('fornecedores', this)">🏢 Fornecedores</button>
+      <button class="nav-btn" onclick="App.nav('recebimento', this)">📥 Recebimento</button>
+      <button class="nav-btn ai-btn" onclick="App.nav('central-ia', this)">🤖 Central de IA</button>
+    </div>
+
+    <div class="sidebar-foot">
+      GRP — Inteligência e Automação<br>v2.1 (Cloud Sync Ativo)
+    </div>
+  </aside>
+
+  <!-- ====== MAIN CONTENT ====== -->
+  <main>
+
+    <!-- ==================== VIEW: DASHBOARD ==================== -->
+    <div id="view-dashboard" class="view active">
+      <div class="doc-head">
+        <div class="doc-title">Dashboard Executivo<small>Visão Geral de Suprimentos</small></div>
+      </div>
+      
+      <div class="kpi-grid">
+        <div class="kpi-card">
+          <div class="kpi-title">Processos Ativos</div>
+          <div class="kpi-value" id="dash-proc">0</div>
+          <div class="kpi-sub">Em andamento</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-title">Ordens Emitidas</div>
+          <div class="kpi-value" id="dash-oc">0</div>
+          <div class="kpi-sub">Concluídas</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-title">Economia Obtida</div>
+          <div class="kpi-value" style="color:var(--success)" id="dash-econ">R$ 0,00</div>
+          <div class="kpi-sub">vs. Média Histórica</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-title">Tempo Médio (SLA)</div>
+          <div class="kpi-value">4.2 <span style="font-size:12px; color:var(--muted)">dias</span></div>
+          <div class="kpi-sub">Req até OC</div>
+        </div>
+      </div>
+
+      <div class="grid cols-2">
+        <section class="block">
+          <h2>Volume de Compras por Mês (Simulado)</h2>
+          <div class="chart-container">
+            <div class="chart-bar" style="height:30%"><span>R$ 150k</span></div>
+            <div class="chart-bar" style="height:50%"><span>R$ 280k</span></div>
+            <div class="chart-bar" style="height:40%"><span>R$ 210k</span></div>
+            <div class="chart-bar" style="height:80%"><span>R$ 450k</span></div>
+            <div class="chart-bar" style="height:60%"><span>R$ 310k</span></div>
+            <div class="chart-bar" style="height:90%; background:var(--success)"><span>R$ 520k</span></div>
+          </div>
+          <div class="chart-labels">
+            <div>Mar</div><div>Abr</div><div>Mai</div><div>Jun</div><div>Jul</div><div>Ago</div>
+          </div>
+        </section>
+
+        <section class="block">
+          <h2>Atalhos Rápidos</h2>
+          <div style="display:flex; flex-direction:column; gap:12px;">
+            <button class="btn btn-solid" style="padding:16px; font-size:14px;" onclick="App.novoProcesso()">＋ Nova Requisição (Processo)</button>
+            <button class="btn btn-outline" style="padding:16px; font-size:14px;" onclick="App.nav('recebimento')">📥 Verificar Caixa de Propostas</button>
+            <button class="btn btn-ai" style="padding:16px; font-size:14px;" onclick="App.nav('central-ia')">🤖 Análises Inteligentes</button>
+          </div>
+        </section>
+      </div>
+    </div>
+
+
+    <!-- ==================== VIEW: LISTA PROCESSOS ==================== -->
+    <div id="view-processos" class="view">
+      <div class="doc-head">
+        <div class="doc-title">Gestão de Processos<small>Acompanhamento de compras, contratações e cotações</small></div>
+        <button class="btn btn-solid" onclick="App.novoProcesso()">＋ Novo Processo</button>
+      </div>
+      <section class="block">
+        <table class="items" id="dash-table">
+          <thead>
+            <tr>
+              <th>Processo / RC</th>
+              <th>Data</th>
+              <th>Empresa (SPE)</th>
+              <th>Status</th>
+              <th style="text-align:right">Ações</th>
+            </tr>
+          </thead>
+          <tbody id="lista-processos-body"></tbody>
+        </table>
+      </section>
+    </div>
+
+
+    <!-- ==================== VIEW: FORNECEDORES ==================== -->
+    <div id="view-fornecedores" class="view">
+      <div class="doc-head">
+        <div class="doc-title">Banco de Fornecedores<small>Base de dados e score de performance</small></div>
+        <button class="btn btn-outline" onclick="App.resetDB()">⚠️ Resetar Sistema (Dados Padrão)</button>
+      </div>
+      <section class="block">
+        <table class="items">
+          <thead>
+            <tr>
+              <th>Razão Social</th>
+              <th>CNPJ</th>
+              <th>Categoria Principal</th>
+              <th>Score IA</th>
+              <th>Prazo Médio</th>
+            </tr>
+          </thead>
+          <tbody id="lista-fornecedores-body"></tbody>
+        </table>
+      </section>
+    </div>
+
+
+    <!-- ==================== VIEW: RECEBIMENTO (INBOX) ==================== -->
+    <div id="view-recebimento" class="view">
+      <div class="doc-head">
+        <div class="doc-title">Caixa de Recebimento<small>Propostas enviadas por fornecedores</small></div>
+      </div>
+      <section class="block">
+        <h2>Processos Aguardando Propostas</h2>
+        <select id="inbox-process-select" style="margin-bottom:20px; padding:10px; width:100%; max-width:400px; border-radius:4px; border:1px solid var(--line);" onchange="App.loadInbox()">
+          <option value="">Selecione o processo...</option>
+        </select>
+
+        <div class="email-list" id="inbox-emails">
+          <!-- Rendered by JS -->
+          <div style="padding:20px; text-align:center; color:var(--muted); font-size:12px; font-weight:600;">Selecione um processo cotando para verificar emails.</div>
+        </div>
+      </section>
+    </div>
+
+
+    <!-- ==================== VIEW: CENTRAL IA ==================== -->
+    <div id="view-central-ia" class="view">
+      <div class="doc-head">
+        <div class="doc-title">Central de IA<small>Assistente de Suprimentos GRP</small></div>
+      </div>
+      <section class="block" style="padding:0; border:none; background:transparent;">
+        <div class="chat-container">
+          <div class="chat-history" id="chat-history">
+            <div class="chat-bubble chat-ai">
+              <strong>Gestão AI:</strong> Olá! Eu sou seu assistente de suprimentos. Você pode me perguntar coisas como:<br><br>
+              - "Qual o melhor fornecedor de Cimento?"<br>
+              - "Resuma a economia do mês."<br>
+              - "Quais processos estão atrasados?"
+            </div>
+          </div>
+          <div class="chat-input-area">
+            <input type="text" id="chat-input" placeholder="Pergunte qualquer coisa sobre suas compras..." onkeypress="if(event.key === 'Enter') AI.sendChatMessage()">
+            <button class="btn btn-ai" onclick="AI.sendChatMessage()">Enviar</button>
+          </div>
+        </div>
+      </section>
+    </div>
+
+
+    <!-- ==================== VIEW: REQUISIÇÃO (FORM) ==================== -->
+    <div id="view-req-form" class="view">
+      <div class="doc-head">
+        <div class="doc-title">1. Requisição para Cotação<small id="rc-subtitle">Processo</small></div>
+        <div class="header-actions">
+          <button class="btn btn-outline" onclick="App.nav('processos')">Voltar</button>
+          <button class="btn btn-solid" onclick="Req.save()">Salvar / Atualizar</button>
+          <button class="btn btn-ai" id="btn-sugerir-forn" onclick="AI.openSupplierSuggestion()">🤖 Sugerir Fornecedores</button>
+          <button class="btn btn-success" id="btn-enviar-cot" style="display:none;" onclick="Req.enviarCotacao()">✉️ Disparar Cotação</button>
+        </div>
+      </div>
+
+      <div class="grid cols-2">
+        <div>
+          <section class="block">
+            <h2>Dados da Requisição <span style="font-size:13px; color:var(--navy); font-weight:800;" id="rcNum"></span></h2>
+            <div class="grid cols-2">
+              <div class="field"><label>Data de emissão</label><input type="text" id="rcEmissao" placeholder="DD/MM/AAAA" oninput="Util.maskDate(this)"></div>
+              <div class="field"><label>Prazo resposta</label><input type="text" id="rcPrazo" placeholder="DD/MM/AAAA" oninput="Util.maskDate(this)"></div>
+              <div class="field"><label>Responsável</label><select id="rcResp"><option value="">Selecione...</option><option value="Gustavo">Gustavo</option><option value="Laismara">Laismara</option></select></div>
+              <div class="field"><label>E-mail p/ envio</label><select id="rcEmail"><option value="">Selecione...</option><option value="gustavocosta@casagrandeurbanismo.com.br">gustavocosta</option><option value="laismara@casagrandeurbanismo.com.br">laismara</option></select></div>
+              <div class="field full"><label>Categoria Predominante (Para IA)</label><input type="text" id="rcCat" placeholder="Ex: Cimento, Hidráulica, EPI..."></div>
+            </div>
+          </section>
+        </div>
+        <div>
+          <section class="block">
+            <h2>Empresa Solicitante (SPE)</h2>
+            <div class="field"><label>Selecione a SPE</label><select id="rcSpe" onchange="Req.updateSPE()"></select></div>
+            <div class="spe-card" id="rcSpeCard" style="margin-top:10px;">
+              <div class="spe-card-body" style="padding:12px;">
+                <div class="item"><span class="l">Razão social</span><span class="v" id="rcSpeNome">—</span></div>
+                <div class="item"><span class="l">CNPJ</span><span class="v" id="rcSpeCnpj">—</span></div>
+                <div class="item full"><span class="l">Endereço</span><span class="v" id="rcSpeEnd">—</span></div>
+              </div>
+            </div>
+            <div class="field" style="margin-top:16px;"><label>Local de entrega</label><select id="rcLocal"><option value="">Selecione a SPE primeiro...</option></select></div>
+          </section>
+        </div>
+      </div>
+
+      <section class="block">
+        <h2>Itens da Requisição</h2>
+        <table class="items">
+          <thead>
+            <tr><th style="width:40%">Descrição</th><th style="width:10%">Qtd.</th><th style="width:10%">Unid.</th><th style="width:20%">Ref. Unit. (Histórico)</th><th style="width:15%">Total (R$)</th><th style="width:5%"></th></tr>
+          </thead>
+          <tbody id="rcItemsBody"></tbody>
+        </table>
+        <button class="add-row-btn" onclick="Req.addItem()">＋ Adicionar item</button>
+        <div class="totals"><div class="box"><div class="label">Total Estimado</div><div class="value" id="rcTotal">R$ 0,00</div></div></div>
+      </section>
+
+      <!-- SEÇÃO FORNECEDORES SELECIONADOS -->
+      <section class="block" id="req-forn-block" style="display:none; border-color:var(--ai-color);">
+        <h2 style="color:var(--ai-color);">Fornecedores Selecionados para Cotação</h2>
+        <table class="items">
+          <thead><tr><th>Fornecedor</th><th>Score IA</th><th>Histórico</th></tr></thead>
+          <tbody id="rcFornBody"></tbody>
+        </table>
+      </section>
+    </div>
+
+
+    <!-- ==================== VIEW: MAPA DE PREÇOS (EQUALIZAÇÃO) ==================== -->
+    <div id="view-mapa" class="view">
+      <div class="doc-head">
+        <div class="doc-title">2. Mapa de Preços & Equalização<small id="map-subtitle">Processo</small></div>
+        <div class="header-actions">
+          <button class="btn btn-outline" onclick="App.nav('req-form', true)">← Voltar à Requisição</button>
+          <button class="btn btn-ai" onclick="AI.analyzeMap()">🤖 Equalizar & Analisar (IA)</button>
+        </div>
+      </div>
+
+      <section class="block">
+        <h2>Mapa Comparativo
+          <button class="btn btn-outline" style="font-size:10px; padding:4px 10px; border-color:var(--success); color:var(--success);" onclick="Map.markBest()">⭐ Marcar melhores</button>
+        </h2>
+        <div style="overflow-x:auto;">
+          <table class="items table-comp" id="map-table">
+            <thead id="map-head"></thead>
+            <tbody id="map-body"></tbody>
+            <tfoot id="map-foot"></tfoot>
+          </table>
+        </div>
+        
+        <!-- RESUMO DA IA -->
+        <div class="ai-summary-box" id="map-ai-summary" style="display:none;">
+          <h4>Análise da Inteligência Artificial</h4>
+          <div id="map-ai-text"></div>
+        </div>
+      </section>
+
+      <section class="block" id="comp-form-forn" style="display:none;">
+        <h2>Dados Complementares do Fornecedor <span id="comp-form-title" style="color:var(--navy)"></span></h2>
+        <div class="grid cols-4">
+          <div class="field"><label>Razão Social</label><input type="text" id="cfNome" onchange="updateFornData('nome', this.value)"></div>
+          <div class="field"><label>CNPJ</label><input type="text" id="cfDoc" onchange="updateFornData('doc', this.value)"></div>
+          <div class="field"><label>Telefone</label><input type="text" id="cfTel" onchange="updateFornData('tel', this.value)"></div>
+          <div class="field"><label>E-mail</label><input type="email" id="cfEmail" onchange="updateFornData('email', this.value)"></div>
+          <div class="field"><label>Cond. Pagto Proposta</label><input type="text" id="cfCond" onchange="updateFornData('cond', this.value)"></div>
+          <div class="field"><label>Prazo Entrega</label><input type="text" id="cfPrazo" onchange="updateFornData('prazo', this.value)"></div>
+        </div>
+      </section>
+
+      <section class="block">
+        <h2>Observações da Cotação</h2>
+        <div class="field full">
+          <textarea id="compObs" placeholder="Registre análises, negociações ou justificativas..." onchange="salvarCompObs()"></textarea>
+        </div>
+      </section>
+
+      <section class="block">
+        <h2>Histórico do Processo (Timeline)</h2>
+        <div class="timeline" id="proc-timeline"></div>
+      </section>
+    </div>
+
+
+    <!-- ==================== VIEW: ORDEM DE COMPRA ==================== -->
+    <div id="view-oc" class="view">
+      <div class="doc-head">
+        <div class="doc-title">3. Ordem de Compra<small>Aprovado e Fechado</small></div>
+        <div class="header-actions">
+          <button class="btn btn-outline" onclick="voltarParaMapa()">← Refazer Comparação</button>
+          <button class="btn btn-success" onclick="OC.save()">Salvar OC</button>
+        </div>
+      </div>
+
+      <div class="grid cols-2">
+        <section class="block">
+          <h2>Dados Gerais <span style="color:var(--navy); font-weight:800;" id="ocNum"></span></h2>
+          <div class="grid cols-2">
+            <div class="field"><label>Emissão</label><input type="text" id="ocEmissao" oninput="Util.maskDate(this)"></div>
+            <div class="field"><label>Entrega Prevista</label><input type="text" id="ocEntrega" oninput="Util.maskDate(this)"></div>
+            <div class="field"><label>Responsável</label><input type="text" id="ocResp" disabled></div>
+            <div class="field"><label>Cond. Pagamento</label><input type="text" id="ocCond"></div>
+          </div>
+        </section>
+        <section class="block">
+          <h2>Fornecedor Vencedor</h2>
+          <div class="grid cols-2">
+            <div class="field full"><label>Razão Social</label><input type="text" id="ocFornNome" disabled style="font-weight:700; color:var(--success)"></div>
+            <div class="field"><label>CNPJ</label><input type="text" id="ocFornCnpj" disabled></div>
+            <div class="field"><label>Contato</label><input type="text" id="ocFornTel" disabled></div>
+          </div>
+        </section>
+      </div>
+
+      <section class="block">
+        <h2>Itens Adquiridos</h2>
+        <table class="items">
+          <thead><tr><th>Descrição</th><th>Qtd</th><th>Unid</th><th>Preço Fechado</th><th>Total</th></tr></thead>
+          <tbody id="ocItemsBody"></tbody>
+        </table>
+        <div class="totals"><div class="box"><div class="label">Total OC</div><div class="value" id="ocTotal">R$ 0,00</div></div></div>
+      </section>
+    </div>
+
+  </main>
+</div>
+
+<!-- ====== MODALS ====== -->
+<!-- MODAL: SUGESTÃO IA -->
+<div class="modal-overlay" id="modal-ia-forn">
+  <div class="modal">
+    <div class="modal-header">
+      <span>🤖 Sugestão Inteligente de Fornecedores</span>
+      <button class="del-btn" onclick="UI.closeModal('modal-ia-forn')" style="font-size:24px;">&times;</button>
+    </div>
+    <div style="font-size:12px; color:var(--muted); margin-bottom:16px;">Baseado na categoria da requisição e histórico de compras.</div>
+    <div id="ia-forn-list" class="grid cols-1" style="gap:10px;"></div>
+    <button class="btn btn-solid" style="width:100%; margin-top:20px;" onclick="AI.confirmSuppliers()">Adicionar Selecionados à Cotação</button>
+  </div>
+</div>
+
+<!-- MODAL: LEITURA DE EMAIL -->
+<div class="modal-overlay" id="modal-ia-email">
+  <div class="modal">
+    <div class="modal-header">
+      <span>🤖 Extração de Proposta (Simulação)</span>
+      <button class="del-btn" onclick="UI.closeModal('modal-ia-email')" style="font-size:24px;">&times;</button>
+    </div>
+    <div style="font-size:12px; margin-bottom:16px;">Analisando anexo PDF... <strong style="color:var(--success)">Confiança: 96%</strong></div>
+    <table class="items" style="margin-bottom:16px;">
+      <tbody id="ia-email-data"></tbody>
+    </table>
+    <div style="display:flex; gap:10px;">
+      <button class="btn btn-outline" style="flex:1;" onclick="UI.closeModal('modal-ia-email')">Cancelar</button>
+      <button class="btn btn-success" style="flex:1;" onclick="Email.approveParsedData()">Aprovar & Inserir no Mapa</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- ==========================================
+     FIREBASE & JAVASCRIPT (MODULAR)
+=========================================== -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyCB4tLW-cTLeNiE21YDVsxy7dj8svFpjfE",
+  authDomain: "suprimentoscgvga.firebaseapp.com",
+  projectId: "suprimentoscgvga",
+  storageBucket: "suprimentoscgvga.firebasestorage.app",
+  messagingSenderId: "547836844633",
+  appId: "1:547836844633:web:cb09c233d68c6168506f48",
+  measurementId: "G-YYSJ5Y22ER"
+};
+
+const firebaseApp = initializeApp(firebaseConfig);
+const db = getFirestore(firebaseApp);
+
+// ==================== CORE DATA & CONFIG ====================
+const SPES = {
+  bocaiuva: { nome: "BOCAIUVA EMPREENDIMENTOS IMOBILIARIOS LTDA", cnpj: "19.218.743/0001-60", endereco: "R Maj Quedinho, 99 — São Paulo/SP", prefixo: "BOC", locais: ["Loteamento Mirante da Lagoa, Bocaiúva-MG (Após a linha de trem)", "Estação de Tratamento de Esgoto do SAE, Bocaiúva-MG"] },
+  jleme: { nome: "J LEME EMPREENDIMENTOS IMOBILIARIOS SPE LTDA", cnpj: "55.160.109/0001-88", endereco: "R Maj Quedinho, 99 — São Paulo/SP", prefixo: "JLE", locais: ["Loteamento Joaquim Leme, Ituiutaba-MG", "Rua Egídio Alves de Oliveira, Ituiutaba-MG"] },
+  mife: { nome: "MIFE NEGOCIOS IMOBILIARIOS S.A", cnpj: "37.014.492/0001-84", endereco: "R Waldomiro Pereira Duarte, 214 — Três Pontas/MG", prefixo: "MIF", locais: ["Loteamento Parque das Nações, Campanha-MG"] },
+  nazareno: { nome: "LOTEAR CONSTRUCOES E EMPREENDIMENTOS NAZARENO LTDA", cnpj: "30.127.853/0001-50", endereco: "R Maj Quedinho, 99 — São Paulo/SP", prefixo: "NAZ", locais: ["Loteamento Cidade Nova, Nazareno-MG"] }
+};
+
+// ==================== UTILS ====================
+const Util = {
+  formatBRL: (v) => "R$ " + (v||0).toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2}),
+  unmaskCur: (str) => { if(!str) return 0; return parseFloat(str.replace(/\./g, '').replace(',', '.').replace(/[^\d.-]/g, '')) || 0; },
+  maskCur: (input) => { 
+    let v = input.value.replace(/\D/g, ''); if(v==='') return; 
+    v = (parseInt(v, 10)/100).toFixed(2); 
+    input.value = "R$ " + v.replace('.', ',').replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1.'); 
+  },
+  maskDate: (input) => {
+    let v = input.value.replace(/\D/g, '');
+    if(v.length > 2) v = v.slice(0,2) + '/' + v.slice(2);
+    if(v.length > 5) v = v.slice(0,5) + '/' + v.slice(5,9);
+    input.value = v;
+  },
+  genId: () => Math.random().toString(36).substr(2, 9),
+  today: () => { const d = new Date(); return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`; }
+};
+
+const UI = {
+  toast: (msg) => { const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),3000); },
+  openModal: (id) => document.getElementById(id).classList.add('show'),
+  closeModal: (id) => document.getElementById(id).classList.remove('show')
+};
+
+// ==================== DATABASE (FIREBASE FIRESTORE) ====================
+const DB = {
+  data: { processos: [], fornecedores: [] },
+  
+  init: async () => {
+    try {
+      const docRef = doc(db, "sistema", "suprimentos_db");
+      const docSnap = await getDoc(docRef);
+      if (docSnap.exists()) {
+        DB.data = docSnap.data();
+        if(!DB.data.processos) DB.data.processos = [];
+        if(!DB.data.fornecedores) DB.data.fornecedores = [];
+      } else {
+        DB.seed();
+        await setDoc(docRef, DB.data);
+      }
+    } catch (e) {
+      console.error("Erro ao ler do Firebase. Verifique se o Modo de Teste está ativado:", e);
+      // Fallback para LocalStorage caso o Firebase falhe por segurança/conexão
+      const saved = localStorage.getItem('grp_ai_db');
+      if (saved) { DB.data = JSON.parse(saved); } else { DB.seed(); }
+    }
+  },
+  
+  save: async () => {
+    // Salva silenciosamente na nuvem
+    try {
+      const docRef = doc(db, "sistema", "suprimentos_db");
+      await setDoc(docRef, DB.data);
+    } catch(e) {
+      console.error("Erro ao gravar no Firebase:", e);
+      localStorage.setItem('grp_ai_db', JSON.stringify(DB.data));
+    }
+  },
+
+  reset: async () => { 
+    DB.seed(); 
+    await DB.save();
+    location.reload(); 
+  },
+  
+  seed: () => {
+    DB.data.fornecedores = [
+      { id: 'f1', nome: 'Votorantim Cimentos', cnpj: '01.000.000/0001-01', cats: 'Cimento, Concreto', score: 95, prazo: '5 dias', contato: 'vendas@voto.com', tel: '11 3000-0000', precoHist: 'Baixo' },
+      { id: 'f2', nome: 'Tigre Tubos e Conexões', cnpj: '02.000.000/0001-02', cats: 'Hidráulica, Tubos', score: 92, prazo: '7 dias', contato: 'vendas@tigre.com', tel: '11 3111-0000', precoHist: 'Médio' },
+      { id: 'f3', nome: 'Amanco Wavin', cnpj: '03.000.000/0001-03', cats: 'Hidráulica, Tubos', score: 88, prazo: '10 dias', contato: 'vendas@amanco.com', tel: '11 3222-0000', precoHist: 'Baixo' },
+      { id: 'f4', nome: 'Gerdau Aços', cnpj: '04.000.000/0001-04', cats: 'Aço, Ferragem', score: 94, prazo: '8 dias', contato: 'vendas@gerdau.com', tel: '11 3333-0000', precoHist: 'Médio' },
+      { id: 'f5', nome: 'Casa do Construtor', cnpj: '05.000.000/0001-05', cats: 'Geral, Ferramentas', score: 80, prazo: '2 dias', contato: 'loja@casaconstrutor.com', tel: '11 3444-0000', precoHist: 'Alto' }
+    ];
+    DB.data.processos = [];
+  },
+  getProcess: (id) => DB.data.processos.find(p => p.id === id)
+};
+
+// ==================== APP CONTROLLER ====================
+let currentPID = null;
+let currentEmailParsing = null;
+let currentCompFornId = null;
+
+const App = {
+  init: async () => {
+    await DB.init();
+    
+    // Hide loader
+    document.getElementById('db-loader').style.opacity = 0;
+    setTimeout(()=> document.getElementById('db-loader').style.display = 'none', 500);
+    
+    // Fill SPE Selects
+    const sel = document.getElementById('rcSpe');
+    sel.innerHTML = '<option value="">Selecione...</option>';
+    Object.keys(SPES).forEach(k => sel.innerHTML += `<option value="${k}">${SPES[k].nome}</option>`);
+    
+    App.renderDash();
+    App.nav('dashboard');
+  },
+  
+  nav: (viewId, isContextual = false) => {
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    document.getElementById('view-' + viewId).classList.add('active');
+    window.scrollTo(0,0);
+    
+    if(!isContextual){
+      document.querySelectorAll('.sidebar .nav-btn').forEach(b => b.classList.remove('active'));
+      try{ event.currentTarget.classList.add('active'); }catch(e){}
+    }
+
+    if(viewId === 'dashboard') App.renderDash();
+    if(viewId === 'processos') App.renderProcessos();
+    if(viewId === 'fornecedores') App.renderForn();
+    if(viewId === 'recebimento') App.initInbox();
+  },
+
+  resetDB: () => { if(confirm("Apagar todos os dados e restaurar padrão no Firebase?")) { DB.reset(); } },
+
+  novoProcesso: () => {
+    const d = new Date();
+    const prefix = `PC-${d.getFullYear()}${String(d.getDate()).padStart(2,'0')}${String(d.getMonth()+1).padStart(2,'0')}-`;
+    let seq = DB.data.processos.filter(p => p.id.startsWith(prefix)).length + 1;
+    const newId = prefix + String(seq).padStart(3, '0');
+    
+    const p = {
+      id: newId, 
+      criadoEm: Util.today(), 
+      status: 'rascunho', 
+      spe: '',
+      req: { numero:`RC-${newId}`, emissao:Util.today(), prazo:'', resp:'', email:'', cat:'', cond:'', local:'', obs:'', itens:[] },
+      fornecedoresSelecionados: [],
+      propostas: [], 
+      compObs: '',
+      vencedorId: null,
+      oc: { numero:'', emissao:'', entrega:'', resp:'', cond:'', obs:'' },
+      historico: [{ data: Util.today(), txt: 'Processo criado (Rascunho)' }]
+    };
+    
+    DB.data.processos.push(p);
+    DB.save();
+    currentPID = p.id;
+    UI.toast("Novo Processo Criado!");
+    Req.load(p);
+    App.nav('req-form', true);
+  },
+
+  renderDash: () => {
+    const procs = DB.data.processos;
+    document.getElementById('dash-proc').textContent = procs.filter(p => p.status !== 'aprovado' && p.status !== 'rascunho').length;
+    document.getElementById('dash-oc').textContent = procs.filter(p => p.status === 'aprovado').length;
+    let tot = 0;
+    procs.filter(p=>p.status==='aprovado').forEach(p => { p.req.itens.forEach(i => tot += (i.preco * i.qtd)); });
+    document.getElementById('dash-econ').textContent = Util.formatBRL(tot * 0.12);
+  },
+
+  renderProcessos: () => {
+    const tbody = document.getElementById('lista-processos-body');
+    tbody.innerHTML = '';
+    [...DB.data.processos].reverse().forEach(p => {
+      let stHtml = '', acHtml = '';
+      if(p.status==='rascunho') { stHtml = '<span class="status-badge s-req">Rascunho</span>'; acHtml=`<button class="btn btn-outline" onclick="App.abrir('${p.id}', 'req-form')">Editar</button>`; }
+      else if(p.status==='cotando') { stHtml = '<span class="status-badge s-cot">Cotando</span>'; acHtml=`<button class="btn btn-solid" onclick="App.nav('recebimento')">Ver Inbox</button>`; }
+      else if(p.status==='analise') { stHtml = '<span class="status-badge s-analise">Análise/Mapa</span>'; acHtml=`<button class="btn btn-ai" onclick="App.abrir('${p.id}', 'mapa')">Mapa IA</button>`; }
+      else if(p.status==='aprovado') { stHtml = '<span class="status-badge s-aprov">OC Emitida</span>'; acHtml=`<button class="btn btn-success" onclick="App.abrir('${p.id}', 'oc')">Ver OC</button>`; }
+      
+      tbody.innerHTML += `<tr>
+        <td style="font-weight:700; color:var(--navy)">${p.id}<br><small style="color:var(--muted)">${p.req.numero}</small></td>
+        <td>${p.criadoEm}</td><td>${p.spe ? SPES[p.spe].prefixo : '-'}</td><td>${stHtml}</td>
+        <td style="text-align:right">${acHtml} <button class="del-btn" onclick="App.del('${p.id}')">×</button></td>
+      </tr>`;
+    });
+  },
+
+  renderForn: () => {
+    const tb = document.getElementById('lista-fornecedores-body');
+    tb.innerHTML = '';
+    DB.data.fornecedores.forEach(f => {
+      tb.innerHTML += `<tr><td><strong style="color:var(--navy)">${f.nome}</strong></td><td>${f.cnpj}</td><td>${f.cats}</td><td><span style="color:var(--success); font-weight:800">${f.score}/100</span></td><td>${f.prazo}</td></tr>`;
+    });
+  },
+
+  abrir: (id, tela) => {
+    currentPID = id;
+    const p = DB.getProcess(id);
+    if(tela==='req-form') Req.load(p);
+    if(tela==='mapa') Map.load(p);
+    if(tela==='oc') OC.load(p);
+    App.nav(tela, true);
+  },
+
+  del: (id) => { if(confirm("Excluir?")) { DB.data.processos = DB.data.processos.filter(x=>x.id!==id); DB.save(); App.renderProcessos(); } },
+
+  logHistory: (pid, msg) => {
+    const p = DB.getProcess(pid);
+    if(p) { p.historico.push({data: Util.today(), txt: msg}); DB.save(); }
+  },
+
+  initInbox: () => {
+    const sel = document.getElementById('inbox-process-select');
+    sel.innerHTML = '<option value="">Selecione o processo...</option>';
+    DB.data.processos.filter(p => p.status === 'cotando').forEach(p => {
+      sel.innerHTML += `<option value="${p.id}">${p.id} (${p.spe ? SPES[p.spe].prefixo : ''})</option>`;
+    });
+    document.getElementById('inbox-emails').innerHTML = '<div style="padding:20px; text-align:center; color:var(--muted); font-size:12px; font-weight:600;">Selecione um processo acima.</div>';
+  },
+
+  loadInbox: () => {
+    const pid = document.getElementById('inbox-process-select').value;
+    const cont = document.getElementById('inbox-emails');
+    if(!pid) { cont.innerHTML = ''; return; }
+    
+    const p = DB.getProcess(pid);
+    cont.innerHTML = '';
+    
+    p.propostas.forEach((prop, idx) => {
+      const f = DB.data.fornecedores.find(x => x.id === prop.fornId);
+      if(prop.status === 'pendente') {
+        cont.innerHTML += `<div class="email-item" style="border-left:3px solid var(--ai-color)">
+          <div class="em-info">
+            <span class="em-sender">${f?.nome||'Novo'}</span>
+            <span class="em-subject">RE: Cotação ${p.req.numero}</span>
+            <span class="em-att">📎 Proposta.pdf</span>
+          </div>
+          <div><button class="btn btn-ai" onclick="Email.readAI('${p.id}', '${f.id}')">🤖 Extrair Proposta</button></div>
+        </div>`;
+      } else {
+        cont.innerHTML += `<div class="email-item" style="opacity:0.6; border-left:3px solid var(--success)">
+          <div class="em-info">
+            <span class="em-sender">${f?.nome||'Novo'}</span>
+            <span class="em-subject">RE: Cotação ${p.req.numero}</span>
+            <span class="em-meta">✓ Lida pela IA e enviada ao Mapa</span>
+          </div>
+        </div>`;
+      }
+    });
+
+    if(p.propostas.length > 0 && p.propostas.every(x => x.status === 'recebida')) {
+      if(p.status !== 'analise') { p.status = 'analise'; DB.save(); }
+      cont.innerHTML += `<div style="padding:20px; text-align:center;"><button class="btn btn-solid" onclick="App.abrir('${p.id}','mapa')">Ir para Mapa de Preços</button></div>`;
+    }
+  }
+};
+
+// ==================== MODULO: REQUISIÇÃO ====================
+const Req = {
+  load: (p) => {
+    document.getElementById('rc-subtitle').textContent = `PROCESSO ${p.id}`;
+    document.getElementById('rcNum').textContent = p.req.numero;
+    document.getElementById('rcEmissao').value = p.req.emissao || '';
+    document.getElementById('rcPrazo').value = p.req.prazo || '';
+    document.getElementById('rcResp').value = p.req.resp || '';
+    document.getElementById('rcEmail').value = p.req.email || '';
+    document.getElementById('rcCat').value = p.req.cat || '';
+    document.getElementById('rcSpe').value = p.spe || '';
+    
+    Req.updateSPE(p.req.local);
+    document.getElementById('rcCond').value = p.req.cond || '';
+    document.getElementById('rcObs').value = p.req.obs || '';
+
+    const tb = document.getElementById('rcItemsBody'); tb.innerHTML='';
+    if(p.req.itens.length===0) Req.addItem();
+    else p.req.itens.forEach(i => Req.addItem(i));
+    
+    Req.calcTotal();
+    Req.renderFornList(p);
+
+    document.getElementById('btn-sugerir-forn').style.display = p.status === 'rascunho' ? 'inline-flex' : 'none';
+    document.getElementById('btn-enviar-cot').style.display = (p.status === 'rascunho' && p.fornecedoresSelecionados.length>0) ? 'inline-flex' : 'none';
+  },
+
+  updateSPE: (valLocal = '') => {
+    const k = document.getElementById('rcSpe').value;
+    const card = document.getElementById('rcSpeCard');
+    const loc = document.getElementById('rcLocal');
+    loc.innerHTML = '<option value="">Selecione...</option>';
+
+    if(!k) { card.classList.remove('show'); return; }
+    
+    document.getElementById('rcSpeNome').textContent = SPES[k].nome;
+    document.getElementById('rcSpeCnpj').textContent = SPES[k].cnpj;
+    document.getElementById('rcSpeEnd').textContent = SPES[k].endereco;
+    card.classList.add('show');
+
+    SPES[k].locais.forEach(l => loc.innerHTML += `<option value="${l}">${l}</option>`);
+    if(valLocal) loc.value = valLocal;
+  },
+
+  addItem: (d=null) => {
+    const id = d ? d.id : Util.genId();
+    const tb = document.getElementById('rcItemsBody');
+    const tr = document.createElement('tr'); tr.id='rit_'+id; tr.dataset.id=id;
+    const v = d?.preco ? Util.formatBRL(d.preco) : '';
+    tr.innerHTML = `
+      <td class="col-desc"><input type="text" class="desc" value="${d?.desc||''}"></td>
+      <td class="col-qty"><input type="number" class="qty num" value="${d?.qtd||1}" onchange="Req.calcTotal()"></td>
+      <td class="col-unit"><input type="text" class="unit" value="${d?.unid||'un.'}"></td>
+      <td class="col-price"><input type="text" class="price num" value="${v}" oninput="Util.maskCur(this)" onchange="Req.calcTotal()"></td>
+      <td class="rtot col-total" style="text-align:right; font-weight:700">R$ 0,00</td>
+      <td class="col-del"><button class="del-btn" onclick="this.closest('tr').remove(); Req.calcTotal()">×</button></td>
+    `;
+    tb.appendChild(tr);
+    Req.calcTotal();
+  },
+
+  calcTotal: () => {
+    let tot=0;
+    document.querySelectorAll('#rcItemsBody tr').forEach(tr=>{
+      const q = parseFloat(tr.querySelector('.qty').value)||0;
+      const p = Util.unmaskCur(tr.querySelector('.price').value);
+      tr.querySelector('.rtot').textContent = Util.formatBRL(q*p);
+      tot+= (q*p);
+    });
+    document.getElementById('rcTotal').textContent = Util.formatBRL(tot);
+  },
+
+  save: () => {
+    const p = DB.getProcess(currentPID);
+    p.spe = document.getElementById('rcSpe').value;
+    p.req.emissao = document.getElementById('rcEmissao').value;
+    p.req.prazo = document.getElementById('rcPrazo').value;
+    p.req.resp = document.getElementById('rcResp').value;
+    p.req.email = document.getElementById('rcEmail').value;
+    p.req.cat = document.getElementById('rcCat').value;
+    p.req.local = document.getElementById('rcLocal').value;
+    p.req.cond = document.getElementById('rcCond').value;
+    p.req.obs = document.getElementById('rcObs').value;
+
+    p.req.itens = [];
+    document.querySelectorAll('#rcItemsBody tr').forEach(tr=>{
+      const desc = tr.querySelector('.desc').value;
+      if(desc.trim() !== '') {
+        p.req.itens.push({
+          id: tr.dataset.id, desc: desc, qtd: parseFloat(tr.querySelector('.qty').value)||0,
+          unid: tr.querySelector('.unit').value, preco: Util.unmaskCur(tr.querySelector('.price').value)
+        });
+      }
+    });
+    
+    if(p.status === 'rascunho' && p.req.itens.length > 0 && p.fornecedoresSelecionados.length > 0) {
+      // ready to send
+    }
+    DB.save();
+    UI.toast("Requisição Salva!");
+    Req.load(p); 
+  },
+
+  renderFornList: (p) => {
+    const blk = document.getElementById('req-forn-block');
+    const tb = document.getElementById('rcFornBody');
+    tb.innerHTML = '';
+    if(p.fornecedoresSelecionados.length === 0) { blk.style.display = 'none'; return; }
+    
+    blk.style.display = 'block';
+    p.fornecedoresSelecionados.forEach(fid => {
+      const f = DB.data.fornecedores.find(x=>x.id===fid);
+      if(f) tb.innerHTML += `<tr><td><strong>${f.nome}</strong></td><td style="color:var(--success); font-weight:800">${f.score}</td><td>${f.precoHist}</td></tr>`;
+    });
+  },
+
+  enviarCotacao: () => {
+    Req.save();
+    const p = DB.getProcess(currentPID);
+    p.status = 'cotando';
+    App.logHistory(p.id, "Solicitação de cotação enviada para " + p.fornecedoresSelecionados.length + " fornecedores.");
+    
+    p.propostas = p.fornecedoresSelecionados.map(fid => ({
+      fornId: fid, nome:'', doc:'', tel:'', email:'', status: 'pendente', itens: {}, frete: 0, imposto: 0, prazo: '', cond: ''
+    }));
+    
+    DB.save();
+    UI.toast("Cotações disparadas por E-mail!");
+    App.nav('dashboard');
+  }
+};
+
+// ==================== MODULO: AI & ALERTS ====================
+const AI = {
+  openSupplierSuggestion: () => {
+    Req.save(); 
+    const cat = document.getElementById('rcCat').value.toLowerCase();
+    const list = document.getElementById('ia-forn-list');
+    list.innerHTML = '';
+    
+    let sorted = [...DB.data.fornecedores].sort((a,b)=>b.score - a.score);
+    if(cat) {
+      const filtered = sorted.filter(f => f.cats.toLowerCase().includes(cat));
+      if(filtered.length > 0) sorted = filtered;
+    }
+
+    sorted.forEach(f => {
+      list.innerHTML += `<div style="padding:12px; border:1px solid var(--line); border-radius:6px; display:flex; justify-content:space-between; align-items:center;">
+        <div>
+          <strong style="color:var(--navy)">${f.nome}</strong><br>
+          <small style="color:var(--success); font-weight:800;">Score: ${f.score}/100</small> • <small>Histórico: ${f.precoHist}</small>
+        </div>
+        <input type="checkbox" class="ia-forn-chk" value="${f.id}" style="width:20px; height:20px; accent-color:var(--ai-color)">
+      </div>`;
+    });
+    UI.openModal('modal-ia-forn');
+  },
+
+  confirmSuppliers: () => {
+    const p = DB.getProcess(currentPID);
+    p.fornecedoresSelecionados = [];
+    document.querySelectorAll('.ia-forn-chk:checked').forEach(c => p.fornecedoresSelecionados.push(c.value));
+    DB.save();
+    UI.closeModal('modal-ia-forn');
+    Req.load(p);
+  },
+
+  analyzeMap: () => {
+    const p = DB.getProcess(currentPID);
+    document.getElementById('map-ai-summary').style.display = 'block';
+    const box = document.getElementById('map-ai-text');
+    box.innerHTML = '<div class="spinner" style="border-color:var(--ai-color); border-top-color:transparent"></div> Processando dados com IA...';
+    
+    setTimeout(() => {
+      let bestForn = null;
+      let minTot = Infinity;
+
+      p.propostas.forEach(prop => {
+        let t = prop.frete + prop.imposto;
+        p.req.itens.forEach(i => t += (prop.itens[i.id]||0) * i.qtd);
+        if(t > 0 && t < minTot) { minTot = t; bestForn = prop.fornId; }
+      });
+
+      if(!bestForn) { box.innerHTML = "Não há dados suficientes para análise."; return; }
+      
+      const f = DB.data.fornecedores.find(x=>x.id===bestForn) || p.propostas.find(x=>x.fornId===bestForn);
+      box.innerHTML = `<strong>Recomendação Executiva:</strong> O fornecedor <strong>${f.nome}</strong> apresenta o menor Custo Total Posto na Obra (${Util.formatBRL(minTot)}).<br>
+      • <strong>Riscos:</strong> Nenhum identificado. Prazos e categorias compatíveis.<br>
+      • <strong>Próximo Passo:</strong> Selecionar o vencedor clicando em 'Escolher' na tabela acima.`;
+      
+      App.logHistory(p.id, "IA executou equalização e sugeriu fornecedor.");
+    }, 1500);
+  },
+
+  sendChatMessage: () => {
+    const inp = document.getElementById('chat-input');
+    const txt = inp.value.trim();
+    if(!txt) return;
+    
+    const hist = document.getElementById('chat-history');
+    hist.innerHTML += `<div class="chat-bubble chat-user">${txt}</div>`;
+    inp.value = '';
+    
+    hist.innerHTML += `<div class="chat-bubble chat-ai" id="chat-temp"><div class="spinner" style="border-color:var(--navy); border-top-color:transparent"></div></div>`;
+    hist.scrollTop = hist.scrollHeight;
+
+    setTimeout(() => {
+      document.getElementById('chat-temp').remove();
+      let resp = "Entendi. Como esta é uma versão de simulação (ainda sem o Backend), eu recomendo verificar o painel de processos para ver o andamento em tempo real.";
+      const t = txt.toLowerCase();
+      
+      if(t.includes('fornecedor') && t.includes('cimento')) resp = "Analisando o banco de dados via Firebase, o fornecedor <strong>Votorantim Cimentos</strong> possui o melhor score (95/100) para esta categoria.";
+      else if(t.includes('economia') || t.includes('mês')) resp = "Até o momento, a economia gerada nos processos aprovados deste mês foi de aproximadamente 12% em relação à média histórica.";
+      else if(t.includes('atrasad')) resp = "Verifiquei que as Cotações em status 'Cotando' estão dentro do prazo estipulado. Posso agendar um alerta para o dia do vencimento se quiser.";
+
+      hist.innerHTML += `<div class="chat-bubble chat-ai"><strong>Gestão AI:</strong> ${resp}</div>`;
+      hist.scrollTop = hist.scrollHeight;
+    }, 1000);
+  }
+};
+
+// ==================== MODULO: EMAIL INBOX ====================
+const Email = {
+  readAI: (pid, fornId) => {
+    currentEmailParsing = { pid, fornId };
+    const p = DB.getProcess(pid);
+    const f = DB.data.fornecedores.find(x=>x.id===fornId);
+    
+    const tb = document.getElementById('ia-email-data');
+    tb.innerHTML = `<tr><td colspan="2" style="text-align:center"><div class="spinner" style="border-color:var(--navy); border-top-color:transparent"></div> Extraindo PDF via Gemini...</td></tr>`;
+    UI.openModal('modal-ia-email');
+
+    setTimeout(() => {
+      const parsedItens = [];
+      p.req.itens.forEach(i => {
+        const varPer = 1 + ((Math.random()*0.1) - 0.05);
+        parsedItens.push({ id: i.id, desc: i.desc, val: i.preco * varPer });
+      });
+
+      currentEmailParsing.parsed = { frete: 150, imposto: 0, cond: '30 DDL', prazo: f?.prazo||'7 dias', itens: parsedItens };
+
+      tb.innerHTML = `
+        <tr><td><strong>Fornecedor Localizado</strong></td><td>${f?.nome||'N/D'}</td></tr>
+        <tr><td><strong>Prazo (Extraído)</strong></td><td>${currentEmailParsing.parsed.prazo}</td></tr>
+        <tr><td><strong>Condição (Extraída)</strong></td><td>${currentEmailParsing.parsed.cond}</td></tr>
+        <tr><td><strong>Frete Estimado</strong></td><td>R$ 150,00</td></tr>
+      `;
+      parsedItens.forEach(pi => {
+        tb.innerHTML += `<tr><td style="font-size:11px">${pi.desc}</td><td style="font-weight:700">${Util.formatBRL(pi.val)}</td></tr>`;
+      });
+    }, 1500);
+  },
+
+  approveParsedData: () => {
+    if(!currentEmailParsing || !currentEmailParsing.parsed) return;
+    const { pid, fornId, parsed } = currentEmailParsing;
+    const p = DB.getProcess(pid);
+    const prop = p.propostas.find(x => x.fornId === fornId);
+    
+    prop.status = 'recebida';
+    prop.frete = parsed.frete;
+    prop.imposto = parsed.imposto;
+    prop.cond = parsed.cond;
+    prop.prazo = parsed.prazo;
+    parsed.itens.forEach(pi => { prop.itens[pi.id] = pi.val; });
+
+    const fname = DB.data.fornecedores.find(x=>x.id===fornId)?.nome || 'Fornecedor';
+    App.logHistory(p.id, `Proposta de ${fname} processada pela IA e inserida no Mapa.`);
+    
+    DB.save();
+    UI.closeModal('modal-ia-email');
+    UI.toast("Dados aprovados e sincronizados na Nuvem!");
+    App.loadInbox();
+  }
+};
+
+// ==================== MODULO: MAPA DE PREÇOS ====================
+const Map = {
+  load: (p) => {
+    document.getElementById('map-subtitle').textContent = `PROCESSO ${p.id}`;
+    document.getElementById('map-ai-summary').style.display = 'none';
+    document.getElementById('comp-form-forn').style.display = 'none';
+    document.getElementById('compObs').value = p.compObs || '';
+    currentCompFornId = null;
+
+    const thead = document.getElementById('map-head');
+    const tbody = document.getElementById('map-body');
+    const tfoot = document.getElementById('map-foot');
+    
+    let thHtml = `<tr><th>Item</th><th>Qtd</th><th>Unid</th>`;
+    p.propostas.forEach(prop => {
+      const f = DB.data.fornecedores.find(x=>x.id===prop.fornId) || prop;
+      const isW = p.vencedorId === prop.fornId;
+      thHtml += `<th class="${isW?'winner-col':''}">
+        <input type="text" class="comp-forn-input" value="${f.nome || ''}" placeholder="Fornecedor" onchange="updatePropFornNome('${prop.fornId}', this.value)" onclick="editFornDetails('${prop.fornId}')">
+        <br><small style="font-weight:500; cursor:pointer;" onclick="editFornDetails('${prop.fornId}')">(Editar Dados)</small>
+        <button class="del-btn" style="font-size:12px; margin-left:5px" onclick="removeFornecedorComp('${prop.fornId}')">×</button>
+      </th>`;
+    });
+    thHtml += `</tr>`;
+    thead.innerHTML = thHtml;
+
+    let tbHtml = '';
+    p.req.itens.forEach(i => {
+      tbHtml += `<tr><td style="font-size:11px">${i.desc}</td><td style="font-size:11px; font-weight:700">${i.qtd}</td><td style="font-size:11px; font-weight:700">${i.unid}</td>`;
+      p.propostas.forEach(prop => {
+        const isW = p.vencedorId === prop.fornId;
+        const val = prop.itens[i.id] || 0;
+        const vs = val>0 ? Util.formatBRL(val) : '';
+        tbHtml += `<td class="${isW?'winner-col':''}">
+          <input type="text" id="in_${prop.fornId}_${i.id}" class="num item-val-input" style="width:110px" value="${vs}" placeholder="R$ 0,00" data-val="${val}" oninput="Util.maskCur(this)" onchange="updatePropPreco('${prop.fornId}', '${i.id}', this.value)">
+          <span id="dev_${prop.fornId}_${i.id}"></span>
+        </td>`;
+      });
+      tbHtml += `</tr>`;
+    });
+
+    // Custo Total Rows (Frete, Imposto)
+    tbHtml += `<tr><td colspan="3" style="text-align:right; font-size:11px;">Frete R$</td>`;
+    p.propostas.forEach(prop => { 
+      tbHtml += `<td class="${p.vencedorId===prop.fornId?'winner-col':''}"><input type="text" class="num" style="width:110px" value="${prop.frete>0?Util.formatBRL(prop.frete):''}" placeholder="R$ 0,00" oninput="Util.maskCur(this)" onchange="updatePropFreco('${prop.fornId}', this.value)"></td>`; 
+    });
+    tbHtml += `</tr>`;
+
+    tbody.innerHTML = tbHtml;
+
+    let tfHtml = `<tr><td colspan="3" style="text-align:right; font-weight:800; padding:15px">CUSTO TOTAL POSTO NA OBRA</td>`;
+    p.propostas.forEach(prop => {
+      let t = prop.frete + prop.imposto;
+      p.req.itens.forEach(i => t += (prop.itens[i.id]||0) * i.qtd);
+      const isW = p.vencedorId === prop.fornId;
+
+      let btn = '';
+      if(t > 0 && p.status !== 'aprovado') {
+        btn = `<div style="margin-top:10px"><button class="btn btn-outline" style="font-size:9px; padding:6px 10px" onclick="selecionarVencedor('${prop.fornId}')">Escolher</button></div>`;
+      } else if (isW) {
+        btn = `<div style="margin-top:10px; color:var(--success); font-size:11px; font-weight:800">★ VENCEDOR</div>`;
+      }
+
+      tfHtml += `<td class="${isW?'winner-col':''}" style="font-weight:800; color:var(--navy); font-size:14px; padding:15px">
+        ${t>0 ? Util.formatBRL(t) : '-'}${btn}
+      </td>`;
+    });
+    tfHtml += `</tr>`;
+    tfoot.innerHTML = tfHtml;
+
+    // Render Timeline
+    const tl = document.getElementById('proc-timeline');
+    tl.innerHTML = '';
+    [...p.historico].reverse().forEach(h => {
+      tl.innerHTML += `<div class="tl-item"><div class="tl-date">${h.data}</div><div class="tl-content">${h.txt}</div></div>`;
+    });
+  },
+
+  markBest: () => {
+    const p = DB.getProcess(currentPID);
+    if(!p || p.propostas.length === 0) return;
+    
+    p.req.itens.forEach(it => {
+      let min = Infinity;
+      p.propostas.forEach(prop => {
+        const val = prop.itens[it.id] || 0;
+        if (val > 0 && val < min) min = val;
+      });
+      
+      p.propostas.forEach(prop => {
+        const val = prop.itens[it.id] || 0;
+        const input = document.getElementById(`in_${prop.fornId}_${it.id}`);
+        const devSpan = document.getElementById(`dev_${prop.fornId}_${it.id}`);
+        if (!input || !devSpan) return;
+        
+        input.classList.remove('best-price');
+        devSpan.innerHTML = '';
+        
+        if (val > 0) {
+          if (val === min) {
+            input.classList.add('best-price');
+          } else {
+            const perc = ((val - min) / min) * 100;
+            devSpan.innerHTML = `<br><span style="color:var(--danger); font-size:10px; font-weight:800;">▲ +${perc.toFixed(1)}%</span>`;
+          }
+        }
+      });
+    });
+  }
+};
+
+// ==================== MODULO: ORDEM DE COMPRA ====================
+const OC = {
+  load: (p) => {
+    document.getElementById('ocNum').textContent = p.oc.numero || `OC-${p.id}`;
+    document.getElementById('ocEmissao').value = p.oc.emissao || Util.today();
+    document.getElementById('ocEntrega').value = p.oc.entrega || '';
+    document.getElementById('ocResp').value = p.oc.resp || p.req.resp;
+    
+    if(p.spe) {
+      document.getElementById('ocSpeNome').textContent = SPES[p.spe].nome;
+      document.getElementById('ocSpeCnpj').textContent = SPES[p.spe].cnpj;
+      document.getElementById('ocSpeEnd').textContent = SPES[p.spe].endereco;
+      atualizarLocaisEntrega('oc', p.spe, p.oc.local || p.req.local);
+    } else {
+      atualizarLocaisEntrega('oc', null, '');
+    }
+
+    const prop = p.propostas.find(x=>x.fornId===p.vencedorId);
+    const f = DB.data.fornecedores.find(x=>x.id===p.vencedorId) || prop;
+    if(f) {
+      document.getElementById('ocFornNome').value = f.nome || '';
+      document.getElementById('ocFornCnpj').value = f.cnpj || f.doc || '';
+      document.getElementById('ocFornTel').value = f.tel || '';
+    }
+
+    document.getElementById('ocCond').value = p.oc.cond || prop?.cond || p.req.cond;
+    document.getElementById('ocObs').value = p.oc.obs || p.req.obs;
+
+    const tb = document.getElementById('ocItemsBody');
+    tb.innerHTML = '';
+    let tot = 0;
+    if(prop) {
+      p.req.itens.forEach(i => {
+        const v = prop.itens[i.id]||0;
+        tot += (i.qtd * v);
+        tb.innerHTML += `<tr><td style="font-size:11px">${i.desc}</td><td>${i.qtd}</td><td>${i.unid}</td><td>${Util.formatBRL(v)}</td><td style="font-weight:700">${Util.formatBRL(i.qtd*v)}</td></tr>`;
+      });
+      tot += prop.frete + prop.imposto;
+    }
+    document.getElementById('ocTotal').textContent = Util.formatBRL(tot);
+  },
+
+  save: () => {
+    const p = DB.getProcess(currentPID);
+    p.oc.numero = `OC-${p.id}`;
+    p.oc.emissao = document.getElementById('ocEmissao').value;
+    p.oc.entrega = document.getElementById('ocEntrega').value;
+    p.oc.resp = document.getElementById('ocResp').value;
+    p.oc.cond = document.getElementById('ocCond').value;
+    p.oc.local = document.getElementById('ocLocal').value;
+    p.oc.obs = document.getElementById('ocObs').value;
+    DB.save();
+    UI.toast("Ordem de Compra Sincronizada!");
+  }
+};
+
+// ==================== GLOBAL HELPERS EXPOSED TO WINDOW ====================
+window.App = App;
+window.Req = Req;
+window.Map = Map;
+window.OC = OC;
+window.AI = AI;
+window.Email = Email;
+window.UI = UI;
+window.Util = Util;
+window.DB = DB;
+
+window.addFornecedorComp = () => {
+  const p = DB.getProcess(currentPID);
+  p.propostas.push({ fornId: Util.genId(), nome: 'Novo Forn', doc:'', tel:'', email:'', status:'recebida', itens:{}, frete:0, imposto:0, prazo:'', cond:'' });
+  DB.save();
+  Map.load(p);
+};
+
+window.removeFornecedorComp = (propId) => {
+  if(!confirm('Remover este fornecedor?')) return;
+  const p = DB.getProcess(currentPID);
+  p.propostas = p.propostas.filter(x => x.fornId !== propId);
+  if(p.vencedorId === propId) p.vencedorId = null;
+  DB.save();
+  Map.load(p);
+  document.getElementById('comp-form-forn').style.display = 'none';
+};
+
+window.updatePropFornNome = (propId, val) => {
+  const p = DB.getProcess(currentPID);
+  const prop = p.propostas.find(x => x.fornId === propId);
+  if(prop) prop.nome = val;
+  DB.save();
+  if(currentCompFornId === propId) document.getElementById('comp-form-title').textContent = `- ${val}`;
+};
+
+window.updatePropPreco = (propId, itemId, valStr) => {
+  const val = Util.unmaskCur(valStr);
+  const p = DB.getProcess(currentPID);
+  const prop = p.propostas.find(x => x.fornId === propId);
+  if(prop) { prop.itens[itemId] = val; prop.status = 'recebida'; }
+  DB.save();
+  Map.load(p);
+};
+
+window.updatePropFreco = (propId, valStr) => {
+  const p = DB.getProcess(currentPID);
+  const prop = p.propostas.find(x => x.fornId === propId);
+  if(prop) prop.frete = Util.unmaskCur(valStr);
+  DB.save();
+  Map.load(p);
+};
+
+window.editFornDetails = (propId) => {
+  currentCompFornId = propId;
+  const p = DB.getProcess(currentPID);
+  const prop = p.propostas.find(x => x.fornId === propId);
+  const f = DB.data.fornecedores.find(x => x.id === propId) || prop;
+  
+  document.getElementById('comp-form-forn').style.display = 'block';
+  document.getElementById('comp-form-title').textContent = `- ${f.nome||'Novo'}`;
+  
+  document.getElementById('cfNome').value = f.nome || '';
+  document.getElementById('cfDoc').value = f.cnpj || f.doc || '';
+  document.getElementById('cfTel').value = f.tel || '';
+  document.getElementById('cfEmail').value = f.email || f.contato || '';
+  document.getElementById('cfCond').value = prop.cond || '';
+  document.getElementById('cfPrazo').value = prop.prazo || '';
+};
+
+window.updateFornData = (field, val) => {
+  if(!currentCompFornId) return;
+  const p = DB.getProcess(currentPID);
+  const prop = p.propostas.find(x => x.fornId === currentCompFornId);
+  if(prop) prop[field] = val;
+  DB.save();
+  if(field === 'nome') Map.load(p);
+};
+
+window.salvarCompObs = () => {
+  const p = DB.getProcess(currentPID);
+  if(p) { p.compObs = document.getElementById('compObs').value; DB.save(); }
+};
+
+window.selecionarVencedor = (propId) => {
+  if(!confirm('Deseja aprovar esta proposta e gerar a Ordem de Compra?')) return;
+  const p = DB.getProcess(currentPID);
+  p.vencedorId = propId;
+  p.status = 'aprovado';
+  App.logHistory(p.id, `Fornecedor Vencedor Aprovado. Gerando OC.`);
+  DB.save();
+  UI.toast('Fornecedor vencedor selecionado!');
+  App.abrir(p.id, 'oc');
+};
+
+window.voltarParaMapa = () => {
+  const p = DB.getProcess(currentPID);
+  if(p) { p.status = 'analise'; DB.save(); App.abrir(p.id, 'mapa'); }
+};
+
+window.exportarTudo = () => {
+  const data = JSON.stringify(DB.data, null, 2);
+  const blob = new Blob([data], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = `GRP_Backup_Cloud_${new Date().toISOString().slice(0,10)}.json`;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+  UI.toast('Backup exportado.');
+};
+
+window.importarTudo = (e) => {
+  const file = e.target.files[0]; if(!file) return;
+  const reader = new FileReader();
+  reader.onload = async (evt) => {
+    try{
+      const data = JSON.parse(evt.target.result);
+      if(data.processos) { DB.data = data; await DB.save(); location.reload(); }
+    }catch(err){ alert('Erro ao ler arquivo.'); }
+  };
+  reader.readAsText(file); e.target.value = '';
+};
+
+// Ignite!
+window.onload = App.init;
+
+</script>
+</body>
+</html>
