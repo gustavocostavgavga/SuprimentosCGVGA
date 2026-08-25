@@ -56,10 +56,10 @@
   
   /* ====== TAGS ====== */
   .status-badge { padding: 4px 8px; border-radius: 4px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
-  .s-req { background: #F3F4F6; color: #374151; } /* Rascunho */
-  .s-cot { background: #FEF3C7; color: #92400E; } /* Cotando */
-  .s-analise { background: #DBEAFE; color: #1E40AF; } /* Análise */
-  .s-aprov { background: #D1FAE5; color: #065F46; } /* Aprovado / OC */
+  .s-req { background: #F3F4F6; color: #374151; }
+  .s-cot { background: #FEF3C7; color: #92400E; }
+  .s-analise { background: #DBEAFE; color: #1E40AF; }
+  .s-aprov { background: #D1FAE5; color: #065F46; }
 
   /* ====== GRIDS & BLOCKS ====== */
   section.block { background: var(--paper); border: 1px solid var(--line); border-radius: 6px; padding: 24px 26px; margin-bottom: 20px; position:relative;}
@@ -81,14 +81,6 @@
   .kpi-card .kpi-title { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); }
   .kpi-card .kpi-value { font-size: 24px; font-weight: 800; color: var(--navy); }
   .kpi-card .kpi-sub { font-size: 10px; font-weight: 600; color: var(--success); }
-
-  /* ====== CHARTS (Pure HTML/CSS simulation) ====== */
-  .chart-container { display:flex; align-items:flex-end; gap:12px; height:120px; padding-top:20px; border-bottom:1px solid var(--line); margin-bottom:10px;}
-  .chart-bar { background: var(--navy); width:100%; border-radius:4px 4px 0 0; position:relative; transition: height 0.5s ease;}
-  .chart-bar:hover { background: var(--ai-color); }
-  .chart-bar span { position:absolute; top:-18px; left:50%; transform:translateX(-50%); font-size:9px; font-weight:700; color:var(--muted);}
-  .chart-labels { display:flex; justify-content:space-between; gap:12px; }
-  .chart-labels div { width:100%; text-align:center; font-size:9px; font-weight:700; color:var(--muted); text-transform:uppercase;}
 
   /* ====== EMAIL INBOX ====== */
   .email-list { border: 1px solid var(--line); border-radius:6px; overflow:hidden;}
@@ -137,16 +129,6 @@
   .tl-date { font-size:10px; font-weight:700; color:var(--muted); margin-bottom:2px;}
   .tl-content { font-weight:600; color:var(--ink);}
 
-  /* ====== AI CHAT ====== */
-  .chat-container { border:1px solid var(--line); border-radius:6px; background:#fff; display:flex; flex-direction:column; height:500px;}
-  .chat-history { flex:1; padding:20px; overflow-y:auto; display:flex; flex-direction:column; gap:16px;}
-  .chat-bubble { max-width:80%; padding:12px 16px; border-radius:8px; font-size:13px; line-height:1.5; font-weight:500;}
-  .chat-user { align-self:flex-end; background:var(--navy); color:#fff; border-bottom-right-radius:0;}
-  .chat-ai { align-self:flex-start; background:var(--bg); border:1px solid var(--line); color:var(--ink); border-bottom-left-radius:0;}
-  .chat-ai strong { color:var(--ai-color);}
-  .chat-input-area { padding:16px; border-top:1px solid var(--line); display:flex; gap:12px;}
-  .chat-input-area input { flex:1; padding:12px; border:1px solid var(--line); border-radius:6px; outline:none; font-family:'Montserrat';}
-
   /* ====== TOAST ====== */
   .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(20px); background: var(--navy); color: #fff; padding: 12px 22px; border-radius: 6px; font-size: 12.5px; font-weight: 600; letter-spacing: .3px; opacity: 0; pointer-events: none; transition: opacity .2s ease, transform .2s ease; z-index: 9999; }
   .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
@@ -155,7 +137,6 @@
   .spinner { border: 3px solid rgba(255,255,255,0.3); border-top: 3px solid #fff; border-radius: 50%; width: 16px; height: 16px; animation: spin 1s linear infinite; display:inline-block;}
   @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
   
-  /* LOADING OVERLAY */
   #db-loader { position: fixed; top:0; left:0; right:0; bottom:0; background:var(--bg); z-index:99999; display:flex; flex-direction:column; justify-content:center; align-items:center; transition: opacity 0.5s ease;}
   .db-loader-spinner { border: 4px solid var(--line); border-top: 4px solid var(--navy); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin-bottom:16px;}
 </style>
@@ -180,12 +161,11 @@
       <button class="nav-btn active" onclick="App.nav('dashboard', this)">📊 Dashboard</button>
       <button class="nav-btn" onclick="App.nav('processos', this)">🔄 Processos</button>
       <button class="nav-btn" onclick="App.nav('fornecedores', this)">🏢 Fornecedores</button>
-      <button class="nav-btn" onclick="App.nav('recebimento', this)">📥 Recebimento</button>
-      <button class="nav-btn ai-btn" onclick="App.nav('central-ia', this)">🤖 Central de IA</button>
+      <button class="nav-btn" onclick="App.nav('recebimento', this)">📥 Inbox & IA Real</button>
     </div>
 
     <div class="sidebar-foot">
-      GRP — Inteligência e Automação<br>v2.1 (Cloud Sync Ativo)
+      GRP — Inteligência e Automação<br>v3.0 (Integração Gemini & Vercel)
     </div>
   </aside>
 
@@ -221,33 +201,14 @@
         </div>
       </div>
 
-      <div class="grid cols-2">
-        <section class="block">
-          <h2>Volume de Compras por Mês (Simulado)</h2>
-          <div class="chart-container">
-            <div class="chart-bar" style="height:30%"><span>R$ 150k</span></div>
-            <div class="chart-bar" style="height:50%"><span>R$ 280k</span></div>
-            <div class="chart-bar" style="height:40%"><span>R$ 210k</span></div>
-            <div class="chart-bar" style="height:80%"><span>R$ 450k</span></div>
-            <div class="chart-bar" style="height:60%"><span>R$ 310k</span></div>
-            <div class="chart-bar" style="height:90%; background:var(--success)"><span>R$ 520k</span></div>
-          </div>
-          <div class="chart-labels">
-            <div>Mar</div><div>Abr</div><div>Mai</div><div>Jun</div><div>Jul</div><div>Ago</div>
-          </div>
-        </section>
-
-        <section class="block">
-          <h2>Atalhos Rápidos</h2>
-          <div style="display:flex; flex-direction:column; gap:12px;">
-            <button class="btn btn-solid" style="padding:16px; font-size:14px;" onclick="App.novoProcesso()">＋ Nova Requisição (Processo)</button>
-            <button class="btn btn-outline" style="padding:16px; font-size:14px;" onclick="App.nav('recebimento')">📥 Verificar Caixa de Propostas</button>
-            <button class="btn btn-ai" style="padding:16px; font-size:14px;" onclick="App.nav('central-ia')">🤖 Análises Inteligentes</button>
-          </div>
-        </section>
-      </div>
+      <section class="block">
+        <h2>Atalhos Rápidos</h2>
+        <div style="display:flex; flex-direction:column; gap:12px;">
+          <button class="btn btn-solid" style="padding:16px; font-size:14px;" onclick="App.novoProcesso()">＋ Nova Requisição (Processo)</button>
+          <button class="btn btn-ai" style="padding:16px; font-size:14px;" onclick="App.nav('recebimento')">📥 Testar Extração com Gemini (Real)</button>
+        </div>
+      </section>
     </div>
-
 
     <!-- ==================== VIEW: LISTA PROCESSOS ==================== -->
     <div id="view-processos" class="view">
@@ -271,7 +232,6 @@
       </section>
     </div>
 
-
     <!-- ==================== VIEW: FORNECEDORES ==================== -->
     <div id="view-fornecedores" class="view">
       <div class="doc-head">
@@ -294,49 +254,30 @@
       </section>
     </div>
 
-
     <!-- ==================== VIEW: RECEBIMENTO (INBOX) ==================== -->
     <div id="view-recebimento" class="view">
       <div class="doc-head">
-        <div class="doc-title">Caixa de Recebimento<small>Propostas enviadas por fornecedores</small></div>
+        <div class="doc-title">Inbox de Propostas & Leitura por IA<small>Integração Real (Locaweb & Google Gemini)</small></div>
       </div>
       <section class="block">
-        <h2>Processos Aguardando Propostas</h2>
+        <h2>Selecione a Cotação em Andamento</h2>
         <select id="inbox-process-select" style="margin-bottom:20px; padding:10px; width:100%; max-width:400px; border-radius:4px; border:1px solid var(--line);" onchange="App.loadInbox()">
           <option value="">Selecione o processo...</option>
         </select>
 
         <div class="email-list" id="inbox-emails">
           <!-- Rendered by JS -->
-          <div style="padding:20px; text-align:center; color:var(--muted); font-size:12px; font-weight:600;">Selecione um processo cotando para verificar emails.</div>
+          <div style="padding:20px; text-align:center; color:var(--muted); font-size:12px; font-weight:600;">Selecione um processo cotando para verificar emails na Locaweb.</div>
+        </div>
+
+        <div style="margin-top:30px; border-top:1px solid var(--line); padding-top:20px;">
+          <h2 style="color:var(--ai-color)">Teste Imediato da Inteligência Artificial (Fallback)</h2>
+          <p style="font-size:12px; color:var(--muted); margin-bottom:10px;">Caso a Locaweb não retorne os e-mails agora, cole abaixo o texto de uma proposta real sua para testarmos o Gemini extraindo os preços e jogando no seu Mapa!</p>
+          <textarea id="fallback-ai-text" style="width:100%; height:100px; padding:10px; border:1px solid var(--ai-color); border-radius:6px;" placeholder="Cole o texto de uma proposta comercial aqui..."></textarea>
+          <button class="btn btn-ai" style="margin-top:10px; width:100%; padding:15px;" onclick="Email.testAIFallback()">🚀 Extrair Dados com Gemini Agora</button>
         </div>
       </section>
     </div>
-
-
-    <!-- ==================== VIEW: CENTRAL IA ==================== -->
-    <div id="view-central-ia" class="view">
-      <div class="doc-head">
-        <div class="doc-title">Central de IA<small>Assistente de Suprimentos GRP</small></div>
-      </div>
-      <section class="block" style="padding:0; border:none; background:transparent;">
-        <div class="chat-container">
-          <div class="chat-history" id="chat-history">
-            <div class="chat-bubble chat-ai">
-              <strong>Gestão AI:</strong> Olá! Eu sou seu assistente de suprimentos. Você pode me perguntar coisas como:<br><br>
-              - "Qual o melhor fornecedor de Cimento?"<br>
-              - "Resuma a economia do mês."<br>
-              - "Quais processos estão atrasados?"
-            </div>
-          </div>
-          <div class="chat-input-area">
-            <input type="text" id="chat-input" placeholder="Pergunte qualquer coisa sobre suas compras..." onkeypress="if(event.key === 'Enter') AI.sendChatMessage()">
-            <button class="btn btn-ai" onclick="AI.sendChatMessage()">Enviar</button>
-          </div>
-        </div>
-      </section>
-    </div>
-
 
     <!-- ==================== VIEW: REQUISIÇÃO (FORM) ==================== -->
     <div id="view-req-form" class="view">
@@ -391,7 +332,6 @@
         <div class="totals"><div class="box"><div class="label">Total Estimado</div><div class="value" id="rcTotal">R$ 0,00</div></div></div>
       </section>
 
-      <!-- SEÇÃO FORNECEDORES SELECIONADOS -->
       <section class="block" id="req-forn-block" style="display:none; border-color:var(--ai-color);">
         <h2 style="color:var(--ai-color);">Fornecedores Selecionados para Cotação</h2>
         <table class="items">
@@ -401,14 +341,12 @@
       </section>
     </div>
 
-
-    <!-- ==================== VIEW: MAPA DE PREÇOS (EQUALIZAÇÃO) ==================== -->
+    <!-- ==================== VIEW: MAPA DE PREÇOS ==================== -->
     <div id="view-mapa" class="view">
       <div class="doc-head">
         <div class="doc-title">2. Mapa de Preços & Equalização<small id="map-subtitle">Processo</small></div>
         <div class="header-actions">
           <button class="btn btn-outline" onclick="App.nav('req-form', true)">← Voltar à Requisição</button>
-          <button class="btn btn-ai" onclick="AI.analyzeMap()">🤖 Equalizar & Analisar (IA)</button>
         </div>
       </div>
 
@@ -422,12 +360,6 @@
             <tbody id="map-body"></tbody>
             <tfoot id="map-foot"></tfoot>
           </table>
-        </div>
-        
-        <!-- RESUMO DA IA -->
-        <div class="ai-summary-box" id="map-ai-summary" style="display:none;">
-          <h4>Análise da Inteligência Artificial</h4>
-          <div id="map-ai-text"></div>
         </div>
       </section>
 
@@ -455,7 +387,6 @@
         <div class="timeline" id="proc-timeline"></div>
       </section>
     </div>
-
 
     <!-- ==================== VIEW: ORDEM DE COMPRA ==================== -->
     <div id="view-oc" class="view">
@@ -501,7 +432,6 @@
 </div>
 
 <!-- ====== MODALS ====== -->
-<!-- MODAL: SUGESTÃO IA -->
 <div class="modal-overlay" id="modal-ia-forn">
   <div class="modal">
     <div class="modal-header">
@@ -514,20 +444,19 @@
   </div>
 </div>
 
-<!-- MODAL: LEITURA DE EMAIL -->
 <div class="modal-overlay" id="modal-ia-email">
   <div class="modal">
     <div class="modal-header">
-      <span>🤖 Extração de Proposta (Simulação)</span>
+      <span>🤖 Extração de Proposta via Gemini</span>
       <button class="del-btn" onclick="UI.closeModal('modal-ia-email')" style="font-size:24px;">&times;</button>
     </div>
-    <div style="font-size:12px; margin-bottom:16px;">Analisando anexo PDF... <strong style="color:var(--success)">Confiança: 96%</strong></div>
+    <div style="font-size:12px; margin-bottom:16px;" id="ia-email-status">Aguarde... Conectando à Inteligência Artificial do Google...</div>
     <table class="items" style="margin-bottom:16px;">
       <tbody id="ia-email-data"></tbody>
     </table>
-    <div style="display:flex; gap:10px;">
+    <div style="display:flex; gap:10px;" id="ia-email-actions">
       <button class="btn btn-outline" style="flex:1;" onclick="UI.closeModal('modal-ia-email')">Cancelar</button>
-      <button class="btn btn-success" style="flex:1;" onclick="Email.approveParsedData()">Aprovar & Inserir no Mapa</button>
+      <button class="btn btn-success" style="flex:1; display:none;" id="btn-approve-ia" onclick="Email.approveParsedData()">Aprovar & Inserir no Mapa</button>
     </div>
   </div>
 </div>
@@ -547,8 +476,7 @@ const firebaseConfig = {
   projectId: "suprimentoscgvga",
   storageBucket: "suprimentoscgvga.firebasestorage.app",
   messagingSenderId: "547836844633",
-  appId: "1:547836844633:web:cb09c233d68c6168506f48",
-  measurementId: "G-YYSJ5Y22ER"
+  appId: "1:547836844633:web:cb09c233d68c6168506f48"
 };
 
 const firebaseApp = initializeApp(firebaseConfig);
@@ -562,10 +490,9 @@ const SPES = {
   nazareno: { nome: "LOTEAR CONSTRUCOES E EMPREENDIMENTOS NAZARENO LTDA", cnpj: "30.127.853/0001-50", endereco: "R Maj Quedinho, 99 — São Paulo/SP", prefixo: "NAZ", locais: ["Loteamento Cidade Nova, Nazareno-MG"] }
 };
 
-// ==================== UTILS ====================
 const Util = {
   formatBRL: (v) => "R$ " + (v||0).toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2}),
-  unmaskCur: (str) => { if(!str) return 0; return parseFloat(str.replace(/\./g, '').replace(',', '.').replace(/[^\d.-]/g, '')) || 0; },
+  unmaskCur: (str) => { if(!str) return 0; return parseFloat(String(str).replace(/\./g, '').replace(',', '.').replace(/[^\d.-]/g, '')) || 0; },
   maskCur: (input) => { 
     let v = input.value.replace(/\D/g, ''); if(v==='') return; 
     v = (parseInt(v, 10)/100).toFixed(2); 
@@ -587,10 +514,9 @@ const UI = {
   closeModal: (id) => document.getElementById(id).classList.remove('show')
 };
 
-// ==================== DATABASE (FIREBASE FIRESTORE) ====================
+// ==================== DATABASE ====================
 const DB = {
   data: { processos: [], fornecedores: [] },
-  
   init: async () => {
     try {
       const docRef = doc(db, "sistema", "suprimentos_db");
@@ -604,44 +530,29 @@ const DB = {
         await setDoc(docRef, DB.data);
       }
     } catch (e) {
-      console.error("Erro ao ler do Firebase:", e);
-      // Fallback para LocalStorage caso o Firebase falhe por segurança/conexão
+      console.error(e);
       const saved = localStorage.getItem('grp_ai_db');
       if (saved) { DB.data = JSON.parse(saved); } else { DB.seed(); }
     }
   },
-  
   save: async () => {
-    // Salva silenciosamente na nuvem
-    try {
-      const docRef = doc(db, "sistema", "suprimentos_db");
-      await setDoc(docRef, DB.data);
-    } catch(e) {
-      console.error("Erro ao gravar no Firebase:", e);
-      localStorage.setItem('grp_ai_db', JSON.stringify(DB.data));
-    }
+    try { await setDoc(doc(db, "sistema", "suprimentos_db"), DB.data); } 
+    catch(e) { localStorage.setItem('grp_ai_db', JSON.stringify(DB.data)); }
   },
-
-  reset: async () => { 
-    DB.seed(); 
-    await DB.save();
-    location.reload(); 
-  },
-  
+  reset: async () => { DB.seed(); await DB.save(); location.reload(); },
   seed: () => {
     DB.data.fornecedores = [
       { id: 'f1', nome: 'Votorantim Cimentos', cnpj: '01.000.000/0001-01', cats: 'Cimento, Concreto', score: 95, prazo: '5 dias', contato: 'vendas@voto.com', tel: '11 3000-0000', precoHist: 'Baixo' },
       { id: 'f2', nome: 'Tigre Tubos e Conexões', cnpj: '02.000.000/0001-02', cats: 'Hidráulica, Tubos', score: 92, prazo: '7 dias', contato: 'vendas@tigre.com', tel: '11 3111-0000', precoHist: 'Médio' },
       { id: 'f3', nome: 'Amanco Wavin', cnpj: '03.000.000/0001-03', cats: 'Hidráulica, Tubos', score: 88, prazo: '10 dias', contato: 'vendas@amanco.com', tel: '11 3222-0000', precoHist: 'Baixo' },
-      { id: 'f4', nome: 'Gerdau Aços', cnpj: '04.000.000/0001-04', cats: 'Aço, Ferragem', score: 94, prazo: '8 dias', contato: 'vendas@gerdau.com', tel: '11 3333-0000', precoHist: 'Médio' },
-      { id: 'f5', nome: 'Casa do Construtor', cnpj: '05.000.000/0001-05', cats: 'Geral, Ferramentas', score: 80, prazo: '2 dias', contato: 'loja@casaconstrutor.com', tel: '11 3444-0000', precoHist: 'Alto' }
+      { id: 'f4', nome: 'Gerdau Aços', cnpj: '04.000.000/0001-04', cats: 'Aço, Ferragem', score: 94, prazo: '8 dias', contato: 'vendas@gerdau.com', tel: '11 3333-0000', precoHist: 'Médio' }
     ];
     DB.data.processos = [];
   },
   getProcess: (id) => DB.data.processos.find(p => p.id === id)
 };
 
-// ==================== APP CONTROLLER ====================
+// ==================== CONTROLLER ====================
 let currentPID = null;
 let currentEmailParsing = null;
 let currentCompFornId = null;
@@ -649,117 +560,73 @@ let currentCompFornId = null;
 const App = {
   init: async () => {
     await DB.init();
-    
-    // Hide loader
     document.getElementById('db-loader').style.opacity = 0;
     setTimeout(()=> document.getElementById('db-loader').style.display = 'none', 500);
     
-    // Fill SPE Selects
     const sel = document.getElementById('rcSpe');
     sel.innerHTML = '<option value="">Selecione...</option>';
     Object.keys(SPES).forEach(k => sel.innerHTML += `<option value="${k}">${SPES[k].nome}</option>`);
-    
-    App.renderDash();
     App.nav('dashboard');
   },
-  
   nav: (viewId, isContextual = false) => {
     document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
     document.getElementById('view-' + viewId).classList.add('active');
     window.scrollTo(0,0);
-    
     if(!isContextual){
       document.querySelectorAll('.sidebar .nav-btn').forEach(b => b.classList.remove('active'));
       try{ event.currentTarget.classList.add('active'); }catch(e){}
     }
-
     if(viewId === 'dashboard') App.renderDash();
     if(viewId === 'processos') App.renderProcessos();
     if(viewId === 'fornecedores') App.renderForn();
     if(viewId === 'recebimento') App.initInbox();
   },
-
-  resetDB: () => { if(confirm("Apagar todos os dados e restaurar padrão no Firebase?")) { DB.reset(); } },
-
+  resetDB: () => { if(confirm("Apagar dados do Firebase?")) { DB.reset(); } },
   novoProcesso: () => {
     const d = new Date();
     const prefix = `PC-${d.getFullYear()}${String(d.getDate()).padStart(2,'0')}${String(d.getMonth()+1).padStart(2,'0')}-`;
     let seq = DB.data.processos.filter(p => p.id.startsWith(prefix)).length + 1;
-    const newId = prefix + String(seq).padStart(3, '0');
-    
     const p = {
-      id: newId, 
-      criadoEm: Util.today(), 
-      status: 'rascunho', 
-      spe: '',
-      req: { numero:`RC-${newId}`, emissao:Util.today(), prazo:'', resp:'', email:'', cat:'', cond:'', local:'', obs:'', itens:[] },
-      fornecedoresSelecionados: [],
-      propostas: [], 
-      compObs: '',
-      vencedorId: null,
+      id: prefix + String(seq).padStart(3, '0'), 
+      criadoEm: Util.today(), status: 'rascunho', spe: '',
+      req: { numero:`RC-${prefix + String(seq).padStart(3, '0')}`, emissao:Util.today(), prazo:'', resp:'', email:'', cat:'', cond:'', local:'', obs:'', itens:[] },
+      fornecedoresSelecionados: [], propostas: [], compObs: '', vencedorId: null,
       oc: { numero:'', emissao:'', entrega:'', resp:'', cond:'', obs:'' },
-      historico: [{ data: Util.today(), txt: 'Processo criado (Rascunho)' }]
+      historico: [{ data: Util.today(), txt: 'Processo criado' }]
     };
-    
-    DB.data.processos.push(p);
-    DB.save();
-    currentPID = p.id;
-    UI.toast("Novo Processo Criado!");
-    Req.load(p);
-    App.nav('req-form', true);
+    DB.data.processos.push(p); DB.save();
+    currentPID = p.id; UI.toast("Novo Processo Criado!");
+    Req.load(p); App.nav('req-form', true);
   },
-
   renderDash: () => {
     const procs = DB.data.processos;
     document.getElementById('dash-proc').textContent = procs.filter(p => p.status !== 'aprovado' && p.status !== 'rascunho').length;
     document.getElementById('dash-oc').textContent = procs.filter(p => p.status === 'aprovado').length;
-    let tot = 0;
-    procs.filter(p=>p.status==='aprovado').forEach(p => { p.req.itens.forEach(i => tot += (i.preco * i.qtd)); });
-    document.getElementById('dash-econ').textContent = Util.formatBRL(tot * 0.12);
   },
-
   renderProcessos: () => {
-    const tbody = document.getElementById('lista-processos-body');
-    tbody.innerHTML = '';
+    const tbody = document.getElementById('lista-processos-body'); tbody.innerHTML = '';
     [...DB.data.processos].reverse().forEach(p => {
       let stHtml = '', acHtml = '';
       if(p.status==='rascunho') { stHtml = '<span class="status-badge s-req">Rascunho</span>'; acHtml=`<button class="btn btn-outline" onclick="App.abrir('${p.id}', 'req-form')">Editar</button>`; }
-      else if(p.status==='cotando') { stHtml = '<span class="status-badge s-cot">Cotando</span>'; acHtml=`<button class="btn btn-solid" onclick="App.nav('recebimento')">Ver Inbox</button>`; }
-      else if(p.status==='analise') { stHtml = '<span class="status-badge s-analise">Análise/Mapa</span>'; acHtml=`<button class="btn btn-ai" onclick="App.abrir('${p.id}', 'mapa')">Mapa IA</button>`; }
+      else if(p.status==='cotando') { stHtml = '<span class="status-badge s-cot">Cotando</span>'; acHtml=`<button class="btn btn-solid" onclick="App.nav('recebimento')">Inbox</button>`; }
+      else if(p.status==='analise') { stHtml = '<span class="status-badge s-analise">Análise</span>'; acHtml=`<button class="btn btn-ai" onclick="App.abrir('${p.id}', 'mapa')">Mapa IA</button>`; }
       else if(p.status==='aprovado') { stHtml = '<span class="status-badge s-aprov">OC Emitida</span>'; acHtml=`<button class="btn btn-success" onclick="App.abrir('${p.id}', 'oc')">Ver OC</button>`; }
-      
-      tbody.innerHTML += `<tr>
-        <td style="font-weight:700; color:var(--navy)">${p.id}<br><small style="color:var(--muted)">${p.req.numero}</small></td>
-        <td>${p.criadoEm}</td><td>${p.spe ? SPES[p.spe].prefixo : '-'}</td><td>${stHtml}</td>
-        <td style="text-align:right">${acHtml} <button class="del-btn" onclick="App.del('${p.id}')">×</button></td>
-      </tr>`;
+      tbody.innerHTML += `<tr><td><strong style="color:var(--navy)">${p.id}</strong></td><td>${p.criadoEm}</td><td>${p.spe ? SPES[p.spe].prefixo : '-'}</td><td>${stHtml}</td><td style="text-align:right">${acHtml} <button class="del-btn" onclick="App.del('${p.id}')">×</button></td></tr>`;
     });
   },
-
   renderForn: () => {
-    const tb = document.getElementById('lista-fornecedores-body');
-    tb.innerHTML = '';
-    DB.data.fornecedores.forEach(f => {
-      tb.innerHTML += `<tr><td><strong style="color:var(--navy)">${f.nome}</strong></td><td>${f.cnpj}</td><td>${f.cats}</td><td><span style="color:var(--success); font-weight:800">${f.score}/100</span></td><td>${f.prazo}</td></tr>`;
-    });
+    const tb = document.getElementById('lista-fornecedores-body'); tb.innerHTML = '';
+    DB.data.fornecedores.forEach(f => { tb.innerHTML += `<tr><td><strong>${f.nome}</strong></td><td>${f.cnpj}</td><td>${f.cats}</td><td><span style="color:var(--success); font-weight:800">${f.score}/100</span></td><td>${f.prazo}</td></tr>`; });
   },
-
   abrir: (id, tela) => {
-    currentPID = id;
-    const p = DB.getProcess(id);
-    if(tela==='req-form') Req.load(p);
-    if(tela==='mapa') MapaPrecos.load(p);
-    if(tela==='oc') OC.load(p);
+    currentPID = id; const p = DB.getProcess(id);
+    if(tela==='req-form') Req.load(p); if(tela==='mapa') MapaPrecos.load(p); if(tela==='oc') OC.load(p);
     App.nav(tela, true);
   },
-
   del: (id) => { if(confirm("Excluir?")) { DB.data.processos = DB.data.processos.filter(x=>x.id!==id); DB.save(); App.renderProcessos(); } },
-
-  logHistory: (pid, msg) => {
-    const p = DB.getProcess(pid);
-    if(p) { p.historico.push({data: Util.today(), txt: msg}); DB.save(); }
-  },
-
+  logHistory: (pid, msg) => { const p = DB.getProcess(pid); if(p) { p.historico.push({data: Util.today(), txt: msg}); DB.save(); } },
+  
+  // INBOX & REAL EMAIL READING
   initInbox: () => {
     const sel = document.getElementById('inbox-process-select');
     sel.innerHTML = '<option value="">Selecione o processo...</option>';
@@ -769,39 +636,54 @@ const App = {
     document.getElementById('inbox-emails').innerHTML = '<div style="padding:20px; text-align:center; color:var(--muted); font-size:12px; font-weight:600;">Selecione um processo acima.</div>';
   },
 
-  loadInbox: () => {
+  loadInbox: async () => {
     const pid = document.getElementById('inbox-process-select').value;
     const cont = document.getElementById('inbox-emails');
     if(!pid) { cont.innerHTML = ''; return; }
     
+    currentPID = pid;
     const p = DB.getProcess(pid);
-    cont.innerHTML = '';
+    cont.innerHTML = `<div style="padding:20px; text-align:center;"><div class="spinner" style="border-color:var(--navy); border-top-color:transparent"></div> Lendo Locaweb...</div>`;
     
-    p.propostas.forEach((prop, idx) => {
-      const f = DB.data.fornecedores.find(x => x.id === prop.fornId);
-      if(prop.status === 'pendente') {
-        cont.innerHTML += `<div class="email-item" style="border-left:3px solid var(--ai-color)">
-          <div class="em-info">
-            <span class="em-sender">${f?.nome||'Novo'}</span>
-            <span class="em-subject">RE: Cotação ${p.req.numero}</span>
-            <span class="em-att">📎 Proposta.pdf</span>
-          </div>
-          <div><button class="btn btn-ai" onclick="Email.readAI('${p.id}', '${f?.id}')">🤖 Extrair Proposta</button></div>
-        </div>`;
-      } else {
-        cont.innerHTML += `<div class="email-item" style="opacity:0.6; border-left:3px solid var(--success)">
-          <div class="em-info">
-            <span class="em-sender">${f?.nome||'Novo'}</span>
-            <span class="em-subject">RE: Cotação ${p.req.numero}</span>
-            <span class="em-meta">✓ Lida pela IA e enviada ao Mapa</span>
-          </div>
-        </div>`;
-      }
-    });
+    try {
+      // API call to the new Locaweb script on Vercel
+      const res = await fetch('/api/ler-emails');
+      const data = await res.json();
+      
+      cont.innerHTML = '';
 
-    if(p.propostas.length > 0 && p.propostas.every(x => x.status === 'recebida')) {
-      if(p.status !== 'analise') { p.status = 'analise'; DB.save(); }
-      cont.innerHTML += `<div style="padding:20px; text-align:center;"><button class="btn btn-solid" onclick="App.abrir('${p.id}','mapa')">Ir para Mapa de Preços</button></div>`;
+      if (data.emails && data.emails.length > 0) {
+        data.emails.forEach((mail, idx) => {
+          cont.innerHTML += `<div class="email-item" style="border-left:3px solid var(--ai-color)">
+            <div class="em-info">
+              <span class="em-sender">${mail.remetente}</span>
+              <span class="em-subject">${mail.assunto}</span>
+            </div>
+            <div><button class="btn btn-ai" onclick="Email.readAI(null, null, \`${encodeURIComponent(mail.texto_proposta)}\`)">🤖 Extrair com Gemini</button></div>
+          </div>`;
+        });
+      } else {
+        // Fallback layout when inbox is empty
+        p.propostas.forEach(prop => {
+          const f = DB.data.fornecedores.find(x => x.id === prop.fornId);
+          if(prop.status === 'pendente') {
+            cont.innerHTML += `<div class="email-item" style="border-left:3px solid var(--ai-color)">
+              <div class="em-info"><span class="em-sender">${f?.nome||'Novo'}</span><span class="em-subject">Aguardando e-mail...</span></div>
+            </div>`;
+          } else {
+            cont.innerHTML += `<div class="email-item" style="opacity:0.6; border-left:3px solid var(--success)">
+              <div class="em-info"><span class="em-sender">${f?.nome||'Novo'}</span><span class="em-meta">✓ Extraído e no Mapa</span></div>
+            </div>`;
+          }
+        });
+        
+        if(p.propostas.length > 0 && p.propostas.every(x => x.status === 'recebida')) {
+          if(p.status !== 'analise') { p.status = 'analise'; DB.save(); }
+          cont.innerHTML += `<div style="padding:20px; text-align:center;"><button class="btn btn-solid" onclick="App.abrir('${p.id}','mapa')">Ir para Mapa de Preços</button></div>`;
+        }
+      }
+    } catch (err) {
+      cont.innerHTML = `<div style="padding:20px; text-align:center; color:var(--danger); font-size:12px;">Erro ao acessar Locaweb. Use o teste de IA abaixo.</div>`;
     }
   }
 };
@@ -811,66 +693,47 @@ const Req = {
   load: (p) => {
     document.getElementById('rc-subtitle').textContent = `PROCESSO ${p.id}`;
     document.getElementById('rcNum').textContent = p.req.numero;
-    document.getElementById('rcEmissao').value = p.req.emissao || '';
-    document.getElementById('rcPrazo').value = p.req.prazo || '';
-    document.getElementById('rcResp').value = p.req.resp || '';
-    document.getElementById('rcEmail').value = p.req.email || '';
-    document.getElementById('rcCat').value = p.req.cat || '';
-    document.getElementById('rcSpe').value = p.spe || '';
-    
+    ['Emissao','Prazo','Resp','Email','Cat','Spe','Cond','Obs'].forEach(k => {
+      if(document.getElementById('rc'+k)) document.getElementById('rc'+k).value = p.req[k.toLowerCase()] || p[k.toLowerCase()] || '';
+    });
     Req.updateSPE(p.req.local);
-    document.getElementById('rcCond').value = p.req.cond || '';
-    document.getElementById('rcObs').value = p.req.obs || '';
 
     const tb = document.getElementById('rcItemsBody'); tb.innerHTML='';
-    if(p.req.itens.length===0) Req.addItem();
-    else p.req.itens.forEach(i => Req.addItem(i));
-    
-    Req.calcTotal();
-    Req.renderFornList(p);
+    if(p.req.itens.length===0) Req.addItem(); else p.req.itens.forEach(i => Req.addItem(i));
+    Req.calcTotal(); Req.renderFornList(p);
 
     document.getElementById('btn-sugerir-forn').style.display = p.status === 'rascunho' ? 'inline-flex' : 'none';
     document.getElementById('btn-enviar-cot').style.display = (p.status === 'rascunho' && p.fornecedoresSelecionados.length>0) ? 'inline-flex' : 'none';
   },
-
   updateSPE: (valLocal = '') => {
     const k = document.getElementById('rcSpe').value;
     const card = document.getElementById('rcSpeCard');
     const loc = document.getElementById('rcLocal');
     loc.innerHTML = '<option value="">Selecione...</option>';
-
     if(!k) { card.classList.remove('show'); return; }
     
     document.getElementById('rcSpeNome').textContent = SPES[k].nome;
     document.getElementById('rcSpeCnpj').textContent = SPES[k].cnpj;
     document.getElementById('rcSpeEnd').textContent = SPES[k].endereco;
     card.classList.add('show');
-
     SPES[k].locais.forEach(l => loc.innerHTML += `<option value="${l}">${l}</option>`);
     if(valLocal) loc.value = valLocal;
   },
-
   addItem: (d=null) => {
     const id = d ? d.id : Util.genId();
     const tb = document.getElementById('rcItemsBody');
     const tr = document.createElement('tr'); tr.id='rit_'+id; tr.dataset.id=id;
-    
     const priceVal = d?.preco ? Util.formatBRL(d.preco) : '';
-    
     tr.innerHTML = `
       <td class="col-desc"><input type="text" class="desc" placeholder="Descrição" value="${d?.desc || ''}"></td>
       <td class="col-qty"><input type="number" class="qty num" min="0" step="1" value="${d?.qtd || 1}" onchange="Req.calcTotal()"></td>
       <td class="col-unit"><input type="text" class="unit" placeholder="un." value="${d?.unid || 'un.'}"></td>
-      <td class="col-price">
-        <input type="text" class="price num" value="${priceVal}" placeholder="R$ 0,00" oninput="Util.maskCur(this)" onchange="Req.calcTotal()">
-      </td>
+      <td class="col-price"><input type="text" class="price num" value="${priceVal}" placeholder="R$ 0,00" oninput="Util.maskCur(this)" onchange="Req.calcTotal()"></td>
       <td class="row-total" id="rctot_${id}" style="text-align:right; font-weight:700;">R$ 0,00</td>
       <td class="col-del"><button class="del-btn" onclick="this.closest('tr').remove(); Req.calcTotal()">×</button></td>
     `;
-    tb.appendChild(tr);
-    Req.calcTotal();
+    tb.appendChild(tr); Req.calcTotal();
   },
-
   calcTotal: () => {
     let tot=0;
     document.querySelectorAll('#rcItemsBody tr').forEach(tr=>{
@@ -881,205 +744,145 @@ const Req = {
     });
     document.getElementById('rcTotal').textContent = Util.formatBRL(tot);
   },
-
   save: () => {
     const p = DB.getProcess(currentPID);
+    ['Emissao','Prazo','Resp','Email','Cat','Local','Cond','Obs'].forEach(k => {
+      p.req[k.toLowerCase()] = document.getElementById('rc'+k).value;
+    });
     p.spe = document.getElementById('rcSpe').value;
-    p.req.emissao = document.getElementById('rcEmissao').value;
-    p.req.prazo = document.getElementById('rcPrazo').value;
-    p.req.resp = document.getElementById('rcResp').value;
-    p.req.email = document.getElementById('rcEmail').value;
-    p.req.cat = document.getElementById('rcCat').value;
-    p.req.local = document.getElementById('rcLocal').value;
-    p.req.cond = document.getElementById('rcCond').value;
-    p.req.obs = document.getElementById('rcObs').value;
-
     p.req.itens = [];
     document.querySelectorAll('#rcItemsBody tr').forEach(tr=>{
       const desc = tr.querySelector('.desc').value;
-      if(desc.trim() !== '') {
-        p.req.itens.push({
-          id: tr.dataset.id, desc: desc, qtd: parseFloat(tr.querySelector('.qty').value)||0,
-          unid: tr.querySelector('.unit').value, preco: Util.unmaskCur(tr.querySelector('.price').value)
-        });
-      }
+      if(desc.trim() !== '') p.req.itens.push({ id: tr.dataset.id, desc: desc, qtd: parseFloat(tr.querySelector('.qty').value)||0, unid: tr.querySelector('.unit').value, preco: Util.unmaskCur(tr.querySelector('.price').value) });
     });
-    
-    DB.save();
-    UI.toast("Requisição Salva!");
-    Req.load(p); 
+    DB.save(); UI.toast("Requisição Salva!"); Req.load(p); 
   },
-
   renderFornList: (p) => {
     const blk = document.getElementById('req-forn-block');
-    const tb = document.getElementById('rcFornBody');
-    tb.innerHTML = '';
+    const tb = document.getElementById('rcFornBody'); tb.innerHTML = '';
     if(p.fornecedoresSelecionados.length === 0) { blk.style.display = 'none'; return; }
-    
     blk.style.display = 'block';
     p.fornecedoresSelecionados.forEach(fid => {
       const f = DB.data.fornecedores.find(x=>x.id===fid);
       if(f) tb.innerHTML += `<tr><td><strong>${f.nome}</strong></td><td style="color:var(--success); font-weight:800">${f.score}</td><td>${f.precoHist}</td></tr>`;
     });
   },
-
   enviarCotacao: () => {
-    Req.save();
-    const p = DB.getProcess(currentPID);
-    p.status = 'cotando';
-    App.logHistory(p.id, "Solicitação de cotação enviada para " + p.fornecedoresSelecionados.length + " fornecedores.");
-    
-    p.propostas = p.fornecedoresSelecionados.map(fid => ({
-      fornId: fid, nome:'', doc:'', tel:'', email:'', status: 'pendente', itens: {}, frete: 0, imposto: 0, prazo: '', cond: ''
-    }));
-    
-    DB.save();
-    UI.toast("Cotações disparadas por E-mail!");
-    App.nav('dashboard');
+    Req.save(); const p = DB.getProcess(currentPID);
+    p.status = 'cotando'; App.logHistory(p.id, "Cotação enviada para " + p.fornecedoresSelecionados.length + " fornecedores.");
+    p.propostas = p.fornecedoresSelecionados.map(fid => ({ fornId: fid, nome:'', doc:'', tel:'', email:'', status: 'pendente', itens: {}, frete: 0, imposto: 0, prazo: '', cond: '' }));
+    DB.save(); UI.toast("Cotações disparadas por E-mail!"); App.nav('dashboard');
   }
 };
 
-// ==================== MODULO: AI & ALERTS ====================
+// ==================== MODULO: AI ====================
 const AI = {
   openSupplierSuggestion: () => {
     Req.save(); 
     const cat = document.getElementById('rcCat').value.toLowerCase();
-    const list = document.getElementById('ia-forn-list');
-    list.innerHTML = '';
-    
+    const list = document.getElementById('ia-forn-list'); list.innerHTML = '';
     let sorted = [...DB.data.fornecedores].sort((a,b)=>b.score - a.score);
-    if(cat) {
-      const filtered = sorted.filter(f => f.cats.toLowerCase().includes(cat));
-      if(filtered.length > 0) sorted = filtered;
-    }
-
+    if(cat) { const filtered = sorted.filter(f => f.cats.toLowerCase().includes(cat)); if(filtered.length > 0) sorted = filtered; }
     sorted.forEach(f => {
       list.innerHTML += `<div style="padding:12px; border:1px solid var(--line); border-radius:6px; display:flex; justify-content:space-between; align-items:center;">
-        <div>
-          <strong style="color:var(--navy)">${f.nome}</strong><br>
-          <small style="color:var(--success); font-weight:800;">Score: ${f.score}/100</small> • <small>Histórico: ${f.precoHist}</small>
-        </div>
+        <div><strong style="color:var(--navy)">${f.nome}</strong><br><small style="color:var(--success); font-weight:800;">Score: ${f.score}/100</small> • <small>Histórico: ${f.precoHist}</small></div>
         <input type="checkbox" class="ia-forn-chk" value="${f.id}" style="width:20px; height:20px; accent-color:var(--ai-color)">
       </div>`;
     });
     UI.openModal('modal-ia-forn');
   },
-
   confirmSuppliers: () => {
-    const p = DB.getProcess(currentPID);
-    p.fornecedoresSelecionados = [];
+    const p = DB.getProcess(currentPID); p.fornecedoresSelecionados = [];
     document.querySelectorAll('.ia-forn-chk:checked').forEach(c => p.fornecedoresSelecionados.push(c.value));
-    DB.save();
-    UI.closeModal('modal-ia-forn');
-    Req.load(p);
-  },
-
-  analyzeMap: () => {
-    const p = DB.getProcess(currentPID);
-    document.getElementById('map-ai-summary').style.display = 'block';
-    const box = document.getElementById('map-ai-text');
-    box.innerHTML = '<div class="spinner" style="border-color:var(--ai-color); border-top-color:transparent"></div> Processando dados com IA...';
-    
-    setTimeout(() => {
-      let bestForn = null;
-      let minTot = Infinity;
-
-      p.propostas.forEach(prop => {
-        let t = prop.frete + prop.imposto;
-        p.req.itens.forEach(i => t += (prop.itens[i.id]||0) * i.qtd);
-        if(t > 0 && t < minTot) { minTot = t; bestForn = prop.fornId; }
-      });
-
-      if(!bestForn) { box.innerHTML = "Não há dados suficientes para análise."; return; }
-      
-      const f = DB.data.fornecedores.find(x=>x.id===bestForn) || p.propostas.find(x=>x.fornId===bestForn);
-      box.innerHTML = `<strong>Recomendação Executiva:</strong> O fornecedor <strong>${f.nome}</strong> apresenta o menor Custo Total Posto na Obra (${Util.formatBRL(minTot)}).<br>
-      • <strong>Riscos:</strong> Nenhum identificado. Prazos e categorias compatíveis.<br>
-      • <strong>Próximo Passo:</strong> Selecionar o vencedor clicando em 'Escolher' na tabela acima.`;
-      
-      App.logHistory(p.id, "IA executou equalização e sugeriu fornecedor.");
-    }, 1500);
-  },
-
-  sendChatMessage: () => {
-    const inp = document.getElementById('chat-input');
-    const txt = inp.value.trim();
-    if(!txt) return;
-    
-    const hist = document.getElementById('chat-history');
-    hist.innerHTML += `<div class="chat-bubble chat-user">${txt}</div>`;
-    inp.value = '';
-    
-    hist.innerHTML += `<div class="chat-bubble chat-ai" id="chat-temp"><div class="spinner" style="border-color:var(--navy); border-top-color:transparent"></div></div>`;
-    hist.scrollTop = hist.scrollHeight;
-
-    setTimeout(() => {
-      document.getElementById('chat-temp').remove();
-      let resp = "Entendi. Como esta é uma versão de simulação (ainda sem o Backend), eu recomendo verificar o painel de processos para ver o andamento em tempo real.";
-      const t = txt.toLowerCase();
-      
-      if(t.includes('fornecedor') && t.includes('cimento')) resp = "Analisando o banco de dados via Firebase, o fornecedor <strong>Votorantim Cimentos</strong> possui o melhor score (95/100) para esta categoria.";
-      else if(t.includes('economia') || t.includes('mês')) resp = "Até o momento, a economia gerada nos processos aprovados deste mês foi de aproximadamente 12% em relação à média histórica.";
-      else if(t.includes('atrasad')) resp = "Verifiquei que as Cotações em status 'Cotando' estão dentro do prazo estipulado. Posso agendar um alerta para o dia do vencimento se quiser.";
-
-      hist.innerHTML += `<div class="chat-bubble chat-ai"><strong>Gestão AI:</strong> ${resp}</div>`;
-      hist.scrollTop = hist.scrollHeight;
-    }, 1000);
+    DB.save(); UI.closeModal('modal-ia-forn'); Req.load(p);
   }
 };
 
-// ==================== MODULO: EMAIL INBOX ====================
+// ==================== MODULO: EMAIL & GEMINI EXTRACTION ====================
 const Email = {
-  readAI: (pid, fornId) => {
-    currentEmailParsing = { pid, fornId };
-    const p = DB.getProcess(pid);
-    const f = DB.data.fornecedores.find(x=>x.id===fornId);
-    
-    const tb = document.getElementById('ia-email-data');
-    tb.innerHTML = `<tr><td colspan="2" style="text-align:center"><div class="spinner" style="border-color:var(--navy); border-top-color:transparent"></div> Extraindo PDF via Gemini...</td></tr>`;
+  testAIFallback: () => {
+    const text = document.getElementById('fallback-ai-text').value;
+    if(!text || text.length < 10) return alert("Cole uma proposta válida para a IA ler.");
+    if(!currentPID) return alert("Selecione um processo cotando no select acima primeiro.");
+    Email.readAI(null, null, encodeURIComponent(text));
+  },
+
+  readAI: async (pid, fornId, urlEncodedText = null) => {
     UI.openModal('modal-ia-email');
+    const tb = document.getElementById('ia-email-data');
+    document.getElementById('ia-email-status').innerHTML = `<div class="spinner" style="border-color:var(--navy); border-top-color:transparent"></div> Enviando para o Google Gemini...`;
+    tb.innerHTML = '';
+    document.getElementById('ia-email-actions').style.display = 'none';
 
-    setTimeout(() => {
-      const parsedItens = [];
-      p.req.itens.forEach(i => {
-        const varPer = 1 + ((Math.random()*0.1) - 0.05);
-        parsedItens.push({ id: i.id, desc: i.desc, val: i.preco * varPer });
+    try {
+      const textoReal = urlEncodedText ? decodeURIComponent(urlEncodedText) : "Proposta Simulação Gemini...";
+      
+      // Chamada REAL para a API da Vercel (que conecta ao Google Gemini)
+      const res = await fetch('/api/analisar-proposta', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ textoProposta: textoReal })
       });
 
-      currentEmailParsing.parsed = { frete: 150, imposto: 0, cond: '30 DDL', prazo: f?.prazo||'7 dias', itens: parsedItens };
+      const data = await res.json();
+      
+      if(data.error) throw new Error(data.error);
 
+      // Save global state
+      currentEmailParsing = { pid: currentPID, parsed: data };
+
+      document.getElementById('ia-email-status').innerHTML = `<strong style="color:var(--success)">Extração Concluída com Sucesso!</strong>`;
       tb.innerHTML = `
-        <tr><td><strong>Fornecedor Localizado</strong></td><td>${f?.nome||'N/D'}</td></tr>
-        <tr><td><strong>Prazo (Extraído)</strong></td><td>${currentEmailParsing.parsed.prazo}</td></tr>
-        <tr><td><strong>Condição (Extraída)</strong></td><td>${currentEmailParsing.parsed.cond}</td></tr>
-        <tr><td><strong>Frete Estimado</strong></td><td>R$ 150,00</td></tr>
+        <tr><td><strong>Fornecedor Detectado</strong></td><td>${data.fornecedor || 'Desconhecido'}</td></tr>
+        <tr><td><strong>CNPJ</strong></td><td>${data.cnpj || '-'}</td></tr>
+        <tr><td><strong>Prazo</strong></td><td>${data.prazo || '-'}</td></tr>
+        <tr><td><strong>Condição</strong></td><td>${data.condicao || '-'}</td></tr>
+        <tr><td><strong>Frete Estimado</strong></td><td>${Util.formatBRL(data.frete)}</td></tr>
       `;
-      parsedItens.forEach(pi => {
-        tb.innerHTML += `<tr><td style="font-size:11px">${pi.desc}</td><td style="font-weight:700">${Util.formatBRL(pi.val)}</td></tr>`;
-      });
-    }, 1500);
+      if(data.itens) {
+        data.itens.forEach(pi => {
+          tb.innerHTML += `<tr><td style="font-size:11px">${pi.descricao}</td><td style="font-weight:700">${Util.formatBRL(pi.preco_unitario)}</td></tr>`;
+        });
+      }
+
+      document.getElementById('ia-email-actions').style.display = 'flex';
+      document.getElementById('btn-approve-ia').style.display = 'block';
+
+    } catch (err) {
+      document.getElementById('ia-email-status').innerHTML = `<strong style="color:var(--danger)">Erro na IA: ${err.message}</strong>`;
+      document.getElementById('ia-email-actions').style.display = 'flex';
+    }
   },
 
   approveParsedData: () => {
     if(!currentEmailParsing || !currentEmailParsing.parsed) return;
-    const { pid, fornId, parsed } = currentEmailParsing;
-    const p = DB.getProcess(pid);
-    const prop = p.propostas.find(x => x.fornId === fornId);
+    const { parsed } = currentEmailParsing;
+    const p = DB.getProcess(currentPID);
     
-    prop.status = 'recebida';
-    prop.frete = parsed.frete;
-    prop.imposto = parsed.imposto;
-    prop.cond = parsed.cond;
-    prop.prazo = parsed.prazo;
-    parsed.itens.forEach(pi => { prop.itens[pi.id] = pi.val; });
+    // Create new proposal block for this supplier
+    const propId = Util.genId();
+    const newProp = {
+      fornId: propId, nome: parsed.fornecedor, doc: parsed.cnpj, tel: '', email: '',
+      status: 'recebida', itens: {}, frete: parsed.frete || 0, imposto: parsed.imposto || 0,
+      prazo: parsed.prazo, cond: parsed.condicao
+    };
 
-    const fname = DB.data.fornecedores.find(x=>x.id===fornId)?.nome || 'Fornecedor';
-    App.logHistory(p.id, `Proposta de ${fname} processada pela IA e inserida no Mapa.`);
+    // Try to match items by order or name (simplified matching for prototype)
+    if(parsed.itens && parsed.itens.length > 0) {
+      p.req.itens.forEach((reqItem, idx) => {
+        if(parsed.itens[idx]) {
+          newProp.itens[reqItem.id] = parsed.itens[idx].preco_unitario;
+        }
+      });
+    }
+
+    p.propostas.push(newProp);
+    App.logHistory(p.id, `Proposta de ${parsed.fornecedor} extraída via Gemini e adicionada ao Mapa.`);
     
     DB.save();
     UI.closeModal('modal-ia-email');
-    UI.toast("Dados aprovados e sincronizados na Nuvem!");
-    App.loadInbox();
+    UI.toast("Fornecedor adicionado ao Mapa!");
+    App.abrir(p.id, 'mapa');
   }
 };
 
@@ -1087,7 +890,6 @@ const Email = {
 const MapaPrecos = {
   load: (p) => {
     document.getElementById('map-subtitle').textContent = `PROCESSO ${p.id}`;
-    document.getElementById('map-ai-summary').style.display = 'none';
     document.getElementById('comp-form-forn').style.display = 'none';
     document.getElementById('compObs').value = p.compObs || '';
     currentCompFornId = null;
@@ -1124,7 +926,6 @@ const MapaPrecos = {
       tbHtml += `</tr>`;
     });
 
-    // Custo Total Rows (Frete, Imposto)
     tbHtml += `<tr><td colspan="3" style="text-align:right; font-size:11px;">Frete R$</td>`;
     p.propostas.forEach(prop => { 
       tbHtml += `<td class="${p.vencedorId===prop.fornId?'winner-col':''}"><input type="text" class="num" style="width:110px" value="${prop.frete>0?Util.formatBRL(prop.frete):''}" placeholder="R$ 0,00" oninput="Util.maskCur(this)" onchange="updatePropFreco('${prop.fornId}', this.value)"></td>`; 
@@ -1138,56 +939,34 @@ const MapaPrecos = {
       let t = prop.frete + prop.imposto;
       p.req.itens.forEach(i => t += (prop.itens[i.id]||0) * i.qtd);
       const isW = p.vencedorId === prop.fornId;
-
       let btn = '';
       if(t > 0 && p.status !== 'aprovado') {
         btn = `<div style="margin-top:10px"><button class="btn btn-outline" style="font-size:9px; padding:6px 10px" onclick="selecionarVencedor('${prop.fornId}')">Escolher</button></div>`;
-      } else if (isW) {
-        btn = `<div style="margin-top:10px; color:var(--success); font-size:11px; font-weight:800">★ VENCEDOR</div>`;
-      }
-
-      tfHtml += `<td class="${isW?'winner-col':''}" style="font-weight:800; color:var(--navy); font-size:14px; padding:15px">
-        ${t>0 ? Util.formatBRL(t) : '-'}${btn}
-      </td>`;
+      } else if (isW) { btn = `<div style="margin-top:10px; color:var(--success); font-size:11px; font-weight:800">★ VENCEDOR</div>`; }
+      tfHtml += `<td class="${isW?'winner-col':''}" style="font-weight:800; color:var(--navy); font-size:14px; padding:15px">${t>0 ? Util.formatBRL(t) : '-'}${btn}</td>`;
     });
     tfHtml += `</tr>`;
     tfoot.innerHTML = tfHtml;
 
-    // Render Timeline
-    const tl = document.getElementById('proc-timeline');
-    tl.innerHTML = '';
-    [...p.historico].reverse().forEach(h => {
-      tl.innerHTML += `<div class="tl-item"><div class="tl-date">${h.data}</div><div class="tl-content">${h.txt}</div></div>`;
-    });
+    const tl = document.getElementById('proc-timeline'); tl.innerHTML = '';
+    [...p.historico].reverse().forEach(h => { tl.innerHTML += `<div class="tl-item"><div class="tl-date">${h.data}</div><div class="tl-content">${h.txt}</div></div>`; });
   },
 
   markBest: () => {
     const p = DB.getProcess(currentPID);
     if(!p || p.propostas.length === 0) return;
-    
     p.req.itens.forEach(it => {
       let min = Infinity;
-      p.propostas.forEach(prop => {
-        const val = prop.itens[it.id] || 0;
-        if (val > 0 && val < min) min = val;
-      });
-      
+      p.propostas.forEach(prop => { const val = prop.itens[it.id] || 0; if (val > 0 && val < min) min = val; });
       p.propostas.forEach(prop => {
         const val = prop.itens[it.id] || 0;
         const input = document.getElementById(`in_${prop.fornId}_${it.id}`);
         const devSpan = document.getElementById(`dev_${prop.fornId}_${it.id}`);
         if (!input || !devSpan) return;
-        
-        input.classList.remove('best-price');
-        devSpan.innerHTML = '';
-        
+        input.classList.remove('best-price'); devSpan.innerHTML = '';
         if (val > 0) {
-          if (val === min) {
-            input.classList.add('best-price');
-          } else {
-            const perc = ((val - min) / min) * 100;
-            devSpan.innerHTML = `<br><span style="color:var(--danger); font-size:10px; font-weight:800;">▲ +${perc.toFixed(1)}%</span>`;
-          }
+          if (val === min) input.classList.add('best-price');
+          else { const perc = ((val - min) / min) * 100; devSpan.innerHTML = `<br><span style="color:var(--danger); font-size:10px; font-weight:800;">▲ +${perc.toFixed(1)}%</span>`; }
         }
       });
     });
@@ -1206,9 +985,6 @@ const OC = {
       document.getElementById('ocSpeNome').textContent = SPES[p.spe].nome;
       document.getElementById('ocSpeCnpj').textContent = SPES[p.spe].cnpj;
       document.getElementById('ocSpeEnd').textContent = SPES[p.spe].endereco;
-      atualizarLocaisEntrega('oc', p.spe, p.oc.local || p.req.local);
-    } else {
-      atualizarLocaisEntrega('oc', null, '');
     }
 
     const prop = p.propostas.find(x=>x.fornId===p.vencedorId);
@@ -1220,15 +996,12 @@ const OC = {
     }
 
     document.getElementById('ocCond').value = p.oc.cond || prop?.cond || p.req.cond;
-    document.getElementById('ocObs').value = p.oc.obs || p.req.obs;
-
-    const tb = document.getElementById('ocItemsBody');
-    tb.innerHTML = '';
+    
+    const tb = document.getElementById('ocItemsBody'); tb.innerHTML = '';
     let tot = 0;
     if(prop) {
       p.req.itens.forEach(i => {
-        const v = prop.itens[i.id]||0;
-        tot += (i.qtd * v);
+        const v = prop.itens[i.id]||0; tot += (i.qtd * v);
         tb.innerHTML += `<tr><td style="font-size:11px">${i.desc}</td><td>${i.qtd}</td><td>${i.unid}</td><td>${Util.formatBRL(v)}</td><td style="font-weight:700">${Util.formatBRL(i.qtd*v)}</td></tr>`;
       });
       tot += prop.frete + prop.imposto;
@@ -1241,139 +1014,25 @@ const OC = {
     p.oc.numero = `OC-${p.id}`;
     p.oc.emissao = document.getElementById('ocEmissao').value;
     p.oc.entrega = document.getElementById('ocEntrega').value;
-    p.oc.resp = document.getElementById('ocResp').value;
     p.oc.cond = document.getElementById('ocCond').value;
-    p.oc.local = document.getElementById('ocLocal').value;
-    p.oc.obs = document.getElementById('ocObs').value;
-    DB.save();
-    UI.toast("Ordem de Compra Sincronizada!");
+    DB.save(); UI.toast("Ordem de Compra Salva!");
   }
 };
 
-// ==================== GLOBAL HELPERS EXPOSED TO WINDOW ====================
-window.App = App;
-window.Req = Req;
-window.MapaPrecos = MapaPrecos;
-window.OC = OC;
-window.AI = AI;
-window.Email = Email;
-window.UI = UI;
-window.Util = Util;
-window.DB = DB;
+window.App = App; window.Req = Req; window.MapaPrecos = MapaPrecos; window.OC = OC; window.AI = AI; window.Email = Email; window.UI = UI; window.Util = Util; window.DB = DB;
 
-window.addFornecedorComp = () => {
-  const p = DB.getProcess(currentPID);
-  p.propostas.push({ fornId: Util.genId(), nome: 'Novo Forn', doc:'', tel:'', email:'', status:'recebida', itens:{}, frete:0, imposto:0, prazo:'', cond:'' });
-  DB.save();
-  MapaPrecos.load(p);
-};
+window.addFornecedorComp = () => { const p = DB.getProcess(currentPID); p.propostas.push({ fornId: Util.genId(), nome: 'Novo Forn', doc:'', tel:'', email:'', status:'recebida', itens:{}, frete:0, imposto:0, prazo:'', cond:'' }); DB.save(); MapaPrecos.load(p); };
+window.removeFornecedorComp = (propId) => { if(!confirm('Remover fornecedor?')) return; const p = DB.getProcess(currentPID); p.propostas = p.propostas.filter(x => x.fornId !== propId); if(p.vencedorId === propId) p.vencedorId = null; DB.save(); MapaPrecos.load(p); document.getElementById('comp-form-forn').style.display = 'none'; };
+window.updatePropFornNome = (propId, val) => { const p = DB.getProcess(currentPID); const prop = p.propostas.find(x => x.fornId === propId); if(prop) prop.nome = val; DB.save(); if(currentCompFornId === propId) document.getElementById('comp-form-title').textContent = `- ${val}`; };
+window.updatePropPreco = (propId, itemId, valStr) => { const p = DB.getProcess(currentPID); const prop = p.propostas.find(x => x.fornId === propId); if(prop) { prop.itens[itemId] = Util.unmaskCur(valStr); prop.status = 'recebida'; } DB.save(); MapaPrecos.load(p); };
+window.updatePropFreco = (propId, valStr) => { const p = DB.getProcess(currentPID); const prop = p.propostas.find(x => x.fornId === propId); if(prop) prop.frete = Util.unmaskCur(valStr); DB.save(); MapaPrecos.load(p); };
+window.editFornDetails = (propId) => { currentCompFornId = propId; const p = DB.getProcess(currentPID); const prop = p.propostas.find(x => x.fornId === propId); const f = DB.data.fornecedores.find(x => x.id === propId) || prop; document.getElementById('comp-form-forn').style.display = 'block'; document.getElementById('comp-form-title').textContent = `- ${f.nome||'Novo'}`; document.getElementById('cfNome').value = f.nome || ''; document.getElementById('cfDoc').value = f.cnpj || f.doc || ''; document.getElementById('cfTel').value = f.tel || ''; document.getElementById('cfEmail').value = f.email || f.contato || ''; document.getElementById('cfCond').value = prop.cond || ''; document.getElementById('cfPrazo').value = prop.prazo || ''; };
+window.updateFornData = (field, val) => { if(!currentCompFornId) return; const p = DB.getProcess(currentPID); const prop = p.propostas.find(x => x.fornId === currentCompFornId); if(prop) prop[field] = val; DB.save(); if(field === 'nome') MapaPrecos.load(p); };
+window.salvarCompObs = () => { const p = DB.getProcess(currentPID); if(p) { p.compObs = document.getElementById('compObs').value; DB.save(); } };
+window.selecionarVencedor = (propId) => { if(!confirm('Deseja aprovar esta proposta e gerar a Ordem de Compra?')) return; const p = DB.getProcess(currentPID); p.vencedorId = propId; p.status = 'aprovado'; App.logHistory(p.id, `Fornecedor Vencedor Aprovado. Gerando OC.`); DB.save(); UI.toast('Fornecedor vencedor selecionado!'); App.abrir(p.id, 'oc'); };
+window.voltarParaMapa = () => { const p = DB.getProcess(currentPID); if(p) { p.status = 'analise'; DB.save(); App.abrir(p.id, 'mapa'); } };
 
-window.removeFornecedorComp = (propId) => {
-  if(!confirm('Remover este fornecedor?')) return;
-  const p = DB.getProcess(currentPID);
-  p.propostas = p.propostas.filter(x => x.fornId !== propId);
-  if(p.vencedorId === propId) p.vencedorId = null;
-  DB.save();
-  MapaPrecos.load(p);
-  document.getElementById('comp-form-forn').style.display = 'none';
-};
-
-window.updatePropFornNome = (propId, val) => {
-  const p = DB.getProcess(currentPID);
-  const prop = p.propostas.find(x => x.fornId === propId);
-  if(prop) prop.nome = val;
-  DB.save();
-  if(currentCompFornId === propId) document.getElementById('comp-form-title').textContent = `- ${val}`;
-};
-
-window.updatePropPreco = (propId, itemId, valStr) => {
-  const val = Util.unmaskCur(valStr);
-  const p = DB.getProcess(currentPID);
-  const prop = p.propostas.find(x => x.fornId === propId);
-  if(prop) { prop.itens[itemId] = val; prop.status = 'recebida'; }
-  DB.save();
-  MapaPrecos.load(p);
-};
-
-window.updatePropFreco = (propId, valStr) => {
-  const p = DB.getProcess(currentPID);
-  const prop = p.propostas.find(x => x.fornId === propId);
-  if(prop) prop.frete = Util.unmaskCur(valStr);
-  DB.save();
-  MapaPrecos.load(p);
-};
-
-window.editFornDetails = (propId) => {
-  currentCompFornId = propId;
-  const p = DB.getProcess(currentPID);
-  const prop = p.propostas.find(x => x.fornId === propId);
-  const f = DB.data.fornecedores.find(x => x.id === propId) || prop;
-  
-  document.getElementById('comp-form-forn').style.display = 'block';
-  document.getElementById('comp-form-title').textContent = `- ${f.nome||'Novo'}`;
-  
-  document.getElementById('cfNome').value = f.nome || '';
-  document.getElementById('cfDoc').value = f.cnpj || f.doc || '';
-  document.getElementById('cfTel').value = f.tel || '';
-  document.getElementById('cfEmail').value = f.email || f.contato || '';
-  document.getElementById('cfCond').value = prop.cond || '';
-  document.getElementById('cfPrazo').value = prop.prazo || '';
-};
-
-window.updateFornData = (field, val) => {
-  if(!currentCompFornId) return;
-  const p = DB.getProcess(currentPID);
-  const prop = p.propostas.find(x => x.fornId === currentCompFornId);
-  if(prop) prop[field] = val;
-  DB.save();
-  if(field === 'nome') MapaPrecos.load(p);
-};
-
-window.salvarCompObs = () => {
-  const p = DB.getProcess(currentPID);
-  if(p) { p.compObs = document.getElementById('compObs').value; DB.save(); }
-};
-
-window.selecionarVencedor = (propId) => {
-  if(!confirm('Deseja aprovar esta proposta e gerar a Ordem de Compra?')) return;
-  const p = DB.getProcess(currentPID);
-  p.vencedorId = propId;
-  p.status = 'aprovado';
-  App.logHistory(p.id, `Fornecedor Vencedor Aprovado. Gerando OC.`);
-  DB.save();
-  UI.toast('Fornecedor vencedor selecionado!');
-  App.abrir(p.id, 'oc');
-};
-
-window.voltarParaMapa = () => {
-  const p = DB.getProcess(currentPID);
-  if(p) { p.status = 'analise'; DB.save(); App.abrir(p.id, 'mapa'); }
-};
-
-window.exportarTudo = () => {
-  const data = JSON.stringify(DB.data, null, 2);
-  const blob = new Blob([data], {type:'application/json'});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a'); a.href = url; a.download = `GRP_Backup_Cloud_${new Date().toISOString().slice(0,10)}.json`;
-  document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
-  UI.toast('Backup exportado.');
-};
-
-window.importarTudo = (e) => {
-  const file = e.target.files[0]; if(!file) return;
-  const reader = new FileReader();
-  reader.onload = async (evt) => {
-    try{
-      const data = JSON.parse(evt.target.result);
-      if(data.processos) { DB.data = data; await DB.save(); location.reload(); }
-    }catch(err){ alert('Erro ao ler arquivo.'); }
-  };
-  reader.readAsText(file); e.target.value = '';
-};
-
-// Ignite!
 window.onload = App.init;
-
 </script>
 </body>
 </html>
