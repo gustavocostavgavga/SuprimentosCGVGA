@@ -76,11 +76,18 @@
   .field textarea { resize: vertical; min-height: 64px; }
 
   /* ====== DASHBOARD KPIs ====== */
-  .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom:24px;}
-  .kpi-card { background: var(--paper); border: 1px solid var(--line); border-radius: 6px; padding: 16px; display:flex; flex-direction:column; gap:8px;}
+  .kpi-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; margin-bottom:24px;}
+  .kpi-card { background: var(--paper); border: 1px solid var(--line); border-radius: 6px; padding: 16px; display:flex; flex-direction:column; justify-content:space-between; gap:8px;}
   .kpi-card .kpi-title { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); }
   .kpi-card .kpi-value { font-size: 24px; font-weight: 800; color: var(--navy); }
   .kpi-card .kpi-sub { font-size: 10px; font-weight: 600; color: var(--success); }
+
+  /* DASHBOARD CHART */
+  .chart-container { display: flex; align-items: flex-end; gap: 10px; height: 180px; padding-top: 20px; border-bottom: 1px solid var(--line); margin-top: 10px; padding-bottom:10px; }
+  .chart-bar-wrapper { flex: 1; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; gap: 8px; height:100%; }
+  .chart-bar { width: 100%; max-width:40px; background: var(--navy); border-radius: 4px 4px 0 0; transition: height 0.3s; min-height: 2px; }
+  .chart-label { font-size: 10px; font-weight: 700; color: var(--muted); text-transform: uppercase; }
+  .chart-val { font-size: 11px; font-weight: 800; color: var(--navy); }
 
   /* ====== EMAIL INBOX ====== */
   .email-list { border: 1px solid var(--line); border-radius:6px; overflow:hidden;}
@@ -111,8 +118,6 @@
   .table-comp td:nth-child(1), .table-comp th:nth-child(1) { text-align: left; }
   .winner-col { background-color: #ECFDF5; border: 2px solid var(--success) !important; }
   .best-price { background-color: #D1FAE5 !important; border: 1px solid var(--success) !important; color: var(--success) !important; font-weight: 800; }
-  .ai-summary-box { background: var(--ai-light); border:1px solid var(--ai-color); border-radius:6px; padding:16px; margin-top:16px; font-size:12px; line-height:1.5;}
-  .ai-summary-box h4 { margin:0 0 8px 0; color:var(--ai-color); font-size:11px; text-transform:uppercase; letter-spacing:1px;}
   
   /* ====== MODALS & OVERLAYS ====== */
   .modal-overlay { position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(11,31,59,0.7); display:flex; justify-content:center; align-items:center; z-index:100; opacity:0; pointer-events:none; transition:0.2s;}
@@ -157,8 +162,8 @@
 <body>
 
 <div id="login-screen" style="position:fixed; top:0; left:0; width:100%; height:100%; background:var(--navy); display:flex; justify-content:center; align-items:center; z-index:100000; transition: opacity 0.5s ease;">
-  <div style="background:#fff; padding:40px 30px; border-radius:8px; width:90%; max-width:400px; text-align:center; box-shadow: 0 10px 25px rgba(0,0,0,0.3);">
-    <div style="font-weight:800; font-size:16px; color:var(--navy); margin-bottom:5px; letter-spacing:1px; line-height:1.4;">GERENCIAL DE SUPRIMENTOS<br>CASAGRANDE URBANISMO</div>
+  <div style="background:#fff; padding:40px 30px; border-radius:8px; width:90%; max-width:400px; box-shadow: 0 10px 25px rgba(0,0,0,0.3);">
+    <div style="text-align:center; font-weight:800; font-size:16px; color:var(--navy); margin-bottom:5px; letter-spacing:1px; line-height:1.4;">GERENCIAL DE SUPRIMENTOS<br>CASAGRANDE URBANISMO</div>
     <hr style="border:none; border-top:1px solid var(--line); margin: 20px 0;">
     <div class="field" style="text-align:left; margin-bottom:15px;">
       <label style="font-size:11px; margin-bottom:8px;">Usuário:</label>
@@ -201,7 +206,7 @@
     </div>
 
     <div class="sidebar-foot">
-      GRP — Inteligência e Automação<br>v5.2 (Forn. Manual + DB Zero)
+      GRP — Inteligência e Automação<br>v6.0 (SLA, Gráficos & Base Zero)
     </div>
   </aside>
 
@@ -221,6 +226,19 @@
           <div class="kpi-sub">Em andamento</div>
         </div>
         <div class="kpi-card">
+          <div class="kpi-title">SLA (Requisições Ativas)</div>
+          <div style="display:flex; justify-content:space-between; align-items:flex-end;">
+             <div>
+                <div class="kpi-value" id="dash-no-prazo" style="color:var(--success)">0</div>
+                <div class="kpi-sub" style="color:var(--success)">No Prazo</div>
+             </div>
+             <div style="text-align:right;">
+                <div class="kpi-value" id="dash-atraso" style="color:var(--danger)">0</div>
+                <div class="kpi-sub" style="color:var(--danger)">Em Atraso</div>
+             </div>
+          </div>
+        </div>
+        <div class="kpi-card">
           <div class="kpi-title">Ordens Emitidas</div>
           <div class="kpi-value" id="dash-oc">0</div>
           <div class="kpi-sub">Concluídas</div>
@@ -236,6 +254,13 @@
           <div class="kpi-sub">Req até OC</div>
         </div>
       </div>
+
+      <section class="block">
+        <h2>Volume de Compras e Contratações Realizadas por Mês</h2>
+        <div class="chart-container" id="dash-chart">
+          <!-- Gráfico injetado via JS -->
+        </div>
+      </section>
 
       <section class="block">
         <h2>Atalhos Rápidos</h2>
@@ -286,6 +311,7 @@
               <th>Cidade/UF</th>
               <th>Lat</th>
               <th>Lng</th>
+              <th style="text-align:right">Ações</th>
             </tr>
           </thead>
           <tbody id="lista-fornecedores-body"></tbody>
@@ -614,6 +640,13 @@ const DB = {
         DB.seed();
         await setDoc(docRef, DB.data);
       }
+      
+      // Auto-cleanup legacy fictional suppliers without needing the reset button
+      if (DB.data.fornecedores.some(f => ['f1','f2','f3','f4'].includes(f.id))) {
+          DB.data.fornecedores = DB.data.fornecedores.filter(f => !['f1','f2','f3','f4'].includes(f.id));
+          DB.save();
+      }
+
     } catch (e) {
       console.error(e);
       const saved = localStorage.getItem('grp_ai_db');
@@ -678,11 +711,67 @@ const App = {
   },
   renderDash: () => {
     const procs = DB.data.processos;
-    document.getElementById('dash-proc').textContent = procs.filter(p => p.status !== 'aprovado' && p.status !== 'rascunho').length;
+    const ativos = procs.filter(p => p.status !== 'aprovado' && p.status !== 'rascunho');
+    
+    document.getElementById('dash-proc').textContent = ativos.length;
     document.getElementById('dash-oc').textContent = procs.filter(p => p.status === 'aprovado').length;
+    
     let totalEcon = 0;
     procs.filter(p => p.status === 'aprovado').forEach(p => { totalEcon += (p.economia || 0); });
     document.getElementById('dash-econ').textContent = Util.formatBRL(totalEcon);
+
+    // Calc SLA
+    let noPrazo = 0;
+    let emAtraso = 0;
+    const hoje = new Date();
+    hoje.setHours(0,0,0,0);
+
+    ativos.forEach(p => {
+      if(!p.req.prazo) { noPrazo++; return; }
+      const parts = p.req.prazo.split('/');
+      if(parts.length === 3) {
+         const dataPrazo = new Date(parts[2], parts[1]-1, parts[0]);
+         if(dataPrazo < hoje) emAtraso++;
+         else noPrazo++;
+      } else {
+         noPrazo++;
+      }
+    });
+    document.getElementById('dash-no-prazo').textContent = noPrazo;
+    document.getElementById('dash-atraso').textContent = emAtraso;
+
+    // Calc Chart
+    const meses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+    const counts = new Array(12).fill(0);
+    let maxCount = 0;
+
+    procs.filter(p => p.status === 'aprovado').forEach(p => {
+       const dt = p.oc.emissao || p.criadoEm;
+       if(dt) {
+          const parts = dt.split('/');
+          if(parts.length >= 2) {
+             const m = parseInt(parts[1], 10) - 1;
+             if(m >= 0 && m <= 11) {
+                counts[m]++;
+                if(counts[m] > maxCount) maxCount = counts[m];
+             }
+          }
+       }
+    });
+
+    const chartEl = document.getElementById('dash-chart');
+    chartEl.innerHTML = '';
+    meses.forEach((mes, idx) => {
+       const val = counts[idx];
+       const pct = maxCount === 0 ? 0 : (val / maxCount) * 100;
+       chartEl.innerHTML += `
+         <div class="chart-bar-wrapper">
+           <div class="chart-val">${val > 0 ? val : ''}</div>
+           <div class="chart-bar" style="height: ${pct > 0 ? Math.max(pct, 2) : 2}%"></div>
+           <div class="chart-label">${mes}</div>
+         </div>
+       `;
+    });
   },
   renderProcessos: () => {
     const tbody = document.getElementById('lista-processos-body'); tbody.innerHTML = '';
@@ -710,7 +799,7 @@ const App = {
   renderForn: () => {
     const tb = document.getElementById('lista-fornecedores-body'); tb.innerHTML = '';
     if(DB.data.fornecedores.length === 0) {
-      tb.innerHTML = `<tr><td colspan="8" style="text-align:center; padding:20px; color:var(--muted)">Nenhum fornecedor cadastrado.</td></tr>`;
+      tb.innerHTML = `<tr><td colspan="9" style="text-align:center; padding:20px; color:var(--muted)">Nenhum fornecedor cadastrado. Adicione seu primeiro fornecedor.</td></tr>`;
       return;
     }
     DB.data.fornecedores.forEach(f => { 
@@ -724,8 +813,17 @@ const App = {
         <td>${f.cidade || '-'}</td>
         <td>${f.lat || '-'}</td>
         <td>${f.lng || '-'}</td>
+        <td style="text-align:right"><button class="del-btn" onclick="App.delForn('${f.id}')">×</button></td>
       </tr>`; 
     });
+  },
+  delForn: (id) => {
+    if(confirm("Deseja realmente excluir este fornecedor?")) {
+       DB.data.fornecedores = DB.data.fornecedores.filter(x => x.id !== id);
+       DB.save();
+       App.renderForn();
+       UI.toast("Fornecedor excluído!");
+    }
   },
   abrir: (id, tela) => {
     currentPID = id; const p = DB.getProcess(id);
@@ -954,6 +1052,7 @@ const AI = {
     const list = document.getElementById('ia-forn-list'); list.innerHTML = '';
     
     let validForns = DB.data.fornecedores.filter(f => {
+       if(!f.lat || !f.lng) return false;
        const dist = Util.haversine(speObj.lat, speObj.lng, f.lat, f.lng);
        return dist <= 100;
     });
