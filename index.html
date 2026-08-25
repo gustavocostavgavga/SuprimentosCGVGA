@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -413,7 +414,7 @@
 
       <section class="block">
         <h2>Mapa Comparativo
-          <button class="btn btn-outline" style="font-size:10px; padding:4px 10px; border-color:var(--success); color:var(--success);" onclick="Map.markBest()">⭐ Marcar melhores</button>
+          <button class="btn btn-outline" style="font-size:10px; padding:4px 10px; border-color:var(--success); color:var(--success);" onclick="MapaPrecos.markBest()">⭐ Marcar melhores</button>
         </h2>
         <div style="overflow-x:auto;">
           <table class="items table-comp" id="map-table">
@@ -603,7 +604,7 @@ const DB = {
         await setDoc(docRef, DB.data);
       }
     } catch (e) {
-      console.error("Erro ao ler do Firebase. Verifique se o Modo de Teste está ativado:", e);
+      console.error("Erro ao ler do Firebase:", e);
       // Fallback para LocalStorage caso o Firebase falhe por segurança/conexão
       const saved = localStorage.getItem('grp_ai_db');
       if (saved) { DB.data = JSON.parse(saved); } else { DB.seed(); }
@@ -747,7 +748,7 @@ const App = {
     currentPID = id;
     const p = DB.getProcess(id);
     if(tela==='req-form') Req.load(p);
-    if(tela==='mapa') Map.load(p);
+    if(tela==='mapa') MapaPrecos.load(p);
     if(tela==='oc') OC.load(p);
     App.nav(tela, true);
   },
@@ -785,7 +786,7 @@ const App = {
             <span class="em-subject">RE: Cotação ${p.req.numero}</span>
             <span class="em-att">📎 Proposta.pdf</span>
           </div>
-          <div><button class="btn btn-ai" onclick="Email.readAI('${p.id}', '${f.id}')">🤖 Extrair Proposta</button></div>
+          <div><button class="btn btn-ai" onclick="Email.readAI('${p.id}', '${f?.id}')">🤖 Extrair Proposta</button></div>
         </div>`;
       } else {
         cont.innerHTML += `<div class="email-item" style="opacity:0.6; border-left:3px solid var(--success)">
@@ -853,13 +854,17 @@ const Req = {
     const id = d ? d.id : Util.genId();
     const tb = document.getElementById('rcItemsBody');
     const tr = document.createElement('tr'); tr.id='rit_'+id; tr.dataset.id=id;
-    const v = d?.preco ? Util.formatBRL(d.preco) : '';
+    
+    const priceVal = d?.preco ? Util.formatBRL(d.preco) : '';
+    
     tr.innerHTML = `
-      <td class="col-desc"><input type="text" class="desc" value="${d?.desc||''}"></td>
-      <td class="col-qty"><input type="number" class="qty num" value="${d?.qtd||1}" onchange="Req.calcTotal()"></td>
-      <td class="col-unit"><input type="text" class="unit" value="${d?.unid||'un.'}"></td>
-      <td class="col-price"><input type="text" class="price num" value="${v}" oninput="Util.maskCur(this)" onchange="Req.calcTotal()"></td>
-      <td class="rtot col-total" style="text-align:right; font-weight:700">R$ 0,00</td>
+      <td class="col-desc"><input type="text" class="desc" placeholder="Descrição" value="${d?.desc || ''}"></td>
+      <td class="col-qty"><input type="number" class="qty num" min="0" step="1" value="${d?.qtd || 1}" onchange="Req.calcTotal()"></td>
+      <td class="col-unit"><input type="text" class="unit" placeholder="un." value="${d?.unid || 'un.'}"></td>
+      <td class="col-price">
+        <input type="text" class="price num" value="${priceVal}" placeholder="R$ 0,00" oninput="Util.maskCur(this)" onchange="Req.calcTotal()">
+      </td>
+      <td class="row-total" id="rctot_${id}" style="text-align:right; font-weight:700;">R$ 0,00</td>
       <td class="col-del"><button class="del-btn" onclick="this.closest('tr').remove(); Req.calcTotal()">×</button></td>
     `;
     tb.appendChild(tr);
@@ -871,7 +876,7 @@ const Req = {
     document.querySelectorAll('#rcItemsBody tr').forEach(tr=>{
       const q = parseFloat(tr.querySelector('.qty').value)||0;
       const p = Util.unmaskCur(tr.querySelector('.price').value);
-      tr.querySelector('.rtot').textContent = Util.formatBRL(q*p);
+      tr.querySelector('.row-total').textContent = Util.formatBRL(q*p);
       tot+= (q*p);
     });
     document.getElementById('rcTotal').textContent = Util.formatBRL(tot);
@@ -900,9 +905,6 @@ const Req = {
       }
     });
     
-    if(p.status === 'rascunho' && p.req.itens.length > 0 && p.fornecedoresSelecionados.length > 0) {
-      // ready to send
-    }
     DB.save();
     UI.toast("Requisição Salva!");
     Req.load(p); 
@@ -1082,7 +1084,7 @@ const Email = {
 };
 
 // ==================== MODULO: MAPA DE PREÇOS ====================
-const Map = {
+const MapaPrecos = {
   load: (p) => {
     document.getElementById('map-subtitle').textContent = `PROCESSO ${p.id}`;
     document.getElementById('map-ai-summary').style.display = 'none';
@@ -1251,7 +1253,7 @@ const OC = {
 // ==================== GLOBAL HELPERS EXPOSED TO WINDOW ====================
 window.App = App;
 window.Req = Req;
-window.Map = Map;
+window.MapaPrecos = MapaPrecos;
 window.OC = OC;
 window.AI = AI;
 window.Email = Email;
@@ -1263,7 +1265,7 @@ window.addFornecedorComp = () => {
   const p = DB.getProcess(currentPID);
   p.propostas.push({ fornId: Util.genId(), nome: 'Novo Forn', doc:'', tel:'', email:'', status:'recebida', itens:{}, frete:0, imposto:0, prazo:'', cond:'' });
   DB.save();
-  Map.load(p);
+  MapaPrecos.load(p);
 };
 
 window.removeFornecedorComp = (propId) => {
@@ -1272,7 +1274,7 @@ window.removeFornecedorComp = (propId) => {
   p.propostas = p.propostas.filter(x => x.fornId !== propId);
   if(p.vencedorId === propId) p.vencedorId = null;
   DB.save();
-  Map.load(p);
+  MapaPrecos.load(p);
   document.getElementById('comp-form-forn').style.display = 'none';
 };
 
@@ -1290,7 +1292,7 @@ window.updatePropPreco = (propId, itemId, valStr) => {
   const prop = p.propostas.find(x => x.fornId === propId);
   if(prop) { prop.itens[itemId] = val; prop.status = 'recebida'; }
   DB.save();
-  Map.load(p);
+  MapaPrecos.load(p);
 };
 
 window.updatePropFreco = (propId, valStr) => {
@@ -1298,7 +1300,7 @@ window.updatePropFreco = (propId, valStr) => {
   const prop = p.propostas.find(x => x.fornId === propId);
   if(prop) prop.frete = Util.unmaskCur(valStr);
   DB.save();
-  Map.load(p);
+  MapaPrecos.load(p);
 };
 
 window.editFornDetails = (propId) => {
@@ -1324,7 +1326,7 @@ window.updateFornData = (field, val) => {
   const prop = p.propostas.find(x => x.fornId === currentCompFornId);
   if(prop) prop[field] = val;
   DB.save();
-  if(field === 'nome') Map.load(p);
+  if(field === 'nome') MapaPrecos.load(p);
 };
 
 window.salvarCompObs = () => {
