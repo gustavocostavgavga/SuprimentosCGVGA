@@ -4,7 +4,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Inteligência de Suprimentos · GRP</title>
+<title>Gerencial de Suprimentos · Casagrande Urbanismo</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -22,7 +22,7 @@
   /* ====== SIDEBAR ====== */
   .sidebar { background: var(--navy); color: #fff; padding: 32px 24px; display: flex; flex-direction: column; gap: 32px; position: sticky; top:0; height: 100vh; overflow-y: auto;}
   .brand { display: flex; flex-direction: column; gap: 2px; }
-  .brand .mark { font-weight: 800; font-size: 24px; letter-spacing: 1px; line-height: 1.1; }
+  .brand .mark { font-weight: 800; font-size: 20px; letter-spacing: 1px; line-height: 1.2; }
   .brand .sub { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: #9FB1CC; font-weight: 600; margin-top: 6px; }
   .nav-group { display: flex; flex-direction: column; gap: 8px; }
   .nav-label { font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: #7C93B8; font-weight: 700; margin-bottom: 6px; }
@@ -91,7 +91,6 @@
   .em-sender { font-size:13px; font-weight:700; color:var(--navy);}
   .em-subject { font-size:12px; font-weight:500; color:var(--ink);}
   .em-meta { font-size:10px; font-weight:600; color:var(--muted);}
-  .em-att { display:inline-flex; align-items:center; gap:4px; font-size:10px; background:var(--bg); padding:4px 8px; border-radius:4px; border:1px solid var(--line); margin-top:4px; width:fit-content; font-weight:600;}
 
   /* ====== TABLES ====== */
   table.items { width: 100%; border-collapse: collapse; }
@@ -169,7 +168,9 @@
       <label style="font-size:11px; margin-bottom:8px;">Senha:</label>
       <input type="password" id="login-pass" placeholder="Digite sua senha" onkeypress="if(event.key === 'Enter') efetuarLogin()" style="width:100%; padding:12px; border:1px solid var(--line); border-radius:4px; font-family:'Montserrat', sans-serif; outline:none;">
     </div>
-    <button class="btn btn-solid" style="width:100%; padding:14px; font-size:13px;" onclick="efetuarLogin()">Acessar Painel</button>
+    <div style="text-align:center;">
+      <button class="btn btn-solid" style="width:100%; max-width:200px; padding:14px; font-size:13px;" onclick="efetuarLogin()">Acessar Painel</button>
+    </div>
   </div>
 </div>
 
@@ -188,17 +189,19 @@
 
     <div class="nav-group">
       <div class="nav-label">Navegação</div>
-      <button class="nav-btn active" onclick="App.nav('dashboard', this)">Dashboard</button>
-      <button class="nav-btn" onclick="App.nav('processos', this)">Processos</button>
+      <button class="nav-btn active" onclick="App.nav('processos', this)">Processos</button>
+      <button class="nav-btn" onclick="App.nav('dashboard', this)">Dashboard</button>
       <button class="nav-btn" onclick="App.nav('fornecedores', this)">Fornecedores</button>
       <button class="nav-btn" onclick="App.nav('recebimento', this)">Inbox & IA Real</button>
 
       <div class="nav-label" style="margin-top:24px;">Ações Globais</div>
       <button class="nav-btn" onclick="imprimirTela()">Imprimir Tela Atual</button>
+      
+      <button class="nav-btn" style="color:var(--danger); margin-top:20px;" onclick="efetuarLogout()">Sair / Deslogar</button>
     </div>
 
     <div class="sidebar-foot">
-      GRP — Inteligência e Automação<br>v4.2 (Correções OC & Navegação)
+      GRP — Inteligência e Automação<br>v5.2 (Forn. Manual + DB Zero)
     </div>
   </aside>
 
@@ -206,7 +209,7 @@
   <main>
 
     <!-- ==================== VIEW: DASHBOARD ==================== -->
-    <div id="view-dashboard" class="view active">
+    <div id="view-dashboard" class="view">
       <div class="doc-head">
         <div class="doc-title">Dashboard Executivo<small>Visão Geral de Suprimentos</small></div>
       </div>
@@ -225,7 +228,7 @@
         <div class="kpi-card">
           <div class="kpi-title">Economia Obtida</div>
           <div class="kpi-value" style="color:var(--success)" id="dash-econ">R$ 0,00</div>
-          <div class="kpi-sub">vs. Média Histórica</div>
+          <div class="kpi-sub">vs. Média do Mapa</div>
         </div>
         <div class="kpi-card">
           <div class="kpi-title">Tempo Médio (SLA)</div>
@@ -244,7 +247,7 @@
     </div>
 
     <!-- ==================== VIEW: LISTA PROCESSOS ==================== -->
-    <div id="view-processos" class="view">
+    <div id="view-processos" class="view active">
       <div class="doc-head">
         <div class="doc-title">Gestão de Processos<small>Acompanhamento de compras, contratações e cotações</small></div>
         <button class="btn btn-solid" onclick="App.novoProcesso()">Novo Processo</button>
@@ -269,17 +272,20 @@
     <div id="view-fornecedores" class="view">
       <div class="doc-head">
         <div class="doc-title">Banco de Fornecedores<small>Base de dados e score de performance</small></div>
-        <button class="btn btn-outline" onclick="App.resetDB()">Resetar Sistema (Dados Padrão)</button>
+        <button class="btn btn-solid" onclick="UI.openModal('modal-add-forn')">+ Adicionar Fornecedor</button>
       </div>
       <section class="block">
         <table class="items">
           <thead>
             <tr>
               <th>Razão Social</th>
-              <th>CNPJ / E-mail</th>
+              <th>E-mail</th>
               <th>Categoria Principal</th>
               <th>Score IA</th>
               <th>Prazo Médio</th>
+              <th>Cidade/UF</th>
+              <th>Lat</th>
+              <th>Lng</th>
             </tr>
           </thead>
           <tbody id="lista-fornecedores-body"></tbody>
@@ -299,7 +305,6 @@
         </select>
 
         <div class="email-list" id="inbox-emails">
-          <!-- Rendered by JS -->
           <div style="padding:20px; text-align:center; color:var(--muted); font-size:12px; font-weight:600;">Selecione um processo cotando para verificar emails na Locaweb.</div>
         </div>
       </section>
@@ -317,40 +322,28 @@
         </div>
       </div>
 
-      <div class="grid cols-2">
-        <div>
-          <section class="block">
-            <h2>Dados da Requisição <span style="font-size:13px; color:var(--navy); font-weight:800;" id="rcNum"></span></h2>
-            <div class="grid cols-2">
-              <div class="field"><label>Data de emissão</label><input type="text" id="rcEmissao" placeholder="DD/MM/AAAA" oninput="Util.maskDate(this)"></div>
-              <div class="field"><label>Prazo resposta</label><input type="text" id="rcPrazo" placeholder="DD/MM/AAAA" oninput="Util.maskDate(this)"></div>
-              <div class="field"><label>Responsável</label><select id="rcResp"><option value="">Selecione...</option><option value="Gustavo">Gustavo</option><option value="Lais Mara">Lais Mara</option></select></div>
-              <div class="field"><label>E-mail p/ envio</label>
-                <select id="rcEmail">
-                  <option value="">Selecione...</option>
-                  <option value="gustavocosta@casagrandeurbanismo.com.br">gustavocosta@casagrandeurbanismo.com.br</option>
-                  <option value="laismara@casagrandeurbanismo.com.br">laismara@casagrandeurbanismo.com.br</option>
-                </select>
-              </div>
-              <div class="field full"><label>Categoria Predominante (Para IA)</label><input type="text" id="rcCat" placeholder="Ex: Cimento, Hidráulica, EPI..."></div>
-            </div>
-          </section>
+      <section class="block">
+        <h2>Dados da Requisição <span style="font-size:13px; color:var(--navy); font-weight:800;" id="rcNum"></span></h2>
+        <div class="grid cols-4">
+          <div class="field"><label>Data de emissão</label><input type="text" id="rcEmissao" placeholder="DD/MM/AAAA" oninput="Util.maskDate(this)"></div>
+          <div class="field"><label>Prazo resposta</label><input type="text" id="rcPrazo" placeholder="DD/MM/AAAA" oninput="Util.maskDate(this)"></div>
+          <div class="field"><label>Responsável</label><select id="rcResp"><option value="">Selecione...</option><option value="Gustavo">Gustavo</option><option value="Lais Mara">Lais Mara</option></select></div>
+          <div class="field"><label>Categoria Principal</label><select id="rcCat"><option value="">Selecione...</option></select></div>
         </div>
-        <div>
-          <section class="block">
-            <h2>Empresa Solicitante (SPE)</h2>
-            <div class="field"><label>Selecione a SPE</label><select id="rcSpe" onchange="Req.updateSPE()"></select></div>
-            <div class="spe-card" id="rcSpeCard" style="margin-top:10px;">
-              <div class="spe-card-body" style="padding:12px;">
-                <div class="item"><span class="l">Razão social</span><span class="v" id="rcSpeNome">—</span></div>
-                <div class="item"><span class="l">CNPJ</span><span class="v" id="rcSpeCnpj">—</span></div>
-                <div class="item full"><span class="l">Endereço</span><span class="v" id="rcSpeEnd">—</span></div>
-              </div>
-            </div>
-            <div class="field" style="margin-top:16px;"><label>Local de entrega</label><select id="rcLocal"><option value="">Selecione a SPE primeiro...</option></select></div>
-          </section>
+      </section>
+
+      <section class="block">
+        <h2>Empresa Solicitante (SPE)</h2>
+        <div class="grid cols-4">
+          <div class="field" style="grid-column: span 2;"><label>Selecione a SPE</label><select id="rcSpe" onchange="Req.updateSPE()"></select></div>
+          <div class="field" style="grid-column: span 2;"><label>Local de entrega</label><select id="rcLocal"><option value="">Selecione a SPE primeiro...</option></select></div>
         </div>
-      </div>
+        <div class="grid cols-3" style="margin-top:16px;">
+          <div class="field"><label>Razão Social</label><input type="text" id="rcSpeNome" disabled></div>
+          <div class="field"><label>CNPJ</label><input type="text" id="rcSpeCnpj" disabled></div>
+          <div class="field"><label>Endereço Faturamento</label><input type="text" id="rcSpeEnd" disabled></div>
+        </div>
+      </section>
 
       <section class="block">
         <h2>Itens da Requisição</h2>
@@ -360,7 +353,7 @@
           </thead>
           <tbody id="rcItemsBody"></tbody>
         </table>
-        <button class="add-row-btn" onclick="Req.addItem()">Adicionar item</button>
+        <button class="btn btn-outline" style="width:100%; border-style:dashed; margin-top:15px; color:var(--navy)" onclick="Req.addItem()">＋ Adicionar item</button>
         <div class="totals"><div class="box"><div class="label">Total Estimado</div><div class="value" id="rcTotal">R$ 0,00</div></div></div>
       </section>
 
@@ -379,6 +372,7 @@
         <div class="doc-title">2. Mapa de Preços & Equalização<small id="map-subtitle">Processo</small></div>
         <div class="header-actions">
           <button class="btn btn-outline" onclick="editarRequisicao()">← Editar Requisição de Compra</button>
+          <button class="btn btn-solid" onclick="abrirModalAddFornMapa()">➕ Adicionar Fornecedor ao Mapa</button>
         </div>
       </div>
 
@@ -431,32 +425,39 @@
         </div>
       </div>
 
-      <div class="grid cols-2">
-        <section class="block">
-          <h2>Dados Gerais <span style="color:var(--navy); font-weight:800;" id="ocNum"></span></h2>
-          <div class="grid cols-2">
-            <div class="field"><label>Emissão</label><input type="text" id="ocEmissao" oninput="Util.maskDate(this)"></div>
-            <div class="field"><label>Entrega Prevista</label><input type="text" id="ocEntrega" oninput="Util.maskDate(this)"></div>
-            <div class="field"><label>Responsável</label><input type="text" id="ocResp" disabled></div>
-            <div class="field"><label>Cond. Pagamento</label><input type="text" id="ocCond"></div>
-          </div>
-        </section>
-        <section class="block">
-          <h2>Fornecedor Vencedor</h2>
-          <div class="grid cols-2">
-            <div class="field full"><label>Razão Social</label><input type="text" id="ocFornNome" disabled style="font-weight:700; color:var(--success)"></div>
-            <div class="field"><label>CNPJ</label><input type="text" id="ocFornCnpj" disabled></div>
-            <div class="field"><label>Contato</label><input type="text" id="ocFornTel" disabled></div>
-          </div>
-        </section>
-      </div>
-      
+      <section class="block">
+        <h2>Dados Gerais <span style="color:var(--navy); font-weight:800;" id="ocNum"></span></h2>
+        <div class="grid cols-4">
+          <div class="field"><label>Emissão</label><input type="text" id="ocEmissao" oninput="Util.maskDate(this)"></div>
+          <div class="field"><label>Entrega Prevista</label><input type="text" id="ocEntrega" oninput="Util.maskDate(this)"></div>
+          <div class="field"><label>Responsável</label><input type="text" id="ocResp" disabled></div>
+          <div class="field"><label>Cond. Pagamento</label><input type="text" id="ocCond"></div>
+        </div>
+      </section>
+
+      <section class="block">
+        <h2>Fornecedor Vencedor</h2>
+        <div class="grid cols-3">
+          <div class="field"><label>Razão Social</label><input type="text" id="ocFornNome" disabled style="font-weight:700; color:var(--success)"></div>
+          <div class="field"><label>CNPJ</label><input type="text" id="ocFornCnpj" disabled></div>
+          <div class="field"><label>Contato</label><input type="text" id="ocFornTel" disabled></div>
+        </div>
+      </section>
+
       <section class="block">
         <h2>Empresa Faturada (SPE Solicitante)</h2>
-        <div style="background:#F9FAFB; border:1px solid var(--line); border-radius:4px; padding:12px;">
-           <div style="margin-bottom:6px;"><strong style="font-size:10px; color:var(--muted); text-transform:uppercase;">Razão Social:</strong> <span id="ocSpeNome" style="font-size:12px; font-weight:600;">—</span></div>
-           <div style="margin-bottom:6px;"><strong style="font-size:10px; color:var(--muted); text-transform:uppercase;">CNPJ:</strong> <span id="ocSpeCnpj" style="font-size:12px; font-weight:600;">—</span></div>
-           <div><strong style="font-size:10px; color:var(--muted); text-transform:uppercase;">Endereço de Faturamento:</strong> <span id="ocSpeEnd" style="font-size:12px; font-weight:600;">—</span></div>
+        <div class="grid cols-3">
+          <div class="field"><label>Razão Social</label><input type="text" id="ocSpeNome" disabled></div>
+          <div class="field"><label>CNPJ</label><input type="text" id="ocSpeCnpj" disabled></div>
+          <div class="field"><label>Endereço Faturamento</label><input type="text" id="ocSpeEnd" disabled></div>
+        </div>
+      </section>
+      
+      <section class="block">
+        <h2>Local de Entrega & Observações</h2>
+        <div class="grid cols-2">
+          <div class="field"><label>Endereço / Local de Entrega</label><input type="text" id="ocLocal"></div>
+          <div class="field"><label>Observações da Ordem de Compra</label><textarea id="ocObs"></textarea></div>
         </div>
       </section>
 
@@ -480,9 +481,44 @@
       <span>Sugestão Inteligente de Fornecedores</span>
       <button class="del-btn" onclick="UI.closeModal('modal-ia-forn')" style="font-size:24px;">&times;</button>
     </div>
-    <div style="font-size:12px; color:var(--muted); margin-bottom:16px;">Baseado na categoria da requisição e histórico de compras.</div>
-    <div id="ia-forn-list" class="grid cols-1" style="gap:10px;"></div>
+    <div style="font-size:12px; color:var(--muted); margin-bottom:16px;">Filtrados num raio de até 100km da obra.</div>
+    <div id="ia-forn-list" class="grid cols-1" style="gap:10px; max-height:400px; overflow-y:auto;"></div>
     <button class="btn btn-solid" style="width:100%; margin-top:20px;" onclick="AI.confirmSuppliers()">Adicionar Selecionados à Cotação</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-add-forn">
+  <div class="modal">
+    <div class="modal-header">
+      <span>🏢 Cadastrar Novo Fornecedor</span>
+      <button class="del-btn" onclick="UI.closeModal('modal-add-forn')" style="font-size:24px;">&times;</button>
+    </div>
+    <div class="grid cols-2" style="margin-bottom:15px;">
+      <div class="field full"><label>Razão Social</label><input type="text" id="af_nome" placeholder="Nome da empresa"></div>
+      <div class="field"><label>CNPJ</label><input type="text" id="af_cnpj" placeholder="Apenas números"></div>
+      <div class="field"><label>E-mail</label><input type="email" id="af_email" placeholder="contato@empresa.com"></div>
+      <div class="field"><label>Categoria Principal</label><input type="text" id="af_cat" placeholder="Ex: Cimento, Elétrica"></div>
+      <div class="field"><label>Score IA</label><input type="number" id="af_score" placeholder="0 a 100" value="50"></div>
+      <div class="field"><label>Prazo Médio</label><input type="text" id="af_prazo" placeholder="Ex: 5 dias"></div>
+      <div class="field full"><label>Cidade/UF</label><input type="text" id="af_cidade" placeholder="Ex: Bocaiúva/MG"></div>
+      <div class="field"><label>Latitude (Lat)</label><input type="text" id="af_lat" placeholder="Ex: -17.107"></div>
+      <div class="field"><label>Longitude (Lng)</label><input type="text" id="af_lng" placeholder="Ex: -43.814"></div>
+    </div>
+    <button class="btn btn-solid" style="width:100%; padding:15px;" onclick="salvarNovoFornecedor()">Salvar Fornecedor no Banco</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-add-forn-mapa">
+  <div class="modal">
+    <div class="modal-header">
+      <span>➕ Adicionar Fornecedor ao Mapa</span>
+      <button class="del-btn" onclick="UI.closeModal('modal-add-forn-mapa')" style="font-size:24px;">&times;</button>
+    </div>
+    <div class="field">
+      <label>Selecione um fornecedor cadastrado:</label>
+      <select id="map-forn-select" style="width:100%; padding:10px; border:1px solid var(--line); border-radius:4px; font-family:'Montserrat';"></select>
+    </div>
+    <button class="btn btn-solid" style="width:100%; margin-top:20px;" onclick="confirmarAddFornMapa()">Adicionar ao Mapa</button>
   </div>
 </div>
 
@@ -526,10 +562,10 @@ const db = getFirestore(firebaseApp);
 
 // ==================== CORE DATA & CONFIG ====================
 const SPES = {
-  bocaiuva: { nome: "BOCAIUVA EMPREENDIMENTOS IMOBILIARIOS LTDA", cnpj: "19.218.743/0001-60", endereco: "R Maj Quedinho, 99 — São Paulo/SP", prefixo: "BOC", locais: ["Loteamento Mirante da Lagoa, Bocaiúva-MG (Após a linha de trem)", "Estação de Tratamento de Esgoto do SAE, Bocaiúva-MG"] },
-  jleme: { nome: "J LEME EMPREENDIMENTOS IMOBILIARIOS SPE LTDA", cnpj: "55.160.109/0001-88", endereco: "R Maj Quedinho, 99 — São Paulo/SP", prefixo: "JLE", locais: ["Loteamento Joaquim Leme, Ituiutaba-MG", "Rua Egídio Alves de Oliveira, Ituiutaba-MG"] },
-  mife: { nome: "MIFE NEGOCIOS IMOBILIARIOS S.A", cnpj: "37.014.492/0001-84", endereco: "R Waldomiro Pereira Duarte, 214 — Três Pontas/MG", prefixo: "MIF", locais: ["Loteamento Parque das Nações, Campanha-MG"] },
-  nazareno: { nome: "LOTEAR CONSTRUCOES E EMPREENDIMENTOS NAZARENO LTDA", cnpj: "30.127.853/0001-50", endereco: "R Maj Quedinho, 99 — São Paulo/SP", prefixo: "NAZ", locais: ["Loteamento Cidade Nova, Nazareno-MG"] }
+  bocaiuva: { nome: "BOCAIUVA EMPREENDIMENTOS IMOBILIARIOS LTDA", cnpj: "19.218.743/0001-60", endereco: "R Maj Quedinho, 99 — São Paulo/SP", prefixo: "BOC", lat: -17.107, lng: -43.814, locais: ["Loteamento Mirante da Lagoa, Bocaiúva-MG (Após a linha de trem)", "Estação de Tratamento de Esgoto do SAE, Bocaiúva-MG"] },
+  jleme: { nome: "J LEME EMPREENDIMENTOS IMOBILIARIOS SPE LTDA", cnpj: "55.160.109/0001-88", endereco: "R Maj Quedinho, 99 — São Paulo/SP", prefixo: "JLE", lat: -18.969, lng: -49.465, locais: ["Loteamento Joaquim Leme, Ituiutaba-MG", "Rua Egídio Alves de Oliveira, Ituiutaba-MG"] },
+  mife: { nome: "MIFE NEGOCIOS IMOBILIARIOS S.A", cnpj: "37.014.492/0001-84", endereco: "R Waldomiro Pereira Duarte, 214 — Três Pontas/MG", prefixo: "MIF", lat: -21.836, lng: -45.401, locais: ["Loteamento Parque das Nações, Campanha-MG"] },
+  nazareno: { nome: "LOTEAR CONSTRUCOES E EMPREENDIMENTOS NAZARENO LTDA", cnpj: "30.127.853/0001-50", endereco: "R Maj Quedinho, 99 — São Paulo/SP", prefixo: "NAZ", lat: -21.215, lng: -44.605, locais: ["Loteamento Cidade Nova, Nazareno-MG"] }
 };
 
 const Util = {
@@ -547,7 +583,14 @@ const Util = {
     input.value = v;
   },
   genId: () => Math.random().toString(36).substr(2, 9),
-  today: () => { const d = new Date(); return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`; }
+  today: () => { const d = new Date(); return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`; },
+  haversine: (lat1, lon1, lat2, lon2) => {
+    const R = 6371; const p1 = lat1 * Math.PI/180; const p2 = lat2 * Math.PI/180;
+    const dp = (lat2-lat1) * Math.PI/180; const dl = (lon2-lon1) * Math.PI/180;
+    const a = Math.sin(dp/2) * Math.sin(dp/2) + Math.cos(p1) * Math.cos(p2) * Math.sin(dl/2) * Math.sin(dl/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c;
+  }
 };
 
 const UI = {
@@ -581,14 +624,8 @@ const DB = {
     try { await setDoc(doc(db, "sistema", "suprimentos_db"), DB.data); } 
     catch(e) { localStorage.setItem('grp_ai_db', JSON.stringify(DB.data)); }
   },
-  reset: async () => { DB.seed(); await DB.save(); location.reload(); },
   seed: () => {
-    DB.data.fornecedores = [
-      { id: 'f1', nome: 'Votorantim Cimentos', cnpj: '01.000.000/0001-01', cats: 'Cimento, Concreto', score: 95, prazo: '5 dias', contato: 'vendas@voto.com', email: '', tel: '11 3000-0000', precoHist: 'Baixo' },
-      { id: 'f2', nome: 'Tigre Tubos e Conexões', cnpj: '02.000.000/0001-02', cats: 'Hidráulica, Tubos', score: 92, prazo: '7 dias', contato: 'vendas@tigre.com', email: '', tel: '11 3111-0000', precoHist: 'Médio' },
-      { id: 'f3', nome: 'Amanco Wavin', cnpj: '03.000.000/0001-03', cats: 'Hidráulica, Tubos', score: 88, prazo: '10 dias', contato: 'vendas@amanco.com', email: '', tel: '11 3222-0000', precoHist: 'Baixo' },
-      { id: 'f4', nome: 'Gerdau Aços', cnpj: '04.000.000/0001-04', cats: 'Aço, Ferragem', score: 94, prazo: '8 dias', contato: 'vendas@gerdau.com', email: '', tel: '11 3333-0000', precoHist: 'Médio' }
-    ];
+    DB.data.fornecedores = [];
     DB.data.processos = [];
   },
   getProcess: (id) => DB.data.processos.find(p => p.id === id)
@@ -608,7 +645,7 @@ const App = {
     const sel = document.getElementById('rcSpe');
     sel.innerHTML = '<option value="">Selecione...</option>';
     Object.keys(SPES).forEach(k => sel.innerHTML += `<option value="${k}">${SPES[k].nome}</option>`);
-    App.nav('dashboard');
+    App.nav('processos'); 
   },
   nav: (viewId, isContextual = false) => {
     document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
@@ -623,7 +660,6 @@ const App = {
     if(viewId === 'fornecedores') App.renderForn();
     if(viewId === 'recebimento') App.initInbox();
   },
-  resetDB: () => { if(confirm("Apagar dados do Firebase?")) { DB.reset(); } },
   novoProcesso: () => {
     const d = new Date();
     const prefix = `PC-${d.getFullYear()}${String(d.getDate()).padStart(2,'0')}${String(d.getMonth()+1).padStart(2,'0')}-`;
@@ -632,8 +668,8 @@ const App = {
       id: prefix + String(seq).padStart(3, '0'), 
       criadoEm: Util.today(), status: 'rascunho', spe: '',
       req: { numero:`RC-${prefix + String(seq).padStart(3, '0')}`, emissao:Util.today(), prazo:'', resp:'', email:'', cat:'', cond:'', local:'', obs:'', itens:[] },
-      fornecedoresSelecionados: [], propostas: [], compObs: '', vencedorId: null,
-      oc: { numero:'', emissao:'', entrega:'', resp:'', cond:'', obs:'' },
+      fornecedoresSelecionados: [], propostas: [], compObs: '', vencedorId: null, economia: 0,
+      oc: { numero:'', emissao:'', entrega:'', resp:'', cond:'', obs:'', local:'' },
       historico: [{ data: Util.today(), txt: 'Processo criado' }]
     };
     DB.data.processos.push(p); DB.save();
@@ -644,6 +680,9 @@ const App = {
     const procs = DB.data.processos;
     document.getElementById('dash-proc').textContent = procs.filter(p => p.status !== 'aprovado' && p.status !== 'rascunho').length;
     document.getElementById('dash-oc').textContent = procs.filter(p => p.status === 'aprovado').length;
+    let totalEcon = 0;
+    procs.filter(p => p.status === 'aprovado').forEach(p => { totalEcon += (p.economia || 0); });
+    document.getElementById('dash-econ').textContent = Util.formatBRL(totalEcon);
   },
   renderProcessos: () => {
     const tbody = document.getElementById('lista-processos-body'); tbody.innerHTML = '';
@@ -670,9 +709,22 @@ const App = {
   },
   renderForn: () => {
     const tb = document.getElementById('lista-fornecedores-body'); tb.innerHTML = '';
+    if(DB.data.fornecedores.length === 0) {
+      tb.innerHTML = `<tr><td colspan="8" style="text-align:center; padding:20px; color:var(--muted)">Nenhum fornecedor cadastrado.</td></tr>`;
+      return;
+    }
     DB.data.fornecedores.forEach(f => { 
       const mailDisp = f.email ? f.email : f.contato;
-      tb.innerHTML += `<tr><td><strong>${f.nome}</strong></td><td>${f.cnpj}<br><small>${mailDisp}</small></td><td>${f.cats}</td><td><span style="color:var(--success); font-weight:800">${f.score}/100</span></td><td>${f.prazo}</td></tr>`; 
+      tb.innerHTML += `<tr>
+        <td><strong>${f.nome}</strong></td>
+        <td>${mailDisp || '-'}</td>
+        <td>${f.cats || '-'}</td>
+        <td><span style="color:var(--success); font-weight:800">${f.score || 0}/100</span></td>
+        <td>${f.prazo || '-'}</td>
+        <td>${f.cidade || '-'}</td>
+        <td>${f.lat || '-'}</td>
+        <td>${f.lng || '-'}</td>
+      </tr>`; 
     });
   },
   abrir: (id, tela) => {
@@ -680,7 +732,7 @@ const App = {
     if(tela==='req-form') Req.load(p); if(tela==='mapa') MapaPrecos.load(p); if(tela==='oc') OC.load(p);
     App.nav(tela, true);
   },
-  del: (id) => { if(confirm("Excluir?")) { DB.data.processos = DB.data.processos.filter(x=>x.id!==id); DB.save(); App.renderProcessos(); } },
+  del: (id) => { if(confirm("Excluir Processo?")) { DB.data.processos = DB.data.processos.filter(x=>x.id!==id); DB.save(); App.renderProcessos(); } },
   logHistory: (pid, msg) => { const p = DB.getProcess(pid); if(p) { p.historico.push({data: Util.today(), txt: msg}); DB.save(); } },
   
   initInbox: () => {
@@ -704,16 +756,12 @@ const App = {
     try {
       const res = await fetch('/api/ler-emails');
       const data = await res.json();
-      
       cont.innerHTML = '';
 
       if (data.emails && data.emails.length > 0) {
-        data.emails.forEach((mail, idx) => {
+        data.emails.forEach((mail) => {
           cont.innerHTML += `<div class="email-item" style="border-left:3px solid var(--ai-color)">
-            <div class="em-info">
-              <span class="em-sender">${mail.remetente}</span>
-              <span class="em-subject">${mail.assunto}</span>
-            </div>
+            <div class="em-info"><span class="em-sender">${mail.remetente}</span><span class="em-subject">${mail.assunto}</span></div>
             <div><button class="btn btn-ai" onclick="Email.readAI(null, null, \`${encodeURIComponent(mail.texto_proposta)}\`)">Extrair com Gemini</button></div>
           </div>`;
         });
@@ -721,16 +769,11 @@ const App = {
         p.propostas.forEach(prop => {
           const f = DB.data.fornecedores.find(x => x.id === prop.fornId);
           if(prop.status === 'pendente') {
-            cont.innerHTML += `<div class="email-item" style="border-left:3px solid var(--ai-color)">
-              <div class="em-info"><span class="em-sender">${f?.nome||'Novo'}</span><span class="em-subject">Aguardando e-mail...</span></div>
-            </div>`;
+            cont.innerHTML += `<div class="email-item" style="border-left:3px solid var(--ai-color)"><div class="em-info"><span class="em-sender">${f?.nome||'Novo'}</span><span class="em-subject">Aguardando e-mail...</span></div></div>`;
           } else {
-            cont.innerHTML += `<div class="email-item" style="opacity:0.6; border-left:3px solid var(--success)">
-              <div class="em-info"><span class="em-sender">${f?.nome||'Novo'}</span><span class="em-meta">✓ Extraído e no Mapa</span></div>
-            </div>`;
+            cont.innerHTML += `<div class="email-item" style="opacity:0.6; border-left:3px solid var(--success)"><div class="em-info"><span class="em-sender">${f?.nome||'Novo'}</span><span class="em-meta">✓ Extraído e no Mapa</span></div></div>`;
           }
         });
-        
         if(p.propostas.length > 0 && p.propostas.every(x => x.status === 'recebida')) {
           if(p.status !== 'analise') { p.status = 'analise'; DB.save(); }
           cont.innerHTML += `<div style="padding:20px; text-align:center;"><button class="btn btn-solid" onclick="App.abrir('${p.id}','mapa')">Ir para Mapa de Preços</button></div>`;
@@ -747,10 +790,22 @@ const Req = {
   load: (p) => {
     document.getElementById('rc-subtitle').textContent = `PROCESSO ${p.id}`;
     document.getElementById('rcNum').textContent = p.req.numero;
-    ['Emissao','Prazo','Resp','Email','Cat','Spe','Local'].forEach(k => {
+    
+    // Fill Category Dropdown
+    const catSelect = document.getElementById('rcCat');
+    if (catSelect) {
+      catSelect.innerHTML = '<option value="">Selecione...</option>';
+      const uniqueCats = [...new Set(DB.data.fornecedores.map(f => f.cats).filter(Boolean))];
+      uniqueCats.forEach(c => catSelect.innerHTML += `<option value="${c}">${c}</option>`);
+    }
+
+    ['Emissao','Prazo','Resp','Email','Cat','Local'].forEach(k => {
       const el = document.getElementById('rc'+k);
       if(el) el.value = p.req[k.toLowerCase()] || p[k.toLowerCase()] || '';
     });
+    
+    const speEl = document.getElementById('rcSpe');
+    if(speEl) speEl.value = p.spe || '';
     Req.updateSPE(p.req.local);
 
     const tb = document.getElementById('rcItemsBody'); tb.innerHTML='';
@@ -758,21 +813,26 @@ const Req = {
     Req.calcTotal(); Req.renderFornList(p);
 
     document.getElementById('btn-sugerir-forn').style.display = p.status === 'rascunho' ? 'inline-flex' : 'none';
-    document.getElementById('btn-enviar-cot').style.display = (p.status === 'rascunho' && p.fornecedoresSelecionados.length>0) ? 'inline-flex' : 'none';
+    document.getElementById('btn-enviar-cot').style.display = p.status === 'rascunho' ? 'inline-flex' : 'none';
   },
   updateSPE: (valLocal = '') => {
     const speEl = document.getElementById('rcSpe');
     if(!speEl) return;
     const k = speEl.value;
-    const card = document.getElementById('rcSpeCard');
     const loc = document.getElementById('rcLocal');
     if(loc) loc.innerHTML = '<option value="">Selecione...</option>';
-    if(!k) { if(card) card.classList.remove('show'); return; }
     
-    if(document.getElementById('rcSpeNome')) document.getElementById('rcSpeNome').textContent = SPES[k].nome;
-    if(document.getElementById('rcSpeCnpj')) document.getElementById('rcSpeCnpj').textContent = SPES[k].cnpj;
-    if(document.getElementById('rcSpeEnd')) document.getElementById('rcSpeEnd').textContent = SPES[k].endereco;
-    if(card) card.classList.add('show');
+    if(!k) { 
+      if(document.getElementById('rcSpeNome')) document.getElementById('rcSpeNome').value = '';
+      if(document.getElementById('rcSpeCnpj')) document.getElementById('rcSpeCnpj').value = '';
+      if(document.getElementById('rcSpeEnd')) document.getElementById('rcSpeEnd').value = '';
+      return; 
+    }
+    
+    if(document.getElementById('rcSpeNome')) document.getElementById('rcSpeNome').value = SPES[k].nome;
+    if(document.getElementById('rcSpeCnpj')) document.getElementById('rcSpeCnpj').value = SPES[k].cnpj;
+    if(document.getElementById('rcSpeEnd')) document.getElementById('rcSpeEnd').value = SPES[k].endereco;
+    
     if(loc) {
       SPES[k].locais.forEach(l => loc.innerHTML += `<option value="${l}">${l}</option>`);
       if(valLocal) loc.value = valLocal;
@@ -833,42 +893,46 @@ const Req = {
     Req.save(); 
     const p = DB.getProcess(currentPID);
     
-    if (p.fornecedoresSelecionados.length < 2) {
-      return alert("É obrigatório selecionar no mínimo 2 fornecedores para disparar a cotação.");
+    if (p.fornecedoresSelecionados.length === 0) {
+      if(!confirm("Nenhum fornecedor selecionado. Deseja iniciar a cotação assim mesmo (para adicionar manualmente no Mapa de Preços depois)?")) return;
+    } else if (p.fornecedoresSelecionados.length < 2) {
+      if(!confirm("Apenas 1 fornecedor selecionado. Recomenda-se no mínimo 2. Deseja continuar?")) return;
     }
 
     const fornecedoresData = p.fornecedoresSelecionados.map(fid => DB.data.fornecedores.find(x => x.id === fid)).filter(Boolean);
-    const semEmail = fornecedoresData.filter(f => !f.email && !f.contato);
     
-    if (semEmail.length > 0) {
-       alert(`Atenção: ${semEmail.length} fornecedor(es) não possuem e-mail cadastrado. A requisição deverá ser enviada a eles manualmente via WhatsApp.`);
+    if (fornecedoresData.length > 0) {
+        const semEmail = fornecedoresData.filter(f => !f.email && !f.contato);
+        if (semEmail.length > 0) {
+           alert(`Atenção: ${semEmail.length} fornecedor(es) não possuem e-mail cadastrado. A requisição deverá ser enviada a eles manualmente via WhatsApp.`);
+        }
+
+        UI.toast("Disparando e-mails...");
+        document.getElementById('db-loader').style.display = 'flex';
+        document.getElementById('db-loader').style.opacity = '1';
+
+        try {
+          const selectResp = document.getElementById('rcResp');
+          const respNome = selectResp.options[selectResp.selectedIndex].text;
+          
+          await fetch('/api/enviar-email', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              fornecedores: fornecedoresData.map(f => ({ nome: f.nome, email: f.email || f.contato })),
+              rcData: { ...p.req, respNome: respNome }
+            })
+          });
+        } catch (err) {
+          console.error("Aviso: Falha ao acionar API de e-mail.", err);
+        }
+
+        document.getElementById('db-loader').style.opacity = '0';
+        setTimeout(()=> document.getElementById('db-loader').style.display = 'none', 500);
     }
-
-    UI.toast("Disparando e-mails...");
-    document.getElementById('db-loader').style.display = 'flex';
-    document.getElementById('db-loader').style.opacity = '1';
-
-    try {
-      const selectResp = document.getElementById('rcResp');
-      const respNome = selectResp.options[selectResp.selectedIndex].text;
-      
-      await fetch('/api/enviar-email', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          fornecedores: fornecedoresData.map(f => ({ nome: f.nome, email: f.email || f.contato })),
-          rcData: { ...p.req, respNome: respNome }
-        })
-      });
-    } catch (err) {
-      console.error("Aviso: Falha ao acionar API de e-mail.", err);
-    }
-
-    document.getElementById('db-loader').style.opacity = '0';
-    setTimeout(()=> document.getElementById('db-loader').style.display = 'none', 500);
 
     p.status = 'cotando'; 
-    App.logHistory(p.id, "Cotação disparada para " + p.fornecedoresSelecionados.length + " fornecedores.");
+    App.logHistory(p.id, "Cotação ativada com " + p.fornecedoresSelecionados.length + " fornecedores.");
     p.propostas = p.fornecedoresSelecionados.map(fid => ({ fornId: fid, nome:'', doc:'', tel:'', email:'', status: 'pendente', itens: {}, frete: 0, imposto: 0, prazo: '', cond: '' }));
     DB.save(); 
     UI.toast("Cotações iniciadas!"); 
@@ -880,14 +944,30 @@ const Req = {
 const AI = {
   openSupplierSuggestion: () => {
     Req.save(); 
+    const speKey = document.getElementById('rcSpe').value;
+    const speObj = SPES[speKey];
+    if(!speObj) return alert("Selecione a Empresa Solicitante (SPE) primeiro para calcular a distância.");
+
     const catEl = document.getElementById('rcCat');
     const cat = catEl ? catEl.value.toLowerCase() : '';
+    
     const list = document.getElementById('ia-forn-list'); list.innerHTML = '';
-    let sorted = [...DB.data.fornecedores].sort((a,b)=>b.score - a.score);
-    if(cat) { const filtered = sorted.filter(f => f.cats.toLowerCase().includes(cat)); if(filtered.length > 0) sorted = filtered; }
+    
+    let validForns = DB.data.fornecedores.filter(f => {
+       const dist = Util.haversine(speObj.lat, speObj.lng, f.lat, f.lng);
+       return dist <= 100;
+    });
+
+    let sorted = validForns.sort((a,b)=>b.score - a.score);
+    if(cat) { const filtered = sorted.filter(f => f.cats && f.cats.toLowerCase().includes(cat)); if(filtered.length > 0) sorted = filtered; }
+    
+    if(sorted.length === 0) {
+       list.innerHTML = `<div style="text-align:center; padding:20px; font-size:12px;">Nenhum fornecedor encontrado num raio de 100km para os critérios atuais.</div>`;
+    }
+
     sorted.forEach(f => {
       list.innerHTML += `<div style="padding:12px; border:1px solid var(--line); border-radius:6px; display:flex; justify-content:space-between; align-items:center;">
-        <div><strong style="color:var(--navy)">${f.nome}</strong><br><small style="color:var(--success); font-weight:800;">Score: ${f.score}/100</small> • <small>Histórico: ${f.precoHist}</small></div>
+        <div><strong style="color:var(--navy)">${f.nome}</strong><br><small style="color:var(--success); font-weight:800;">Score: ${f.score}/100</small> • <small>${f.cidade}</small></div>
         <input type="checkbox" class="ia-forn-chk" value="${f.id}" style="width:20px; height:20px; accent-color:var(--ai-color)">
       </div>`;
     });
@@ -1025,16 +1105,41 @@ const MapaPrecos = {
 
     tbody.innerHTML = tbHtml;
 
-    let tfHtml = `<tr><td colspan="3" style="text-align:right; font-weight:800; padding:15px">CUSTO TOTAL POSTO NA OBRA</td>`;
+    let minTot = Infinity;
     p.propostas.forEach(prop => {
       let t = prop.frete + prop.imposto;
       p.req.itens.forEach(i => t += (prop.itens[i.id]||0) * i.qtd);
+      if(t > 0 && t < minTot) minTot = t;
+    });
+
+    let tfHtml = `<tr><td colspan="3" style="text-align:right; font-weight:800; padding:15px">CUSTO TOTAL POSTO NA OBRA</td>`;
+    p.propostas.forEach(prop => {
+      let t = prop.frete + prop.imposto;
+      let isIncomplete = false;
+      p.req.itens.forEach(i => {
+         let val = prop.itens[i.id] || 0;
+         if (val === 0) isIncomplete = true;
+         t += val * i.qtd;
+      });
+      
       const isW = p.vencedorId === prop.fornId;
+      let diffHtml = '';
+      if (t > 0 && minTot > 0 && t > minTot) {
+        const perc = ((t - minTot) / minTot) * 100;
+        diffHtml = `<div style="color:var(--danger); font-size:10px; font-weight:800; margin-top:4px;">▲ +${perc.toFixed(1)}%</div>`;
+      }
+
       let btn = '';
-      if(t > 0 && p.status !== 'aprovado') {
-        btn = `<div style="margin-top:10px"><button class="btn btn-outline" style="font-size:9px; padding:6px 10px" onclick="selecionarVencedor('${prop.fornId}')">Escolher</button></div>`;
-      } else if (isW) { btn = `<div style="margin-top:10px; color:var(--success); font-size:11px; font-weight:800">★ VENCEDOR</div>`; }
-      tfHtml += `<td class="${isW?'winner-col':''}" style="font-weight:800; color:var(--navy); font-size:14px; padding:15px">${t>0 ? Util.formatBRL(t) : '-'}${btn}</td>`;
+      if(p.status !== 'aprovado') {
+        const warnHtml = isIncomplete ? `<div style="color:var(--danger); font-size:9px; font-weight:700; margin-bottom:4px; text-transform:uppercase;">⚠️ Incompleta</div>` : '';
+        btn = `<div style="margin-top:10px">${warnHtml}<button class="btn btn-outline" style="font-size:9px; padding:6px 10px" onclick="selecionarVencedor('${prop.fornId}')">Escolher</button></div>`;
+      } else if (isW) { 
+        btn = `<div style="margin-top:10px; color:var(--success); font-size:11px; font-weight:800">★ VENCEDOR</div>`; 
+      }
+      
+      tfHtml += `<td class="${isW?'winner-col':''}" style="font-weight:800; color:var(--navy); font-size:14px; padding:15px; text-align:center;">
+        ${t>0 ? Util.formatBRL(t) : '-'}${diffHtml}${btn}
+      </td>`;
     });
     tfHtml += `</tr>`;
     tfoot.innerHTML = tfHtml;
@@ -1073,9 +1178,9 @@ const OC = {
     document.getElementById('ocResp').value = p.oc.resp || p.req.resp;
     
     if(p.spe) {
-      document.getElementById('ocSpeNome').textContent = SPES[p.spe].nome;
-      document.getElementById('ocSpeCnpj').textContent = SPES[p.spe].cnpj;
-      document.getElementById('ocSpeEnd').textContent = SPES[p.spe].endereco;
+      document.getElementById('ocSpeNome').value = SPES[p.spe].nome;
+      document.getElementById('ocSpeCnpj').value = SPES[p.spe].cnpj;
+      document.getElementById('ocSpeEnd').value = SPES[p.spe].endereco;
     }
 
     const prop = p.propostas.find(x=>x.fornId===p.vencedorId);
@@ -1088,6 +1193,12 @@ const OC = {
 
     const condEl = document.getElementById('ocCond');
     if(condEl) condEl.value = p.oc.cond || prop?.cond || p.req.cond || '';
+    
+    const localEl = document.getElementById('ocLocal');
+    if(localEl) localEl.value = p.oc.local || p.req.local || '';
+    
+    const obsEl = document.getElementById('ocObs');
+    if(obsEl) obsEl.value = p.oc.obs || '';
     
     const tb = document.getElementById('ocItemsBody'); tb.innerHTML = '';
     let tot = 0;
@@ -1106,8 +1217,16 @@ const OC = {
     p.oc.numero = `OC-${p.id}`;
     p.oc.emissao = document.getElementById('ocEmissao').value;
     p.oc.entrega = document.getElementById('ocEntrega').value;
+    
     const condEl = document.getElementById('ocCond');
     if(condEl) p.oc.cond = condEl.value;
+    
+    const localEl = document.getElementById('ocLocal');
+    if(localEl) p.oc.local = localEl.value;
+    
+    const obsEl = document.getElementById('ocObs');
+    if(obsEl) p.oc.obs = obsEl.value;
+    
     DB.save(); UI.toast("Ordem de Compra Salva!");
   }
 };
@@ -1120,10 +1239,20 @@ window.efetuarLogin = () => {
   const p = document.getElementById('login-pass').value.trim();
   if((u === 'Gustavo' && p === 'gustavocgvga') || (u === 'Lais Mara' && p === 'laiscgvga')) {
     document.getElementById('login-screen').style.opacity = '0';
-    setTimeout(() => document.getElementById('login-screen').style.display = 'none', 500);
+    setTimeout(() => {
+        document.getElementById('login-screen').style.display = 'none';
+        App.nav('processos'); 
+    }, 500);
   } else {
     UI.toast('Usuário ou senha incorretos.');
   }
+};
+
+window.efetuarLogout = () => {
+  document.getElementById('login-user').value = '';
+  document.getElementById('login-pass').value = '';
+  document.getElementById('login-screen').style.display = 'flex';
+  setTimeout(() => document.getElementById('login-screen').style.opacity = '1', 10);
 };
 
 window.imprimirTela = () => {
@@ -1175,12 +1304,40 @@ window.imprimirTela = () => {
   });
 };
 
+window.salvarNovoFornecedor = () => {
+  const f = {
+    id: Util.genId(),
+    nome: document.getElementById('af_nome').value || 'Novo Fornecedor',
+    cnpj: document.getElementById('af_cnpj').value || '',
+    email: document.getElementById('af_email').value || '',
+    contato: document.getElementById('af_email').value || '',
+    cats: document.getElementById('af_cat').value || '',
+    score: parseInt(document.getElementById('af_score').value) || 50,
+    prazo: document.getElementById('af_prazo').value || '',
+    cidade: document.getElementById('af_cidade').value || '',
+    lat: parseFloat(document.getElementById('af_lat').value) || 0,
+    lng: parseFloat(document.getElementById('af_lng').value) || 0,
+    precoHist: 'Sem histórico'
+  };
+  DB.data.fornecedores.push(f);
+  DB.save();
+  UI.closeModal('modal-add-forn');
+  UI.toast('Fornecedor cadastrado!');
+  App.renderForn();
+  
+  ['nome','cnpj','email','cat','score','prazo','cidade','lat','lng'].forEach(k => {
+     const el = document.getElementById('af_'+k);
+     if(el) el.value = '';
+  });
+};
+
 window.voltarParaMapa = () => { 
   if(!confirm('Isso irá cancelar a Ordem de Compra atual para você refazer o mapa. Continuar?')) return;
   const p = DB.getProcess(currentPID); 
   if(p) { 
     p.status = 'analise'; 
     p.vencedorId = null;
+    p.economia = 0; 
     DB.save(); 
     App.abrir(p.id, 'mapa'); 
   } 
@@ -1196,7 +1353,35 @@ window.editarRequisicao = () => {
   }
 };
 
-window.addFornecedorComp = () => { const p = DB.getProcess(currentPID); p.propostas.push({ fornId: Util.genId(), nome: 'Novo Forn', doc:'', tel:'', email:'', status:'recebida', itens:{}, frete:0, imposto:0, prazo:'', cond:'' }); DB.save(); MapaPrecos.load(p); };
+window.abrirModalAddFornMapa = () => {
+  const p = DB.getProcess(currentPID);
+  const sel = document.getElementById('map-forn-select');
+  sel.innerHTML = '<option value="">Selecione...</option>';
+  DB.data.fornecedores.forEach(f => {
+    if(!p.propostas.find(prop => prop.fornId === f.id)) {
+       sel.innerHTML += `<option value="${f.id}">${f.nome} (${f.cidade || 'Sem cidade'})</option>`;
+    }
+  });
+  UI.openModal('modal-add-forn-mapa');
+};
+
+window.confirmarAddFornMapa = () => {
+  const fid = document.getElementById('map-forn-select').value;
+  if(!fid) return alert('Selecione um fornecedor.');
+  const p = DB.getProcess(currentPID);
+  const f = DB.data.fornecedores.find(x => x.id === fid);
+  if(f && p) {
+    p.propostas.push({ 
+      fornId: f.id, nome: f.nome, doc: f.cnpj, tel: f.tel||'', email: f.email||f.contato||'', 
+      status: 'pendente', itens: {}, frete: 0, imposto: 0, prazo: f.prazo||'', cond: '' 
+    });
+    DB.save();
+    MapaPrecos.load(p);
+    UI.closeModal('modal-add-forn-mapa');
+    UI.toast('Fornecedor adicionado ao mapa!');
+  }
+};
+
 window.removeFornecedorComp = (propId) => { if(!confirm('Remover fornecedor?')) return; const p = DB.getProcess(currentPID); p.propostas = p.propostas.filter(x => x.fornId !== propId); if(p.vencedorId === propId) p.vencedorId = null; DB.save(); MapaPrecos.load(p); document.getElementById('comp-form-forn').style.display = 'none'; };
 window.updatePropFornNome = (propId, val) => { const p = DB.getProcess(currentPID); const prop = p.propostas.find(x => x.fornId === propId); if(prop) prop.nome = val; DB.save(); if(currentCompFornId === propId) document.getElementById('comp-form-title').textContent = `- ${val}`; };
 window.updatePropPreco = (propId, itemId, valStr) => { const p = DB.getProcess(currentPID); const prop = p.propostas.find(x => x.fornId === propId); if(prop) { prop.itens[itemId] = Util.unmaskCur(valStr); prop.status = 'recebida'; } DB.save(); MapaPrecos.load(p); };
@@ -1204,7 +1389,28 @@ window.updatePropFreco = (propId, valStr) => { const p = DB.getProcess(currentPI
 window.editFornDetails = (propId) => { currentCompFornId = propId; const p = DB.getProcess(currentPID); const prop = p.propostas.find(x => x.fornId === propId); const f = DB.data.fornecedores.find(x => x.id === propId) || prop; document.getElementById('comp-form-forn').style.display = 'block'; document.getElementById('comp-form-title').textContent = `- ${f.nome||'Novo'}`; document.getElementById('cfNome').value = f.nome || ''; document.getElementById('cfDoc').value = f.cnpj || f.doc || ''; document.getElementById('cfTel').value = f.tel || ''; document.getElementById('cfEmail').value = f.email || f.contato || ''; document.getElementById('cfCond').value = prop.cond || ''; document.getElementById('cfPrazo').value = prop.prazo || ''; };
 window.updateFornData = (field, val) => { if(!currentCompFornId) return; const p = DB.getProcess(currentPID); const prop = p.propostas.find(x => x.fornId === currentCompFornId); if(prop) prop[field] = val; DB.save(); if(field === 'nome') MapaPrecos.load(p); };
 window.salvarCompObs = () => { const p = DB.getProcess(currentPID); const obsEl = document.getElementById('compObs'); if(p && obsEl) { p.compObs = obsEl.value; DB.save(); } };
-window.selecionarVencedor = (propId) => { if(!confirm('Deseja aprovar esta proposta e gerar a Ordem de Compra?')) return; const p = DB.getProcess(currentPID); p.vencedorId = propId; p.status = 'aprovado'; App.logHistory(p.id, `Fornecedor Vencedor Aprovado. Gerando OC.`); DB.save(); UI.toast('Fornecedor vencedor selecionado!'); App.abrir(p.id, 'oc'); };
+
+window.selecionarVencedor = (propId) => { 
+  if(!confirm('Deseja aprovar esta proposta e gerar a Ordem de Compra?')) return; 
+  const p = DB.getProcess(currentPID); 
+  
+  let sum = 0, count = 0, winningTot = 0;
+  p.propostas.forEach(prop => {
+    let t = prop.frete + prop.imposto;
+    p.req.itens.forEach(i => t += (prop.itens[i.id]||0) * i.qtd);
+    if (t > 0) { sum += t; count++; }
+    if (prop.fornId === propId) winningTot = t;
+  });
+  const avg = count > 0 ? sum / count : winningTot;
+  p.economia = Math.max(0, avg - winningTot);
+  
+  p.vencedorId = propId; 
+  p.status = 'aprovado'; 
+  App.logHistory(p.id, `Fornecedor Vencedor Aprovado. Gerando OC.`); 
+  DB.save(); 
+  UI.toast('Fornecedor vencedor selecionado!'); 
+  App.abrir(p.id, 'oc'); 
+};
 
 window.onload = App.init;
 </script>
