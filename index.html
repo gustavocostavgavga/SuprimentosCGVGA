@@ -85,9 +85,10 @@
   /* DASHBOARD CHART */
   .chart-container { display: flex; align-items: flex-end; gap: 10px; height: 180px; padding-top: 20px; border-bottom: 1px solid var(--line); margin-top: 10px; padding-bottom:10px; }
   .chart-bar-wrapper { flex: 1; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; gap: 8px; height:100%; }
-  .chart-bar { width: 100%; max-width:40px; background: var(--navy); border-radius: 4px 4px 0 0; transition: height 0.3s; min-height: 2px; }
+  .chart-bar-group { display: flex; align-items: flex-end; gap: 2px; height: 100%; width: 100%; justify-content: center; }
+  .chart-bar { width: 12px; border-radius: 2px 2px 0 0; cursor: pointer; position: relative; transition: height 0.3s ease; }
+  .chart-bar:hover::after { content: attr(data-tooltip); position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%); background: #000; color: #fff; padding: 4px 8px; font-size: 10px; border-radius: 4px; white-space: nowrap; z-index: 10; margin-bottom: 4px;}
   .chart-label { font-size: 10px; font-weight: 700; color: var(--muted); text-transform: uppercase; }
-  .chart-val { font-size: 11px; font-weight: 800; color: var(--navy); }
 
   /* ====== EMAIL INBOX ====== */
   .email-list { border: 1px solid var(--line); border-radius:6px; overflow:hidden;}
@@ -206,7 +207,7 @@
     </div>
 
     <div class="sidebar-foot">
-      GRP — Inteligência e Automação<br>v6.0 (SLA, Gráficos & Base Zero)
+      GRP — Inteligência e Automação<br>v6.1 (SLA & Map Edit)
     </div>
   </aside>
 
@@ -226,7 +227,7 @@
           <div class="kpi-sub">Em andamento</div>
         </div>
         <div class="kpi-card">
-          <div class="kpi-title">SLA (Requisições Ativas)</div>
+          <div class="kpi-title">Requisições Emitidas</div>
           <div style="display:flex; justify-content:space-between; align-items:flex-end;">
              <div>
                 <div class="kpi-value" id="dash-no-prazo" style="color:var(--success)">0</div>
@@ -246,7 +247,7 @@
         <div class="kpi-card">
           <div class="kpi-title">Economia Obtida</div>
           <div class="kpi-value" style="color:var(--success)" id="dash-econ">R$ 0,00</div>
-          <div class="kpi-sub">vs. Média do Mapa</div>
+          <div class="kpi-sub">Soma das Diferenças</div>
         </div>
         <div class="kpi-card">
           <div class="kpi-title">Tempo Médio (SLA)</div>
@@ -257,6 +258,12 @@
 
       <section class="block">
         <h2>Volume de Compras e Contratações Realizadas por Mês</h2>
+        <div style="display:flex; justify-content:center; gap:15px; margin-bottom:15px; flex-wrap:wrap;" id="dash-chart-legend">
+           <div style="display:flex; align-items:center; gap:5px; font-size:10px;"><div style="width:12px; height:12px; background:#0B1F3B;"></div> Mirante da Lagoa</div>
+           <div style="display:flex; align-items:center; gap:5px; font-size:10px;"><div style="width:12px; height:12px; background:#163B6B;"></div> Joaquim Leme</div>
+           <div style="display:flex; align-items:center; gap:5px; font-size:10px;"><div style="width:12px; height:12px; background:#2A5D9C;"></div> Parque das Nações</div>
+           <div style="display:flex; align-items:center; gap:5px; font-size:10px;"><div style="width:12px; height:12px; background:#4A81CB;"></div> Cidade Nova</div>
+        </div>
         <div class="chart-container" id="dash-chart">
           <!-- Gráfico injetado via JS -->
         </div>
@@ -398,13 +405,17 @@
         <div class="doc-title">2. Mapa de Preços & Equalização<small id="map-subtitle">Processo</small></div>
         <div class="header-actions">
           <button class="btn btn-outline" onclick="editarRequisicao()">← Editar Requisição de Compra</button>
-          <button class="btn btn-solid" onclick="abrirModalAddFornMapa()">➕ Adicionar Fornecedor ao Mapa</button>
+          <button class="btn btn-solid" onclick="abrirModalAddFornMapa()">➕ Adicionar Fornecedor Existente</button>
         </div>
       </div>
 
       <section class="block">
-        <h2>Mapa Comparativo
-          <button class="btn btn-outline" style="font-size:10px; padding:4px 10px; border-color:var(--success); color:var(--success);" onclick="MapaPrecos.markBest()">Marcar melhores</button>
+        <h2 style="display:flex; justify-content:space-between; align-items:center;">
+          <span>Mapa Comparativo</span>
+          <div>
+             <button class="btn btn-outline" style="font-size:10px; padding:4px 10px; border-color:var(--success); color:var(--success);" onclick="MapaPrecos.markBest()">Marcar melhores</button>
+             <button class="btn btn-success" style="font-size:10px; padding:4px 10px; margin-left:8px;" onclick="addFornecedorNovoNoMapa()">+ Add Fornecedor Novo</button>
+          </div>
         </h2>
         <div style="overflow-x:auto;">
           <table class="items table-comp" id="map-table">
@@ -424,6 +435,9 @@
           <div class="field"><label>E-mail</label><input type="email" id="cfEmail" onchange="updateFornData('email', this.value)"></div>
           <div class="field"><label>Cond. Pagto Proposta</label><input type="text" id="cfCond" onchange="updateFornData('cond', this.value)"></div>
           <div class="field"><label>Prazo Entrega</label><input type="text" id="cfPrazo" onchange="updateFornData('prazo', this.value)"></div>
+        </div>
+        <div style="margin-top:15px; text-align:right;">
+           <button class="btn btn-solid" style="padding:10px 20px;" onclick="salvarFornDoMapaNoBanco()">💾 Salvar Fornecedor no Banco Geral</button>
         </div>
       </section>
 
@@ -641,7 +655,7 @@ const DB = {
         await setDoc(docRef, DB.data);
       }
       
-      // Auto-cleanup legacy fictional suppliers without needing the reset button
+      // Auto-cleanup legacy fictional suppliers
       if (DB.data.fornecedores.some(f => ['f1','f2','f3','f4'].includes(f.id))) {
           DB.data.fornecedores = DB.data.fornecedores.filter(f => !['f1','f2','f3','f4'].includes(f.id));
           DB.save();
@@ -741,34 +755,57 @@ const App = {
     document.getElementById('dash-atraso').textContent = emAtraso;
 
     // Calc Chart
-    const meses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
-    const counts = new Array(12).fill(0);
-    let maxCount = 0;
+    const chartMonths = [
+       { key: '09/2026', label: 'Set/26' }, { key: '10/2026', label: 'Out/26' },
+       { key: '11/2026', label: 'Nov/26' }, { key: '12/2026', label: 'Dez/26' },
+       { key: '01/2027', label: 'Jan/27' }, { key: '02/2027', label: 'Fev/27' },
+       { key: '03/2027', label: 'Mar/27' }, { key: '04/2027', label: 'Abr/27' },
+       { key: '05/2027', label: 'Mai/27' }, { key: '06/2027', label: 'Jun/27' },
+       { key: '07/2027', label: 'Jul/27' }, { key: '08/2027', label: 'Ago/27' }
+    ];
+    
+    const speInfos = [
+       { id: 'bocaiuva', label: 'Mirante da Lagoa', color: '#0B1F3B' },
+       { id: 'jleme', label: 'Joaquim Leme', color: '#163B6B' },
+       { id: 'mife', label: 'Parque das Nações', color: '#2A5D9C' },
+       { id: 'nazareno', label: 'Cidade Nova', color: '#4A81CB' }
+    ];
 
+    const chartData = {};
+    chartMonths.forEach(m => chartData[m.key] = { bocaiuva: 0, jleme: 0, mife: 0, nazareno: 0 });
+
+    let maxVal = 0;
     procs.filter(p => p.status === 'aprovado').forEach(p => {
        const dt = p.oc.emissao || p.criadoEm;
-       if(dt) {
-          const parts = dt.split('/');
-          if(parts.length >= 2) {
-             const m = parseInt(parts[1], 10) - 1;
-             if(m >= 0 && m <= 11) {
-                counts[m]++;
-                if(counts[m] > maxCount) maxCount = counts[m];
-             }
+       if(dt && p.spe) {
+          const monthKey = dt.substring(3); // MM/YYYY
+          if(chartData[monthKey] && chartData[monthKey][p.spe] !== undefined) {
+             chartData[monthKey][p.spe]++;
+             if(chartData[monthKey][p.spe] > maxVal) maxVal = chartData[monthKey][p.spe];
           }
        }
     });
 
     const chartEl = document.getElementById('dash-chart');
     chartEl.innerHTML = '';
-    meses.forEach((mes, idx) => {
-       const val = counts[idx];
-       const pct = maxCount === 0 ? 0 : (val / maxCount) * 100;
+    
+    chartMonths.forEach(m => {
+       const data = chartData[m.key];
+       let barsHtml = '';
+       speInfos.forEach(spe => {
+          const val = data[spe.id] || 0;
+          const pct = maxVal === 0 ? 0 : (val / maxVal) * 100;
+          const h = pct > 0 ? Math.max(pct, 5) : 0;
+          if (val > 0) {
+             barsHtml += `<div class="chart-bar" style="height: ${h}%; background: ${spe.color};" data-tooltip="${spe.label}: ${val} OC(s)"></div>`;
+          } else {
+             barsHtml += `<div class="chart-bar" style="height: 0px; background: transparent;"></div>`;
+          }
+       });
        chartEl.innerHTML += `
          <div class="chart-bar-wrapper">
-           <div class="chart-val">${val > 0 ? val : ''}</div>
-           <div class="chart-bar" style="height: ${pct > 0 ? Math.max(pct, 2) : 2}%"></div>
-           <div class="chart-label">${mes}</div>
+           <div class="chart-bar-group">${barsHtml}</div>
+           <div class="chart-label">${m.label}</div>
          </div>
        `;
     });
@@ -1481,7 +1518,44 @@ window.confirmarAddFornMapa = () => {
   }
 };
 
-window.removeFornecedorComp = (propId) => { if(!confirm('Remover fornecedor?')) return; const p = DB.getProcess(currentPID); p.propostas = p.propostas.filter(x => x.fornId !== propId); if(p.vencedorId === propId) p.vencedorId = null; DB.save(); MapaPrecos.load(p); document.getElementById('comp-form-forn').style.display = 'none'; };
+window.addFornecedorNovoNoMapa = () => {
+  const p = DB.getProcess(currentPID);
+  const newId = Util.genId();
+  p.propostas.push({ 
+    fornId: newId, nome: 'NOVO FORNECEDOR (Editar)', doc: '', tel: '', email: '', 
+    status: 'recebida', itens: {}, frete: 0, imposto: 0, prazo: '', cond: '' 
+  });
+  DB.save();
+  MapaPrecos.load(p);
+  editFornDetails(newId);
+  UI.toast("Preencha os dados e clique em 'Salvar no Banco'!");
+};
+
+window.salvarFornDoMapaNoBanco = () => {
+  if(!currentCompFornId) return;
+  const p = DB.getProcess(currentPID);
+  const prop = p.propostas.find(x => x.fornId === currentCompFornId);
+  if(!prop) return;
+  
+  let f = DB.data.fornecedores.find(x => x.id === currentCompFornId);
+  if(!f) {
+     f = { id: currentCompFornId, lat: 0, lng: 0, score: 50, precoHist: 'Novo', cidade: '' };
+     DB.data.fornecedores.push(f);
+  }
+  
+  f.nome = prop.nome || 'Novo Fornecedor';
+  f.cnpj = prop.doc || '';
+  f.tel = prop.tel || '';
+  f.email = prop.email || '';
+  f.cats = p.req.cat || '';
+  f.prazo = prop.prazo || '';
+  
+  DB.save();
+  UI.toast('Fornecedor salvo no Banco de Dados global!');
+  App.renderForn();
+};
+
+window.removeFornecedorComp = (propId) => { if(!confirm('Remover fornecedor do Mapa?')) return; const p = DB.getProcess(currentPID); p.propostas = p.propostas.filter(x => x.fornId !== propId); if(p.vencedorId === propId) p.vencedorId = null; DB.save(); MapaPrecos.load(p); document.getElementById('comp-form-forn').style.display = 'none'; };
 window.updatePropFornNome = (propId, val) => { const p = DB.getProcess(currentPID); const prop = p.propostas.find(x => x.fornId === propId); if(prop) prop.nome = val; DB.save(); if(currentCompFornId === propId) document.getElementById('comp-form-title').textContent = `- ${val}`; };
 window.updatePropPreco = (propId, itemId, valStr) => { const p = DB.getProcess(currentPID); const prop = p.propostas.find(x => x.fornId === propId); if(prop) { prop.itens[itemId] = Util.unmaskCur(valStr); prop.status = 'recebida'; } DB.save(); MapaPrecos.load(p); };
 window.updatePropFreco = (propId, valStr) => { const p = DB.getProcess(currentPID); const prop = p.propostas.find(x => x.fornId === propId); if(prop) prop.frete = Util.unmaskCur(valStr); DB.save(); MapaPrecos.load(p); };
@@ -1493,15 +1567,16 @@ window.selecionarVencedor = (propId) => {
   if(!confirm('Deseja aprovar esta proposta e gerar a Ordem de Compra?')) return; 
   const p = DB.getProcess(currentPID); 
   
-  let sum = 0, count = 0, winningTot = 0;
+  let minTot = Infinity, maxTot = 0;
   p.propostas.forEach(prop => {
     let t = prop.frete + prop.imposto;
     p.req.itens.forEach(i => t += (prop.itens[i.id]||0) * i.qtd);
-    if (t > 0) { sum += t; count++; }
-    if (prop.fornId === propId) winningTot = t;
+    if (t > 0) {
+       if (t < minTot) minTot = t;
+       if (t > maxTot) maxTot = t;
+    }
   });
-  const avg = count > 0 ? sum / count : winningTot;
-  p.economia = Math.max(0, avg - winningTot);
+  p.economia = (maxTot > 0 && minTot !== Infinity) ? (maxTot - minTot) : 0;
   
   p.vencedorId = propId; 
   p.status = 'aprovado'; 
