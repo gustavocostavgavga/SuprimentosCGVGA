@@ -1,4 +1,5 @@
 
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -8,33 +9,72 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+<!-- Bibliotecas Externas para Análises e Exportação -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
 <style>
   :root {
-    --navy: #0B1F3B; --navy-2: #163B6B; --ink: #0A0A0A; --paper: #FFFFFF;
-    --bg: #F4F5F7; --line: #DDE1E6; --muted: #6B7280; --danger: #8A2E2E;
-    --success: #2E8A5B; --highlight: #F0F4FA; --ai-color: #6366F1; --ai-light: #E0E7FF;
+    --navy: #0d3b1f;
+    --navy-2: #24783d;
+    --ink: #232323;
+    --paper: #FFFFFF;
+    --bg: #efefef;
+    --line: #cccccc;
+    --muted: #777777;
+    --danger: #8A2E2E;
+    --success: #24783d;
+    --highlight: #e8f0e9;
+    --ai-color: #b0c90a;
+    --ai-light: #f7f9ea;
   }
+  
+  /* MODO ESCURO (DARK MODE) */
+  body.dark-mode {
+    --navy: #b0c90a; 
+    --navy-2: #4a9c63; 
+    --ink: #efefef; 
+    --paper: #0d3b1f;
+    --bg: #082413; 
+    --line: #18522b; 
+    --muted: #a4c9a8; 
+    --highlight: #124a27; 
+    --ai-light: #0d3b1f;
+    --success: #b0c90a; 
+    --danger: #EF4444;
+  }
+  
   * { box-sizing: border-box; }
   html, body { margin: 0; padding: 0; }
-  body { font-family: 'Montserrat', sans-serif; background: var(--bg); color: var(--ink); -webkit-font-smoothing: antialiased; }
-  .app { display: grid; grid-template-columns: 260px 1fr; min-height: 100vh; }
+  body { font-family: 'Montserrat', sans-serif; background: var(--bg); color: var(--ink); -webkit-font-smoothing: antialiased; transition: background-color 0.3s, color 0.3s; }
+  .app { display: grid; grid-template-columns: 260px minmax(0, 1fr); min-height: 100vh; max-width: 100vw; overflow-x: hidden; }
 
   /* ====== SIDEBAR ====== */
-  .sidebar { background: var(--navy); color: #fff; padding: 32px 24px; display: flex; flex-direction: column; gap: 32px; position: sticky; top:0; height: 100vh; overflow-y: auto;}
+  .sidebar { background: #0d3b1f; color: #fff; padding: 32px 24px; display: flex; flex-direction: column; gap: 32px; transition: 0.3s;}
+  .dark-mode .sidebar { border-right: 1px solid var(--line); background: #082413; }
   .brand { display: flex; flex-direction: column; gap: 2px; }
   .brand .mark { font-weight: 800; font-size: 20px; letter-spacing: 1px; line-height: 1.2; }
-  .brand .sub { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: #9FB1CC; font-weight: 600; margin-top: 6px; }
+  .brand .sub { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: #b0c90a; font-weight: 600; margin-top: 6px; }
   .nav-group { display: flex; flex-direction: column; gap: 8px; }
-  .nav-label { font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: #7C93B8; font-weight: 700; margin-bottom: 6px; }
-  .nav-btn { all: unset; cursor: pointer; display: flex; align-items: center; gap: 10px; padding: 11px 12px; border-radius: 6px; font-size: 13px; font-weight: 600; color: #E7ECF4; border: 1px solid transparent; transition: all .15s ease; }
+  .nav-label { font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: #a4c9a8; font-weight: 700; margin-bottom: 6px; }
+  .nav-btn { all: unset; cursor: pointer; display: flex; align-items: center; gap: 10px; padding: 11px 12px; border-radius: 6px; font-size: 13px; font-weight: 600; color: #efefef; border: 1px solid transparent; transition: all .15s ease; }
   .nav-btn:hover, .nav-btn.active { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.15); }
-  .nav-btn.primary { background: #fff; color: var(--navy); }
-  .nav-btn.primary:hover { background: #E7ECF4; }
-  .nav-btn.ai-btn { background: linear-gradient(135deg, #6366F1, #4F46E5); color: #fff; border: none; }
-  .sidebar-foot { margin-top: auto; font-size: 10px; color: #5E7396; letter-spacing: .5px; line-height: 1.6; }
+  .nav-btn.primary { background: #fff; color: #0d3b1f; }
+  .nav-btn.primary:hover { background: #e8f0e9; }
+  .nav-btn.ai-btn { background: linear-gradient(135deg, #b0c90a, #8da608); color: #000; border: none; }
+  
+  .logout-btn { color: #8A2E2E !important; margin-top:10px; }
+  .logout-btn:hover { background: #8A2E2E !important; color: #fff !important; }
+
+  .sidebar-foot { margin-top: auto; padding-top: 40px; font-size: 10px; color: #7da885; letter-spacing: .5px; line-height: 1.6; text-align: left;}
 
   /* ====== MAIN & VIEWS ====== */
-  main { padding: 40px 48px 80px; max-width: 1200px; margin: 0 auto; width: 100%; }
+  main { padding: 40px 48px 80px; max-width: 1200px; margin: 0 auto; width: 100%; transition: 0.3s; }
   .view { display: none; animation: fadeIn 0.3s ease; }
   .view.active { display: block; }
   @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
@@ -48,21 +88,23 @@
   .btn { all: unset; cursor: pointer; font-size: 12px; font-weight: 700; padding: 10px 16px; border-radius: 4px; transition: 0.2s; letter-spacing: .5px; text-transform: uppercase; display: inline-flex; align-items: center; justify-content: center; gap:6px; text-align:center;}
   .btn-outline { border: 1px solid var(--navy); color: var(--navy); }
   .btn-outline:hover { background: var(--highlight); }
-  .btn-solid { background: var(--navy); color: #fff; }
-  .btn-solid:hover { background: var(--navy-2); }
+  .btn-solid { background: var(--navy); color: var(--bg); }
+  .btn-solid:hover { opacity: 0.9; }
   .btn-success { background: var(--success); color: #fff; }
-  .btn-ai { background: var(--ai-color); color: #fff; }
-  .btn-ai:hover { background: #4F46E5; }
+  .btn-ai { background: var(--ai-color); color: #000; }
+  .btn-ai:hover { opacity: 0.9; }
+  .btn-pdf { background: #8A2E2E; color: #fff; }
+  .btn-excel { background: #107C41; color: #fff; }
   
   /* ====== TAGS ====== */
   .status-badge { padding: 4px 8px; border-radius: 4px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
-  .s-req { background: #F3F4F6; color: #374151; }
+  .s-req { background: #e8f0e9; color: #0d3b1f; }
   .s-cot { background: #FEF3C7; color: #92400E; }
   .s-analise { background: #DBEAFE; color: #1E40AF; }
   .s-aprov { background: #D1FAE5; color: #065F46; }
 
   /* ====== GRIDS & BLOCKS ====== */
-  section.block { background: var(--paper); border: 1px solid var(--line); border-radius: 6px; padding: 24px 26px; margin-bottom: 20px; position:relative;}
+  section.block { background: var(--paper); border: 1px solid var(--line); border-radius: 6px; padding: 24px 26px; margin-bottom: 20px; position:relative; width: 100%; transition: 0.3s;}
   .block h2 { font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; font-weight: 700; color: var(--navy); margin: 0 0 18px; padding-bottom: 10px; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; align-items: center;}
   .grid { display: grid; gap: 16px; }
   .cols-2 { grid-template-columns: 1fr 1fr; }
@@ -70,14 +112,18 @@
   .cols-4 { grid-template-columns: 1fr 1fr 1fr 1fr; }
   
   .field label { display: block; font-size: 10px; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); font-weight: 700; margin-bottom: 6px; }
-  .field input, .field select, .field textarea { width: 100%; font-family: 'Montserrat', sans-serif; font-size: 13.5px; font-weight: 500; color: var(--ink); border: 1px solid var(--line); border-radius: 4px; padding: 10px 11px; outline: none; background: #fff; transition: border-color .15s ease; }
+  .field input, .field select, .field textarea { 
+    width: 100%; font-family: 'Montserrat', sans-serif; font-size: 13.5px; font-weight: 500; 
+    color: var(--ink); border: 1px solid var(--line); border-radius: 4px; padding: 0 11px; 
+    height: 38px; outline: none; background: transparent; transition: border-color .15s ease; 
+  }
   .field input:focus, .field select:focus, .field textarea:focus { border-color: var(--navy); }
   .field input:disabled, .field textarea:disabled, .field select:disabled { background: var(--bg); color: var(--muted); }
-  .field textarea { resize: vertical; min-height: 64px; }
+  .field textarea { padding: 10px 11px; resize: vertical; min-height: 64px; height: auto; }
 
   /* ====== DASHBOARD KPIs ====== */
-  .kpi-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; margin-bottom:24px;}
-  .kpi-card { background: var(--paper); border: 1px solid var(--line); border-radius: 6px; padding: 16px; display:flex; flex-direction:column; justify-content:space-between; gap:8px;}
+  .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom:24px;}
+  .kpi-card { background: var(--paper); border: 1px solid var(--line); border-radius: 6px; padding: 16px; display:flex; flex-direction:column; justify-content:space-between; gap:8px; transition: 0.3s;}
   .kpi-card .kpi-title { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); }
   .kpi-card .kpi-value { font-size: 24px; font-weight: 800; color: var(--navy); }
   .kpi-card .kpi-sub { font-size: 10px; font-weight: 600; color: var(--success); }
@@ -90,9 +136,20 @@
   .chart-bar:hover::after { content: attr(data-tooltip); position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%); background: #000; color: #fff; padding: 4px 8px; font-size: 10px; border-radius: 4px; white-space: nowrap; z-index: 10; margin-bottom: 4px;}
   .chart-label { font-size: 10px; font-weight: 700; color: var(--muted); text-transform: uppercase; }
 
+  /* ====== CUSTOM MULTI-SELECT ====== */
+  .custom-select { position: relative; width: 100%; font-family: 'Montserrat', sans-serif; font-size: 13.5px; }
+  .select-box { border: 1px solid var(--line); border-radius: 4px; padding: 0 11px; background: transparent; cursor: pointer; display: flex; justify-content: space-between; align-items: center; height: 38px; color: var(--ink); font-weight: 500; transition: border-color .15s ease;}
+  .select-box:hover { border-color: var(--navy); }
+  .select-box::after { content: '▼'; font-size: 10px; color: var(--muted); }
+  .dropdown-list { display: none; position: absolute; top: 100%; left: 0; width: 100%; max-height: 250px; overflow-y: auto; background: var(--paper); border: 1px solid var(--navy); border-radius: 4px; z-index: 100; box-shadow: 0 4px 12px rgba(0,0,0,0.15); margin-top: 4px; padding: 5px 0;}
+  .dropdown-list.show { display: block; }
+  .checkbox-item { padding: 8px 12px; display: flex; align-items: center; gap: 8px; cursor: pointer; transition: 0.2s; font-size: 12px; font-weight: 500; color: var(--ink);}
+  .checkbox-item:hover { background: var(--highlight); }
+  .checkbox-item input { width: 16px; height: 16px; cursor: pointer; margin:0; accent-color: var(--navy-2);}
+
   /* ====== EMAIL INBOX ====== */
   .email-list { border: 1px solid var(--line); border-radius:6px; overflow:hidden;}
-  .email-item { display:flex; justify-content:space-between; align-items:center; padding: 16px; border-bottom: 1px solid var(--line); background:#fff; transition:0.2s;}
+  .email-item { display:flex; justify-content:space-between; align-items:center; padding: 16px; border-bottom: 1px solid var(--line); background:var(--paper); transition:0.2s;}
   .email-item:hover { background: var(--highlight); }
   .email-item:last-child { border-bottom:none;}
   .em-info { display:flex; flex-direction:column; gap:4px;}
@@ -100,15 +157,24 @@
   .em-subject { font-size:12px; font-weight:500; color:var(--ink);}
   .em-meta { font-size:10px; font-weight:600; color:var(--muted);}
 
-  /* ====== TABLES ====== */
+  /* ====== TABLES & SCROLL WRAPPER ====== */
+  .table-wrapper { width: 100%; max-height: 450px; overflow-y: auto; overflow-x: auto; border: 1px solid var(--line); border-radius: 6px; }
+  .table-wrapper table.items { min-width: 1200px; border-collapse: separate; border-spacing: 0; }
+  .table-wrapper thead th { position: sticky; top: 0; background: var(--paper); z-index: 2; box-shadow: 0 1px 0 var(--line); border-top: none; }
+  
   table.items { width: 100%; border-collapse: collapse; }
-  table.items th { font-size: 9.5px; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); font-weight: 700; text-align: left; padding: 10px 8px; border-bottom: 1px solid var(--line); background: #FBFBFC;}
+  table.items th { font-size: 9.5px; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); font-weight: 700; text-align: left; padding: 10px 8px; border-bottom: 1px solid var(--line); background: var(--paper);}
   table.items td { padding: 10px 8px; border-bottom: 1px solid var(--line); vertical-align: middle; font-size: 13px;}
-  table.items input { width: 100%; border: 1px solid var(--line); border-radius: 4px; padding: 8px 9px; font-family: 'Montserrat', sans-serif; font-size: 13px; font-weight: 500; outline: none; }
+  table.items input { width: 100%; border: 1px solid var(--line); border-radius: 4px; padding: 8px 9px; font-family: 'Montserrat', sans-serif; font-size: 13px; font-weight: 500; outline: none; background: transparent; color: var(--ink);}
   table.items input:focus { border-color: var(--navy); }
   table.items input.num { text-align: right; }
   
-  .del-btn { all: unset; cursor: pointer; color: var(--danger); font-weight: 800; font-size: 18px; line-height: 1; padding: 4px 8px; }
+  .del-btn { all: unset; cursor: pointer; color: var(--danger); font-weight: 800; font-size: 18px; line-height: 1; padding: 4px 8px; transition: 0.2s; }
+  .del-btn:hover { opacity: 0.7; }
+  
+  .sortable { cursor: pointer; user-select: none; transition: 0.2s; }
+  .sortable:hover { background: var(--highlight) !important; color: var(--navy); }
+
   .totals { display: flex; justify-content: flex-end; margin-top: 16px; padding-top: 14px; border-top: 2px solid var(--navy); }
   .totals .box { text-align: right; }
   .totals .label { font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); font-weight: 700; }
@@ -117,33 +183,37 @@
   /* MAPA DE PREÇOS / COMPARAÇÃO */
   .table-comp th, .table-comp td { border: 1px solid var(--line); text-align: center; }
   .table-comp td:nth-child(1), .table-comp th:nth-child(1) { text-align: left; }
-  .winner-col { background-color: #ECFDF5; border: 2px solid var(--success) !important; }
-  .best-price { background-color: #D1FAE5 !important; border: 1px solid var(--success) !important; color: var(--success) !important; font-weight: 800; }
+  .winner-col { background-color: var(--highlight); border: 2px solid var(--success) !important; }
+  .best-price { background-color: var(--highlight) !important; border: 1px solid var(--success) !important; color: var(--success) !important; font-weight: 800; }
   
-  /* ====== MODALS & OVERLAYS ====== */
-  .modal-overlay { position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(11,31,59,0.7); display:flex; justify-content:center; align-items:center; z-index:100; opacity:0; pointer-events:none; transition:0.2s;}
+  /* OVERLAYS E TEMAS DE ABAS */
+  .modal-overlay { position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(13,59,31,0.7); display:flex; justify-content:center; align-items:center; z-index:100; opacity:0; pointer-events:none; transition:0.2s;}
   .modal-overlay.show { opacity:1; pointer-events:all;}
-  .modal { background:#fff; border-radius:8px; width:90%; max-width:600px; padding:24px; transform:translateY(20px); transition:0.3s; max-height:90vh; overflow-y:auto;}
+  .modal { background: var(--paper); border-radius:8px; width:90%; max-width:600px; padding:24px; transform:translateY(20px); transition:0.3s; max-height:90vh; overflow-y:auto; border: 1px solid var(--line);}
   .modal-overlay.show .modal { transform:translateY(0);}
   .modal-header { font-size:16px; font-weight:800; color:var(--navy); border-bottom:1px solid var(--line); padding-bottom:12px; margin-bottom:16px; display:flex; justify-content:space-between;}
   
-  /* ====== TIMELINE ====== */
   .timeline { display:flex; flex-direction:column; gap:16px; border-left:2px solid var(--line); padding-left:16px; margin-left:8px;}
   .tl-item { position:relative; font-size:12px; }
-  .tl-item::before { content:''; position:absolute; left:-23px; top:2px; width:10px; height:10px; border-radius:50%; background:var(--navy); border:2px solid #fff;}
+  .tl-item::before { content:''; position:absolute; left:-23px; top:2px; width:10px; height:10px; border-radius:50%; background:var(--navy); border:2px solid var(--bg);}
   .tl-date { font-size:10px; font-weight:700; color:var(--muted); margin-bottom:2px;}
   .tl-content { font-weight:600; color:var(--ink);}
 
-  /* ====== TOAST ====== */
   .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(20px); background: var(--navy); color: #fff; padding: 12px 22px; border-radius: 6px; font-size: 12.5px; font-weight: 600; letter-spacing: .3px; opacity: 0; pointer-events: none; transition: opacity .2s ease, transform .2s ease; z-index: 9999; }
   .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
-  /* SPINNER */
   .spinner { border: 3px solid rgba(255,255,255,0.3); border-top: 3px solid #fff; border-radius: 50%; width: 16px; height: 16px; animation: spin 1s linear infinite; display:inline-block;}
   @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
   
   #db-loader { position: fixed; top:0; left:0; right:0; bottom:0; background:var(--bg); z-index:100001; display:flex; flex-direction:column; justify-content:center; align-items:center; transition: opacity 0.5s ease;}
-  .db-loader-spinner { border: 4px solid var(--line); border-top: 4px solid var(--navy); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin-bottom:16px;}
+  .db-loader-spinner { border: 4px solid var(--line); border-top: 4px solid var(--navy-2); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin-bottom:16px;}
+
+  .tab-container { display: flex; gap: 4px; background: var(--bg); padding: 4px; border-radius: 6px; border: 1px solid var(--line); }
+  .tab-btn { all: unset; cursor: pointer; font-size: 12px; font-weight: 700; padding: 8px 16px; border-radius: 4px; transition: 0.2s; color: var(--muted); }
+  .tab-btn:hover { color: var(--ink); }
+  .tab-btn.active { background: var(--paper); color: var(--navy); box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+  
+  .dark-mode .leaflet-popup-content-wrapper, .dark-mode .leaflet-popup-tip { background-color: var(--paper); color: var(--ink); }
 
   /* ====== PRINT STYLES ====== */
   @media print {
@@ -155,6 +225,7 @@
     .block { border: 1px solid #ccc !important; box-shadow: none !important; padding: 15px !important; margin-bottom: 20px !important; break-inside: avoid; }
     .view { display: none !important; }
     .view.active { display: block !important; }
+    .table-wrapper { max-height: none !important; overflow: visible !important; border: none !important; }
     input, select, textarea { border: none !important; background: transparent !important; color: #000 !important; -webkit-appearance: none; outline: none; resize: none; box-shadow: none !important; }
     input::placeholder, textarea::placeholder { color: transparent !important; }
   }
@@ -162,20 +233,21 @@
 </head>
 <body>
 
-<div id="login-screen" style="position:fixed; top:0; left:0; width:100%; height:100%; background:var(--navy); display:flex; justify-content:center; align-items:center; z-index:100000; transition: opacity 0.5s ease;">
-  <div style="background:#fff; padding:40px 30px; border-radius:8px; width:90%; max-width:400px; box-shadow: 0 10px 25px rgba(0,0,0,0.3);">
-    <div style="text-align:center; font-weight:800; font-size:16px; color:var(--navy); margin-bottom:5px; letter-spacing:1px; line-height:1.4;">GERENCIAL DE SUPRIMENTOS<br>CASAGRANDE URBANISMO</div>
-    <hr style="border:none; border-top:1px solid var(--line); margin: 20px 0;">
+<div id="login-screen" style="position:fixed; top:0; left:0; width:100%; height:100%; background:#0d3b1f; display:flex; justify-content:center; align-items:center; z-index:100000; transition: opacity 0.5s ease;">
+  <div style="background:#fff; padding:40px 30px; border-radius:8px; width:90%; max-width:400px; text-align:center; box-shadow: 0 10px 25px rgba(0,0,0,0.3);">
+    <div style="font-weight:800; font-size:16px; color:#0d3b1f; margin-bottom:5px; letter-spacing:1px; line-height:1.4;">PLATAFORMA DE GESTÃO DE SUPRIMENTOS DA CASAGRANDE URBANISMO</div>
+    <hr style="border:none; border-top:1px solid #cccccc; margin: 20px 0;">
     <div class="field" style="text-align:left; margin-bottom:15px;">
-      <label style="font-size:11px; margin-bottom:8px;">Usuário:</label>
-      <input type="text" id="login-user" placeholder="Digite seu usuário" onkeypress="if(event.key === 'Enter') efetuarLogin()" style="width:100%; padding:12px; border:1px solid var(--line); border-radius:4px; font-family:'Montserrat', sans-serif; outline:none;">
+      <label style="font-size:11px; margin-bottom:8px; color:#777777;">Usuário:</label>
+      <input type="text" id="login-user" placeholder="Digite seu usuário" onkeypress="if(event.key === 'Enter') efetuarLogin()" style="width:100%; padding:0 12px; height:42px; border:1px solid #cccccc; border-radius:4px; font-family:'Montserrat', sans-serif; outline:none; color:#000 !important; background:#fff !important;">
     </div>
-    <div class="field" style="text-align:left; margin-bottom:25px;">
-      <label style="font-size:11px; margin-bottom:8px;">Senha:</label>
-      <input type="password" id="login-pass" placeholder="Digite sua senha" onkeypress="if(event.key === 'Enter') efetuarLogin()" style="width:100%; padding:12px; border:1px solid var(--line); border-radius:4px; font-family:'Montserrat', sans-serif; outline:none;">
+    <div class="field" style="text-align:left; margin-bottom:25px; position:relative;">
+      <label style="font-size:11px; margin-bottom:8px; color:#777777;">Senha:</label>
+      <input type="password" id="login-pass" placeholder="Digite sua senha" onkeypress="if(event.key === 'Enter') efetuarLogin()" style="width:100%; padding:0 12px; height:42px; border:1px solid #cccccc; border-radius:4px; font-family:'Montserrat', sans-serif; outline:none; color:#000 !important; background:#fff !important;">
+      <span onclick="window.togglePassword()" style="position:absolute; right:12px; top:33px; cursor:pointer; font-size:14px; color:#777;">👁️</span>
     </div>
     <div style="text-align:center;">
-      <button class="btn btn-solid" style="width:100%; max-width:200px; padding:14px; font-size:13px;" onclick="efetuarLogin()">Acessar Painel</button>
+      <button class="btn" style="background:#0d3b1f; color:#fff; width:100%; max-width:200px; padding:14px; font-size:13px;" onclick="efetuarLogin()">Acessar Painel</button>
     </div>
   </div>
 </div>
@@ -203,11 +275,14 @@
       <div class="nav-label" style="margin-top:24px;">Ações Globais</div>
       <button class="nav-btn" onclick="imprimirTela()">Imprimir Tela Atual</button>
       
-      <button class="nav-btn" style="color:var(--danger); margin-top:20px;" onclick="efetuarLogout()">Sair / Deslogar</button>
+      <!-- Tema Sol/Lua -->
+      <button class="nav-btn" style="margin-top:10px; color:#b0c90a;" onclick="App.toggleTheme()" id="btn-theme-toggle">🌙 Modo Escuro</button>
+      
+      <button class="nav-btn logout-btn" onclick="efetuarLogout()">Sair / Deslogar</button>
     </div>
 
     <div class="sidebar-foot">
-      GRP — Inteligência e Automação<br>v6.1 (SLA & Map Edit)
+      Inteligência e Automação de Plataforma de Gestão de Suprimentos - CasaGrande Urbanismo
     </div>
   </aside>
 
@@ -247,7 +322,7 @@
         <div class="kpi-card">
           <div class="kpi-title">Economia Obtida</div>
           <div class="kpi-value" style="color:var(--success)" id="dash-econ">R$ 0,00</div>
-          <div class="kpi-sub">Soma das Diferenças</div>
+          <div class="kpi-sub">vs. Maior Valor</div>
         </div>
         <div class="kpi-card">
           <div class="kpi-title">Tempo Médio (SLA)</div>
@@ -259,10 +334,10 @@
       <section class="block">
         <h2>Volume de Compras e Contratações Realizadas por Mês</h2>
         <div style="display:flex; justify-content:center; gap:15px; margin-bottom:15px; flex-wrap:wrap;" id="dash-chart-legend">
-           <div style="display:flex; align-items:center; gap:5px; font-size:10px;"><div style="width:12px; height:12px; background:#0B1F3B;"></div> Mirante da Lagoa</div>
-           <div style="display:flex; align-items:center; gap:5px; font-size:10px;"><div style="width:12px; height:12px; background:#163B6B;"></div> Joaquim Leme</div>
-           <div style="display:flex; align-items:center; gap:5px; font-size:10px;"><div style="width:12px; height:12px; background:#2A5D9C;"></div> Parque das Nações</div>
-           <div style="display:flex; align-items:center; gap:5px; font-size:10px;"><div style="width:12px; height:12px; background:#4A81CB;"></div> Cidade Nova</div>
+           <div style="display:flex; align-items:center; gap:5px; font-size:10px;"><div style="width:12px; height:12px; background:var(--navy);"></div> Mirante da Lagoa</div>
+           <div style="display:flex; align-items:center; gap:5px; font-size:10px;"><div style="width:12px; height:12px; background:var(--navy-2);"></div> Joaquim Leme</div>
+           <div style="display:flex; align-items:center; gap:5px; font-size:10px;"><div style="width:12px; height:12px; background:var(--success);"></div> Parque das Nações</div>
+           <div style="display:flex; align-items:center; gap:5px; font-size:10px;"><div style="width:12px; height:12px; background:var(--ai-color);"></div> Cidade Nova</div>
         </div>
         <div class="chart-container" id="dash-chart">
           <!-- Gráfico injetado via JS -->
@@ -300,30 +375,130 @@
       </section>
     </div>
 
-    <!-- ==================== VIEW: FORNECEDORES ==================== -->
+    <!-- ==================== VIEW: FORNECEDORES (COM ABAS) ==================== -->
     <div id="view-fornecedores" class="view">
       <div class="doc-head">
-        <div class="doc-title">Banco de Fornecedores<small>Base de dados e score de performance</small></div>
-        <button class="btn btn-solid" onclick="UI.openModal('modal-add-forn')">+ Adicionar Fornecedor</button>
+        <div class="doc-title">Banco de Fornecedores<small>Gestão, Cadastro e Analytics de Suprimentos</small></div>
+        <div class="header-actions">
+           <div class="tab-container">
+              <button class="tab-btn active" id="tab-btn-lista" onclick="App.switchFornTab('lista')">Base de Dados</button>
+              <button class="tab-btn" id="tab-btn-analise" onclick="App.switchFornTab('analises')">Dashboard & Análises</button>
+           </div>
+        </div>
       </div>
-      <section class="block">
-        <table class="items">
-          <thead>
-            <tr>
-              <th>Razão Social</th>
-              <th>E-mail</th>
-              <th>Categoria Principal</th>
-              <th>Score IA</th>
-              <th>Prazo Médio</th>
-              <th>Cidade/UF</th>
-              <th>Lat</th>
-              <th>Lng</th>
-              <th style="text-align:right">Ações</th>
-            </tr>
-          </thead>
-          <tbody id="lista-fornecedores-body"></tbody>
-        </table>
-      </section>
+
+      <!-- SUB-ABA 1: BASE DE DADOS -->
+      <div id="forn-tab-lista">
+          <div class="kpi-grid" style="grid-template-columns: repeat(3, 1fr);">
+             <div class="kpi-card"><div class="kpi-title">Total Cadastrado</div><div class="kpi-value" id="forn-kpi-total">0</div></div>
+             <div class="kpi-card"><div class="kpi-title">Área de Atuação</div><div class="kpi-value" id="forn-kpi-cat">0</div></div>
+             <div class="kpi-card"><div class="kpi-title">Cidades Relacionadas</div><div class="kpi-value" id="forn-kpi-cid">0</div></div>
+          </div>
+
+          <section class="block">
+            <!-- Botão Adicionar isolado acima -->
+            <div style="display:flex; justify-content:flex-end; margin-bottom: 16px;">
+               <button class="btn btn-ai" style="padding:10px 20px; color:#000;" onclick="window.abrirModalNovoFornecedor()">+ Adicionar Fornecedor</button>
+            </div>
+            
+            <!-- Filtros e botões de exportação perfeitamente alinhados na base -->
+            <div style="display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:16px; flex-wrap:wrap; gap:16px;">
+              <div class="grid cols-3" style="flex:1; min-width:600px; margin-bottom:0;">
+                <div class="field">
+                   <label>🔍 Buscar por Nome do Fornecedor</label>
+                   <input type="text" id="filter-nome" placeholder="Digite o nome..." oninput="App.renderForn()">
+                </div>
+                <div class="field">
+                   <label>🔍 Filtrar por categoria</label>
+                   <div class="custom-select" id="custom-cat">
+                       <div class="select-box" onclick="App.toggleDropdown('dropdown-cat')">Selecione...</div>
+                       <div class="dropdown-list" id="dropdown-cat"></div>
+                   </div>
+                </div>
+                <div class="field">
+                   <label>🔍 Filtrar por Cidade/UF</label>
+                   <div class="custom-select" id="custom-cid">
+                       <div class="select-box" onclick="App.toggleDropdown('dropdown-cid')">Selecione...</div>
+                       <div class="dropdown-list" id="dropdown-cid"></div>
+                   </div>
+                </div>
+              </div>
+              <div style="display:flex; gap:8px; width: 220px;">
+                 <button class="btn btn-excel" style="flex:1;" onclick="App.exportExcel()">Excel</button>
+                 <button class="btn btn-pdf" style="flex:1;" onclick="App.exportPDF()">PDF</button>
+              </div>
+            </div>
+
+            <div class="table-wrapper">
+              <table class="items">
+                <thead>
+                  <tr>
+                    <th class="sortable" onclick="App.sortForn('nome')" title="Ordenar">Fornecedor ↕</th>
+                    <th>E-mail</th>
+                    <th class="sortable" onclick="App.sortForn('cats')" title="Ordenar">Categoria Principal ↕</th>
+                    <th>Lat</th>
+                    <th>Lng</th>
+                    <th class="sortable" onclick="App.sortForn('cidade')" title="Ordenar">Cidade/UF ↕</th>
+                    <th>Score IA</th>
+                    <th>Prazo Médio</th>
+                    <th style="white-space:nowrap; min-width:120px;">Telefone</th>
+                    <th>Contato</th>
+                    <th style="text-align:right">Ações</th>
+                  </tr>
+                </thead>
+                <tbody id="lista-fornecedores-body"></tbody>
+              </table>
+            </div>
+          </section>
+      </div>
+
+      <!-- SUB-ABA 2: DASHBOARD & ANÁLISES -->
+      <div id="forn-tab-analises" style="display:none;">
+          <div class="grid cols-2">
+             <section class="block" style="grid-column: span 2;">
+                <h2>Evolução da Base de Fornecedores (OCs Emitidas)</h2>
+                <div style="height:250px; position:relative; width:100%;"><canvas id="chartEvolucao"></canvas></div>
+             </section>
+             <section class="block">
+                <h2>Cidades com Mais Fornecedores</h2>
+                <div style="height:250px; position:relative; width:100%;"><canvas id="chartCidades"></canvas></div>
+             </section>
+             <section class="block">
+                <h2>Obras com Mais Fornecedores (Raio de 100km)</h2>
+                <div style="height:250px; position:relative; width:100%; display:flex; justify-content:center;"><canvas id="chartObras"></canvas></div>
+             </section>
+             <section class="block" style="grid-column: span 2;">
+                <h2>Fornecedores Mais Bem Avaliados (Score IA)</h2>
+                <div style="height:300px; position:relative; width:100%;"><canvas id="chartAvaliacoes"></canvas></div>
+             </section>
+             <section class="block">
+                <h2>Áreas com MAIS Fornecedores</h2>
+                <div style="display:flex; justify-content:center; gap:8px; margin-bottom:12px; flex-wrap: wrap;">
+                    <button class="btn btn-outline" style="font-size:9px; padding:4px 8px; border-radius:12px;" onclick="App.setAreaFilter('todas', true)">Todas as obras</button>
+                    <button class="btn btn-outline" style="font-size:9px; padding:4px 8px; border-radius:12px;" onclick="App.setAreaFilter('bocaiuva', true)">Mirante</button>
+                    <button class="btn btn-outline" style="font-size:9px; padding:4px 8px; border-radius:12px;" onclick="App.setAreaFilter('jleme', true)">Joaquim</button>
+                    <button class="btn btn-outline" style="font-size:9px; padding:4px 8px; border-radius:12px;" onclick="App.setAreaFilter('mife', true)">Parque</button>
+                    <button class="btn btn-outline" style="font-size:9px; padding:4px 8px; border-radius:12px;" onclick="App.setAreaFilter('nazareno', true)">Cidade</button>
+                </div>
+                <div style="height:280px; position:relative; width:100%;"><canvas id="chartAreasMais"></canvas></div>
+             </section>
+             <section class="block">
+                <h2>Áreas com MENOS Fornecedores</h2>
+                <div style="display:flex; justify-content:center; gap:8px; margin-bottom:12px; flex-wrap: wrap;">
+                    <button class="btn btn-outline" style="font-size:9px; padding:4px 8px; border-radius:12px;" onclick="App.setAreaFilter('todas', false)">Todas as obras</button>
+                    <button class="btn btn-outline" style="font-size:9px; padding:4px 8px; border-radius:12px;" onclick="App.setAreaFilter('bocaiuva', false)">Mirante</button>
+                    <button class="btn btn-outline" style="font-size:9px; padding:4px 8px; border-radius:12px;" onclick="App.setAreaFilter('jleme', false)">Joaquim</button>
+                    <button class="btn btn-outline" style="font-size:9px; padding:4px 8px; border-radius:12px;" onclick="App.setAreaFilter('mife', false)">Parque</button>
+                    <button class="btn btn-outline" style="font-size:9px; padding:4px 8px; border-radius:12px;" onclick="App.setAreaFilter('nazareno', false)">Cidade</button>
+                </div>
+                <div style="height:280px; position:relative; width:100%;"><canvas id="chartAreasMenos"></canvas></div>
+             </section>
+             <section class="block" style="grid-column: span 2;">
+                <h2>Distribuição Geográfica de Fornecedores</h2>
+                <div id="mapContainer" style="height:450px; width:100%; border-radius:6px; z-index:1;"></div>
+             </section>
+          </div>
+      </div>
     </div>
 
     <!-- ==================== VIEW: RECEBIMENTO (INBOX) ==================== -->
@@ -386,7 +561,7 @@
           </thead>
           <tbody id="rcItemsBody"></tbody>
         </table>
-        <button class="btn btn-outline" style="width:100%; border-style:dashed; margin-top:15px; color:var(--navy)" onclick="Req.addItem()">＋ Adicionar item</button>
+       <button class="btn btn-outline" style="width:100%; max-width:100%; box-sizing:border-box; display:flex; justify-content:center; border-style:dashed; margin-top:15px; color:var(--navy)" onclick="Req.addItem()">＋ Adicionar item</button>
         <div class="totals"><div class="box"><div class="label">Total Estimado</div><div class="value" id="rcTotal">R$ 0,00</div></div></div>
       </section>
 
@@ -530,9 +705,10 @@
 <div class="modal-overlay" id="modal-add-forn">
   <div class="modal">
     <div class="modal-header">
-      <span>🏢 Cadastrar Novo Fornecedor</span>
+      <span id="modal-add-forn-title">🏢 Cadastrar Fornecedor</span>
       <button class="del-btn" onclick="UI.closeModal('modal-add-forn')" style="font-size:24px;">&times;</button>
     </div>
+    <input type="hidden" id="af_id">
     <div class="grid cols-2" style="margin-bottom:15px;">
       <div class="field full"><label>Razão Social</label><input type="text" id="af_nome" placeholder="Nome da empresa"></div>
       <div class="field"><label>CNPJ</label><input type="text" id="af_cnpj" placeholder="Apenas números"></div>
@@ -540,6 +716,8 @@
       <div class="field"><label>Categoria Principal</label><input type="text" id="af_cat" placeholder="Ex: Cimento, Elétrica"></div>
       <div class="field"><label>Score IA</label><input type="number" id="af_score" placeholder="0 a 100" value="50"></div>
       <div class="field"><label>Prazo Médio</label><input type="text" id="af_prazo" placeholder="Ex: 5 dias"></div>
+      <div class="field"><label>Telefone</label><input type="text" id="af_tel" placeholder="Telefone"></div>
+      <div class="field"><label>Contato</label><input type="text" id="af_contato" placeholder="Nome do contato"></div>
       <div class="field full"><label>Cidade/UF</label><input type="text" id="af_cidade" placeholder="Ex: Bocaiúva/MG"></div>
       <div class="field"><label>Latitude (Lat)</label><input type="text" id="af_lat" placeholder="Ex: -17.107"></div>
       <div class="field"><label>Longitude (Lng)</label><input type="text" id="af_lng" placeholder="Ex: -43.814"></div>
@@ -640,6 +818,11 @@ const UI = {
 };
 
 // ==================== DATABASE ====================
+const fornecedoresReaisData = [{"id": "f_real_0", "nome": "VALLE METALÚRGICA", "email": "contato@metalvalle.com.br", "cats": "Reservatório Metálico", "lat": -16.75, "lng": -49.44, "score": 0, "prazo": "0 dias", "tel": "+55 62 8243-0284", "contato": "Reidner", "cidade": "Goiânia/GO"}, {"id": "f_real_1", "nome": "EXPONENCIAL", "email": "", "cats": "Elétrica", "lat": -19.92, "lng": -43.93, "score": 0, "prazo": "0 dias", "tel": "+55 31 9819-1812", "contato": "Fernanda", "cidade": "Belo Horizonte/MG"}, {"id": "f_real_2", "nome": "SEF ENERGIA", "email": "", "cats": "Elétrica", "lat": -19.92, "lng": -43.93, "score": 0, "prazo": "0 dias", "tel": "+55 31 8875-5001", "contato": "Emerson", "cidade": "Belo Horizonte/MG"}, {"id": "f_real_3", "nome": "ACK ENGENHARIA", "email": "andre@terraplannus.com.br", "cats": "Mão de obra serviços gerais", "lat": -19.92, "lng": -43.93, "score": 0, "prazo": "0 dias", "tel": "+55 31 9194-6179", "contato": "André", "cidade": "Belo Horizonte/MG"}, {"id": "f_real_4", "nome": "TERRAPLANNUS", "email": "andre@terraplannus.com.br", "cats": "Mão de obra serviços gerais", "lat": -19.92, "lng": -43.93, "score": 0, "prazo": "0 dias", "tel": "+55 31 9194-6179", "contato": "André", "cidade": "Belo Horizonte/MG"}, {"id": "f_real_5", "nome": "CROS CONSTRUÇÕES", "email": "comercial@crosconstrucoes.com.br", "cats": "Pavimentação", "lat": -19.92, "lng": -43.93, "score": 0, "prazo": "0 dias", "tel": "+55 31 9231-8830", "contato": "Ney", "cidade": "Belo Horizonte/MG"}, {"id": "f_real_6", "nome": "VIA SANEAMENTO", "email": "July.b.h@hotmail.com", "cats": "Saneamento", "lat": -19.92, "lng": -43.93, "score": 0, "prazo": "0 dias", "tel": "+55 31 8568-1028", "contato": "Juliana", "cidade": "Belo Horizonte/MG"}, {"id": "f_real_7", "nome": "SANEVIA", "email": "July.b.h@hotmail.com", "cats": "Saneamento", "lat": -19.92, "lng": -43.93, "score": 0, "prazo": "0 dias", "tel": "+55 31 8568-1028", "contato": "Juliana", "cidade": "Belo Horizonte/MG"}, {"id": "f_real_8", "nome": "CENTRAL MIX", "email": "", "cats": "Concreteira", "lat": -17.1, "lng": -43.81, "score": 0, "prazo": "0 dias", "tel": "+55 38 9935-8001", "contato": "Armando", "cidade": "Bocaiúva/MG"}, {"id": "f_real_9", "nome": "MINERO MINAS", "email": "matheusminerominas@gmail.com", "cats": "Mão de obra serviços gerais", "lat": -17.1, "lng": -43.81, "score": 0, "prazo": "0 dias", "tel": "+55 38 8803-6705", "contato": "Matheus", "cidade": "Bocaiúva/MG"}, {"id": "f_real_10", "nome": "RODOCAP", "email": "", "cats": "Transportadora", "lat": -19.92, "lng": -43.93, "score": 0, "prazo": "0 dias", "tel": "+55 38 9151-0019", "contato": "Comercial", "cidade": "Belo Horizonte/MG"}, {"id": "f_real_11", "nome": "FERBOC", "email": "erciliasouza63@gmail.com", "cats": "Materiais de Construção", "lat": -17.1, "lng": -43.81, "score": 0, "prazo": "0 dias", "tel": "+55 38 9894-6373", "contato": "Ercília", "cidade": "Bocaiúva/MG"}, {"id": "f_real_12", "nome": "PREBOC", "email": "", "cats": "Materiais de Construção", "lat": -17.1, "lng": -43.81, "score": 0, "prazo": "0 dias", "tel": "+55 38 9863-1944", "contato": "David", "cidade": "Bocaiúva/MG"}, {"id": "f_real_13", "nome": "ELISANGELA DOS SANTOS", "email": "gem.materiaisdeconstrucao@yahoo.com.br", "cats": "Materiais de Construção", "lat": -17.1, "lng": -43.81, "score": 0, "prazo": "0 dias", "tel": "+55 38 9861-3752", "contato": "Comercial", "cidade": "Bocaiúva/MG"}, {"id": "f_real_14", "nome": "BRAZIMAT", "email": "brazimat@gmail.com", "cats": "Materiais de Construção", "lat": -17.1, "lng": -43.81, "score": 0, "prazo": "0 dias", "tel": "+55 38 9934-3549", "contato": "Comercial", "cidade": "Bocaiúva/MG"}, {"id": "f_real_15", "nome": "V&A", "email": "", "cats": "Materiais de Construção", "lat": -17.1, "lng": -43.81, "score": 0, "prazo": "0 dias", "tel": "+55 38 9883-0739", "contato": "Arthur", "cidade": "Bocaiúva/MG"}, {"id": "f_real_16", "nome": "RIMA INDUSTRIAL", "email": "lhs@rima.com.br", "cats": "Materiais de Construção", "lat": -17.1, "lng": -43.81, "score": 0, "prazo": "0 dias", "tel": "+55 38 9957-5264", "contato": "Lucas", "cidade": "Bocaiúva/MG"}, {"id": "f_real_17", "nome": "FUNDIÇÃO ALEA", "email": "vendas02@fundicaoalea.com.br", "cats": "Saneamento", "lat": -20.55, "lng": -44.97, "score": 0, "prazo": "0 dias", "tel": "+55 37 9968-8400", "contato": "Renata", "cidade": "Oliveira/MG"}, {"id": "f_real_18", "nome": "ELETROE", "email": "eletroe86@gmail.com", "cats": "Elétrica", "lat": -18.96, "lng": -49.46, "score": 0, "prazo": "0 dias", "tel": "+55 34 9262-5302", "contato": "Alex", "cidade": "Ituiutaba/MG"}, {"id": "f_real_19", "nome": "W&W BRITAGEM", "email": "", "cats": "Materiais de Construção", "lat": -18.96, "lng": -49.46, "score": 0, "prazo": "0 dias", "tel": "+55 34 9773-0759", "contato": "Comercial", "cidade": "Ituiutaba/MG"}, {"id": "f_real_20", "nome": "PALACIO DO EUCALIPTO", "email": "laryssacamara326@gmail.com", "cats": "Materiais de Construção", "lat": -18.96, "lng": -49.46, "score": 0, "prazo": "0 dias", "tel": "+55 34 9767-8893", "contato": "Larissa", "cidade": "Ituiutaba/MG"}, {"id": "f_real_21", "nome": "LECO MATERIAIS", "email": "leco.materiais@gmail.com", "cats": "Materiais de Construção", "lat": -18.96, "lng": -49.46, "score": 0, "prazo": "0 dias", "tel": "+55 34 9631-2359", "contato": "Giovana", "cidade": "Ituiutaba/MG"}, {"id": "f_real_22", "nome": "IRMÃO SOARES", "email": "vendas22@irmaossoares.com.br", "cats": "Materiais de Construção", "lat": -18.96, "lng": -49.46, "score": 0, "prazo": "0 dias", "tel": "+55 34 9925-8310", "contato": "Sandra", "cidade": "Ituiutaba/MG"}, {"id": "f_real_23", "nome": "MACRO MATERIAIS", "email": "", "cats": "Materiais de Construção", "lat": -18.96, "lng": -49.46, "score": 0, "prazo": "0 dias", "tel": "+55 34 3269-1818", "contato": "Comercial", "cidade": "Ituiutaba/MG"}, {"id": "f_real_24", "nome": "ROMAGNOLE", "email": "bazoli.vendas@gmail.com", "cats": "Elétrica", "lat": -23.53, "lng": -51.67, "score": 0, "prazo": "0 dias", "tel": "+55 31 8606-3128", "contato": "Fabrizio", "cidade": "Apucarana/PR"}, {"id": "f_real_25", "nome": "POLIMIX", "email": "lidermtc@polimix.com", "cats": "Concreteira", "lat": -16.73, "lng": -43.86, "score": 0, "prazo": "0 dias", "tel": "+55 38 9975-9284", "contato": "Comercial", "cidade": "Montes Claros/MG"}, {"id": "f_real_26", "nome": "OK GERADORES", "email": "", "cats": "Locação de Máquinas", "lat": -16.73, "lng": -43.86, "score": 0, "prazo": "0 dias", "tel": "+55 38 9868-5680", "contato": "Lucas", "cidade": "Montes Claros/MG"}, {"id": "f_real_27", "nome": "LOKAFORT", "email": "comercial@lokaforte.com.br", "cats": "Locação de Máquinas", "lat": -16.73, "lng": -43.86, "score": 0, "prazo": "0 dias", "tel": "+55 38 3223-2027", "contato": "Comercial", "cidade": "Montes Claros/MG"}, {"id": "f_real_28", "nome": "NORTE E TELAS", "email": "nortetelasmoc@yahoo.com", "cats": "Materiais de Construção", "lat": -16.73, "lng": -43.86, "score": 0, "prazo": "0 dias", "tel": "+55 38 9979-8447", "contato": "Comercial", "cidade": "Montes Claros/MG"}, {"id": "f_real_29", "nome": "MR TOPOGRAFIA", "email": "mrtopografia.geo@gmail.com", "cats": "Topografia", "lat": -17.07, "lng": -41.48, "score": 0, "prazo": "0 dias", "tel": "+55 33 9937-8248", "contato": "Ildo", "cidade": "Nanuque/MG"}, {"id": "f_real_30", "nome": "A2N INFRAESTRUTURA", "email": "amg.construcoes@yahoo.com.br", "cats": "Mão de obra serviços gerais", "lat": -20.71, "lng": -46.61, "score": 0, "prazo": "0 dias", "tel": "+55 35 9854-7075", "contato": "Annielle", "cidade": "Passos/MG"}, {"id": "f_real_31", "nome": "ASPERBRAS TUBOS", "email": "asperbrasvendas@gmail.com", "cats": "Saneamento", "lat": -21.42, "lng": -50.07, "score": 0, "prazo": "0 dias", "tel": "+55 31 9971-3003", "contato": "Anderson", "cidade": "Penápolis/SP"}, {"id": "f_real_32", "nome": "SHALOM TUBOS", "email": "", "cats": "Saneamento", "lat": -19.76, "lng": -44.08, "score": 0, "prazo": "0 dias", "tel": "+55 31 8715-4574", "contato": "Andreia", "cidade": "Vespasiano/MG"}, {"id": "f_real_33", "nome": "KPL SOLUÇÕES", "email": "", "cats": "Transportadora", "lat": -23.66, "lng": -46.53, "score": 0, "prazo": "0 dias", "tel": "+55 11 98949-1221", "contato": "Comercial", "cidade": "Santo André/SP"}, {"id": "f_real_34", "nome": "ALC TUBOS", "email": "", "cats": "Saneamento", "lat": -20.12, "lng": -40.3, "score": 0, "prazo": "0 dias", "tel": "+55 31 8898-8416", "contato": "André", "cidade": "Serra/ES"}, {"id": "f_real_35", "nome": "HIDROTAM", "email": "", "cats": "Saneamento", "lat": -21.6, "lng": -47.27, "score": 0, "prazo": "0 dias", "tel": "+55 19 98194-1756", "contato": "Jeferson", "cidade": "Santa Rita do Passa Quatro/SP"}, {"id": "f_real_36", "nome": "CIMENTOLÂNDIA", "email": "", "cats": "Materiais de Construção", "lat": -21.69, "lng": -45.25, "score": 0, "prazo": "0 dias", "tel": "+55 35 8857-3824", "contato": "Comercial", "cidade": "Três Corações/MG"}, {"id": "f_real_37", "nome": "CAUNETTO SUPORTE", "email": "comercial1@suportteengenharia.com.br", "cats": "Projetos", "lat": -21.93, "lng": -50.51, "score": 0, "prazo": "0 dias", "tel": "+55 14 99835-5664", "contato": "Rafaela", "cidade": "Tupã/SP"}, {"id": "f_real_38", "nome": "RIBEIRO BARROSO", "email": "josecarlos@ribeirobarroso.com.br", "cats": "Elétrica", "lat": -18.91, "lng": -48.27, "score": 0, "prazo": "0 dias", "tel": "+55 34 9898-5307", "contato": "José Carlos", "cidade": "Uberlândia/MG"}, {"id": "f_real_39", "nome": "CONFIGEO", "email": "marlon@configeo.com.br", "cats": "Locação de Máquinas", "lat": -18.91, "lng": -48.27, "score": 0, "prazo": "0 dias", "tel": "+55 34 9976-1430", "contato": "Marlon", "cidade": "Uberlândia/MG"}, {"id": "f_real_40", "nome": "GENERATI", "email": "", "cats": "Locação de Máquinas", "lat": -18.91, "lng": -48.27, "score": 0, "prazo": "0 dias", "tel": "+55 34 9975-0400", "contato": "Comercial", "cidade": "Uberlândia/MG"}, {"id": "f_real_41", "nome": "MKA TOPOGRAFIA", "email": "", "cats": "Topografia", "lat": -18.91, "lng": -48.27, "score": 0, "prazo": "0 dias", "tel": "+55 34 9927-2293", "contato": "Caio", "cidade": "Uberlândia/MG"}, {"id": "f_real_42", "nome": "NOG ENGENHARIA", "email": "", "cats": "Projetos", "lat": -21.55, "lng": -45.43, "score": 0, "prazo": "0 dias", "tel": "+55 35 8816-3044", "contato": "Felipe", "cidade": "Varginha/MG"}, {"id": "f_real_43", "nome": "CRABI", "email": "clovis.marques@crabi.com.br", "cats": "Materiais de Construção", "lat": -21.55, "lng": -45.43, "score": 0, "prazo": "0 dias", "tel": "+55 35 8858-1412", "contato": "Clóvis", "cidade": "Varginha/MG"}, {"id": "f_real_44", "nome": "XPRO PROJETOS", "email": "xprolevantamentos@outlook.com", "cats": "Topografia", "lat": -21.55, "lng": -45.43, "score": 0, "prazo": "0 dias", "tel": "+55 35 8886-8628", "contato": "João", "cidade": "Varginha/MG"}, {"id": "f_real_45", "nome": "CASTROFER", "email": "castrofervga@gmail.com", "cats": "Materiais de Construção", "lat": -21.55, "lng": -45.43, "score": 0, "prazo": "0 dias", "tel": "+55 35 3222-6686", "contato": "Brenda", "cidade": "Varginha/MG"}];
+
+window.appCharts = {};
+window.appMap = null;
+
 const DB = {
   data: { processos: [], fornecedores: [] },
   init: async () => {
@@ -655,16 +838,35 @@ const DB = {
         await setDoc(docRef, DB.data);
       }
       
-      // Auto-cleanup legacy fictional suppliers
-      if (DB.data.fornecedores.some(f => ['f1','f2','f3','f4'].includes(f.id))) {
+      if (DB.data.fornecedores.some(f => ['f1','f2','f3','f4'].includes(f.id)) || !DB.data.fornecedores.some(f => f.nome === "VALLE METALÚRGICA")) {
           DB.data.fornecedores = DB.data.fornecedores.filter(f => !['f1','f2','f3','f4'].includes(f.id));
+          if(!DB.data.fornecedores.some(f => f.nome === "VALLE METALÚRGICA")) {
+             fornecedoresReaisData.forEach(fReal => {
+                if(!DB.data.fornecedores.some(f => f.nome === fReal.nome)) {
+                   DB.data.fornecedores.push(fReal);
+                }
+             });
+          }
           DB.save();
       }
 
     } catch (e) {
       console.error(e);
       const saved = localStorage.getItem('grp_ai_db');
-      if (saved) { DB.data = JSON.parse(saved); } else { DB.seed(); }
+      if (saved) { 
+          DB.data = JSON.parse(saved); 
+          if(!DB.data.fornecedores.some(f => f.nome === "VALLE METALÚRGICA")) {
+             DB.data.fornecedores = DB.data.fornecedores.filter(f => !['f1','f2','f3','f4'].includes(f.id));
+             fornecedoresReaisData.forEach(fReal => {
+                if(!DB.data.fornecedores.some(f => f.nome === fReal.nome)) {
+                   DB.data.fornecedores.push(fReal);
+                }
+             });
+             DB.save();
+          }
+      } else { 
+          DB.seed(); 
+      }
     }
   },
   save: async () => {
@@ -672,7 +874,7 @@ const DB = {
     catch(e) { localStorage.setItem('grp_ai_db', JSON.stringify(DB.data)); }
   },
   seed: () => {
-    DB.data.fornecedores = [];
+    DB.data.fornecedores = JSON.parse(JSON.stringify(fornecedoresReaisData));
     DB.data.processos = [];
   },
   getProcess: (id) => DB.data.processos.find(p => p.id === id)
@@ -684,7 +886,61 @@ let currentEmailParsing = null;
 let currentCompFornId = null;
 
 const App = {
+  fornSortCol: '',
+  fornSortAsc: true,
+  areaFilterMais: 'todas',
+  areaFilterMenos: 'todas',
+
+  toggleDropdown: (id) => {
+    const el = document.getElementById(id);
+    const isShowing = el.classList.contains('show');
+    document.querySelectorAll('.dropdown-list').forEach(d => d.classList.remove('show'));
+    if (!isShowing) el.classList.add('show');
+  },
+  updateFiltrosForn: () => {
+    const catDrop = document.getElementById('dropdown-cat');
+    const cidDrop = document.getElementById('dropdown-cid');
+    if(!catDrop || !cidDrop) return;
+
+    const selCats = Array.from(catDrop.querySelectorAll('input:checked')).map(cb => cb.value);
+    const selCids = Array.from(cidDrop.querySelectorAll('input:checked')).map(cb => cb.value);
+
+    const uniqueCats = [...new Set(DB.data.fornecedores.map(f => f.cats).filter(Boolean))].sort();
+    const uniqueCids = [...new Set(DB.data.fornecedores.map(f => f.cidade).filter(Boolean))].sort();
+
+    catDrop.innerHTML = uniqueCats.map(c => `<label class="checkbox-item"><input type="checkbox" value="${c}" onchange="App.renderForn()" ${selCats.includes(c) ? 'checked' : ''}> ${c}</label>`).join('');
+    cidDrop.innerHTML = uniqueCids.map(c => `<label class="checkbox-item"><input type="checkbox" value="${c}" onchange="App.renderForn()" ${selCids.includes(c) ? 'checked' : ''}> ${c}</label>`).join('');
+  },
+  toggleTheme: () => {
+    document.body.classList.toggle('dark-mode');
+    const isDark = document.body.classList.contains('dark-mode');
+    localStorage.setItem('theme', isDark ? 'dark' : 'light');
+    document.getElementById('btn-theme-toggle').textContent = isDark ? '☀️ Modo Claro' : '🌙 Modo Escuro';
+    if(document.getElementById('view-fornecedores').classList.contains('active')) {
+       App.renderFornCharts();
+       App.renderFornMap();
+    }
+    App.renderDash();
+  },
+  switchFornTab: (tab) => {
+    document.getElementById('forn-tab-lista').style.display = tab === 'lista' ? 'block' : 'none';
+    document.getElementById('forn-tab-analises').style.display = tab === 'analises' ? 'block' : 'none';
+    document.getElementById('tab-btn-lista').className = tab === 'lista' ? 'tab-btn active' : 'tab-btn';
+    document.getElementById('tab-btn-analise').className = tab === 'analises' ? 'tab-btn active' : 'tab-btn';
+    if(tab === 'analises') {
+       setTimeout(() => { App.renderFornCharts(); App.renderFornMap(); }, 100);
+    }
+  },
+  setAreaFilter: (f, isMais) => {
+    if(isMais) App.areaFilterMais = f;
+    else App.areaFilterMenos = f;
+    App.renderFornCharts();
+  },
   init: async () => {
+    if(localStorage.getItem('theme') === 'dark') {
+       document.body.classList.add('dark-mode');
+       document.getElementById('btn-theme-toggle').textContent = '☀️ Modo Claro';
+    }
     await DB.init();
     document.getElementById('db-loader').style.opacity = '0';
     setTimeout(()=> document.getElementById('db-loader').style.display = 'none', 500);
@@ -704,7 +960,7 @@ const App = {
     }
     if(viewId === 'dashboard') App.renderDash();
     if(viewId === 'processos') App.renderProcessos();
-    if(viewId === 'fornecedores') App.renderForn();
+    if(viewId === 'fornecedores') { App.updateFiltrosForn(); App.renderForn(); App.switchFornTab('lista'); }
     if(viewId === 'recebimento') App.initInbox();
   },
   novoProcesso: () => {
@@ -734,9 +990,7 @@ const App = {
     procs.filter(p => p.status === 'aprovado').forEach(p => { totalEcon += (p.economia || 0); });
     document.getElementById('dash-econ').textContent = Util.formatBRL(totalEcon);
 
-    // Calc SLA
-    let noPrazo = 0;
-    let emAtraso = 0;
+    let noPrazo = 0, emAtraso = 0;
     const hoje = new Date();
     hoje.setHours(0,0,0,0);
 
@@ -754,7 +1008,6 @@ const App = {
     document.getElementById('dash-no-prazo').textContent = noPrazo;
     document.getElementById('dash-atraso').textContent = emAtraso;
 
-    // Calc Chart
     const chartMonths = [
        { key: '09/2026', label: 'Set/26' }, { key: '10/2026', label: 'Out/26' },
        { key: '11/2026', label: 'Nov/26' }, { key: '12/2026', label: 'Dez/26' },
@@ -765,10 +1018,10 @@ const App = {
     ];
     
     const speInfos = [
-       { id: 'bocaiuva', label: 'Mirante da Lagoa', color: '#0B1F3B' },
-       { id: 'jleme', label: 'Joaquim Leme', color: '#163B6B' },
-       { id: 'mife', label: 'Parque das Nações', color: '#2A5D9C' },
-       { id: 'nazareno', label: 'Cidade Nova', color: '#4A81CB' }
+       { id: 'bocaiuva', label: 'Mirante da Lagoa', color: 'var(--navy)' },
+       { id: 'jleme', label: 'Joaquim Leme', color: 'var(--navy-2)' },
+       { id: 'mife', label: 'Parque das Nações', color: 'var(--success)' },
+       { id: 'nazareno', label: 'Cidade Nova', color: 'var(--ai-color)' }
     ];
 
     const chartData = {};
@@ -778,7 +1031,7 @@ const App = {
     procs.filter(p => p.status === 'aprovado').forEach(p => {
        const dt = p.oc.emissao || p.criadoEm;
        if(dt && p.spe) {
-          const monthKey = dt.substring(3); // MM/YYYY
+          const monthKey = dt.substring(3);
           if(chartData[monthKey] && chartData[monthKey][p.spe] !== undefined) {
              chartData[monthKey][p.spe]++;
              if(chartData[monthKey][p.spe] > maxVal) maxVal = chartData[monthKey][p.spe];
@@ -787,28 +1040,29 @@ const App = {
     });
 
     const chartEl = document.getElementById('dash-chart');
-    chartEl.innerHTML = '';
-    
-    chartMonths.forEach(m => {
-       const data = chartData[m.key];
-       let barsHtml = '';
-       speInfos.forEach(spe => {
-          const val = data[spe.id] || 0;
-          const pct = maxVal === 0 ? 0 : (val / maxVal) * 100;
-          const h = pct > 0 ? Math.max(pct, 5) : 0;
-          if (val > 0) {
-             barsHtml += `<div class="chart-bar" style="height: ${h}%; background: ${spe.color};" data-tooltip="${spe.label}: ${val} OC(s)"></div>`;
-          } else {
-             barsHtml += `<div class="chart-bar" style="height: 0px; background: transparent;"></div>`;
-          }
-       });
-       chartEl.innerHTML += `
-         <div class="chart-bar-wrapper">
-           <div class="chart-bar-group">${barsHtml}</div>
-           <div class="chart-label">${m.label}</div>
-         </div>
-       `;
-    });
+    if(chartEl) {
+        chartEl.innerHTML = '';
+        chartMonths.forEach(m => {
+           const data = chartData[m.key];
+           let barsHtml = '';
+           speInfos.forEach(spe => {
+              const val = data[spe.id] || 0;
+              const pct = maxVal === 0 ? 0 : (val / maxVal) * 100;
+              const h = pct > 0 ? Math.max(pct, 5) : 0;
+              if (val > 0) {
+                 barsHtml += `<div class="chart-bar" style="height: ${h}%; background: ${spe.color};" data-tooltip="${spe.label}: ${val} OC(s)"></div>`;
+              } else {
+                 barsHtml += `<div class="chart-bar" style="height: 0px; background: transparent;"></div>`;
+              }
+           });
+           chartEl.innerHTML += `
+             <div class="chart-bar-wrapper">
+               <div class="chart-bar-group">${barsHtml}</div>
+               <div class="chart-label">${m.label}</div>
+             </div>
+           `;
+        });
+    }
   },
   renderProcessos: () => {
     const tbody = document.getElementById('lista-processos-body'); tbody.innerHTML = '';
@@ -830,34 +1084,342 @@ const App = {
         stHtml = '<span class="status-badge s-aprov">OC Emitida</span>'; 
         acHtml=`<button class="btn btn-success" onclick="App.abrir('${p.id}', 'oc')">Ver OC</button>`; 
       }
-      tbody.innerHTML += `<tr><td><strong style="color:var(--navy)">${p.id}</strong></td><td>${p.criadoEm}</td><td>${p.spe ? SPES[p.spe].prefixo : '-'}</td><td>${stHtml}</td><td style="text-align:right">${acHtml} <button class="del-btn" onclick="App.del('${p.id}')">×</button></td></tr>`;
+      tbody.innerHTML += `<tr><td><strong style="color:var(--navy)">${p.id}</strong></td><td>${p.criadoEm}</td><td>${p.spe ? SPES[p.spe].prefixo : '-'}</td><td>${stHtml}</td><td style="text-align:right">${acHtml} <button class="del-btn" style="font-size:14px; margin-left:4px;" onclick="App.del('${p.id}')">×</button></td></tr>`;
     });
+  },
+  sortForn: (col) => {
+    if (App.fornSortCol === col) {
+      App.fornSortAsc = !App.fornSortAsc;
+    } else {
+      App.fornSortCol = col;
+      App.fornSortAsc = true;
+    }
+    App.renderForn();
   },
   renderForn: () => {
     const tb = document.getElementById('lista-fornecedores-body'); tb.innerHTML = '';
-    if(DB.data.fornecedores.length === 0) {
-      tb.innerHTML = `<tr><td colspan="9" style="text-align:center; padding:20px; color:var(--muted)">Nenhum fornecedor cadastrado. Adicione seu primeiro fornecedor.</td></tr>`;
+    
+    document.getElementById('forn-kpi-total').textContent = DB.data.fornecedores.length;
+    document.getElementById('forn-kpi-cat').textContent = new Set(DB.data.fornecedores.map(f=>f.cats).filter(Boolean)).size;
+    document.getElementById('forn-kpi-cid').textContent = new Set(DB.data.fornecedores.map(f=>f.cidade).filter(Boolean)).size;
+
+    const filterNome = (document.getElementById('filter-nome')?.value || '').toLowerCase();
+    
+    const catDrop = document.getElementById('dropdown-cat');
+    const cidDrop = document.getElementById('dropdown-cid');
+    
+    const selectedCats = catDrop ? Array.from(catDrop.querySelectorAll('input:checked')).map(cb => cb.value) : [];
+    const selectedCids = cidDrop ? Array.from(cidDrop.querySelectorAll('input:checked')).map(cb => cb.value) : [];
+
+    if(document.getElementById('custom-cat')) {
+       const bCat = document.querySelector('#custom-cat .select-box');
+       if(bCat) bCat.textContent = selectedCats.length > 0 ? `${selectedCats.length} selecionado(s)` : 'Selecione...';
+    }
+    if(document.getElementById('custom-cid')) {
+       const bCid = document.querySelector('#custom-cid .select-box');
+       if(bCid) bCid.textContent = selectedCids.length > 0 ? `${selectedCids.length} selecionado(s)` : 'Selecione...';
+    }
+
+    let filtered = DB.data.fornecedores.filter(f => {
+      const matchNome = (f.nome || '').toLowerCase().includes(filterNome);
+      const fCat = f.cats || '';
+      const matchCat = selectedCats.length === 0 || selectedCats.includes(fCat);
+      const fCid = f.cidade || '';
+      const matchCid = selectedCids.length === 0 || selectedCids.includes(fCid);
+      
+      return matchNome && matchCat && matchCid;
+    });
+
+    if(App.fornSortCol) {
+      filtered.sort((a, b) => {
+        let valA = (a[App.fornSortCol] || '').toLowerCase();
+        let valB = (b[App.fornSortCol] || '').toLowerCase();
+        if (valA < valB) return App.fornSortAsc ? -1 : 1;
+        if (valA > valB) return App.fornSortAsc ? 1 : -1;
+        return 0;
+      });
+    }
+
+    if(filtered.length === 0) {
+      tb.innerHTML = `<tr><td colspan="11" style="text-align:center; padding:20px; color:var(--muted)">Nenhum fornecedor encontrado.</td></tr>`;
       return;
     }
-    DB.data.fornecedores.forEach(f => { 
+
+    filtered.forEach(f => { 
       const mailDisp = f.email ? f.email : f.contato;
       tb.innerHTML += `<tr>
         <td><strong>${f.nome}</strong></td>
-        <td>${mailDisp || '-'}</td>
+        <td>${f.email || '-'}</td>
         <td>${f.cats || '-'}</td>
-        <td><span style="color:var(--success); font-weight:800">${f.score || 0}/100</span></td>
-        <td>${f.prazo || '-'}</td>
-        <td>${f.cidade || '-'}</td>
         <td>${f.lat || '-'}</td>
         <td>${f.lng || '-'}</td>
-        <td style="text-align:right"><button class="del-btn" onclick="App.delForn('${f.id}')">×</button></td>
+        <td>${f.cidade || '-'}</td>
+        <td><span style="color:var(--success); font-weight:800">${f.score || 0}/100</span></td>
+        <td>${f.prazo || '-'}</td>
+        <td style="white-space:nowrap;">${f.tel || '-'}</td>
+        <td>${f.contato || '-'}</td>
+        <td style="text-align:right; white-space:nowrap;">
+           <button class="del-btn" style="color:var(--navy); font-size:14px; margin-right:2px;" onclick="App.editForn('${f.id}')" title="Editar">✏️</button>
+           <button class="del-btn" style="font-size:16px;" onclick="App.delForn('${f.id}')" title="Excluir">×</button>
+        </td>
       </tr>`; 
     });
+  },
+  renderFornCharts: () => {
+      const isDark = document.body.classList.contains('dark-mode');
+      const textColor = isDark ? '#efefef' : '#777777';
+      Chart.defaults.color = textColor;
+      Chart.defaults.plugins.tooltip.backgroundColor = isDark ? '#082413' : '#0d3b1f';
+      Chart.defaults.font.family = "'Montserrat', sans-serif";
+
+      const defScales = {
+          x: { ticks: { color: textColor }, grid: { display: false }, border: {display: false} },
+          y: { ticks: { color: textColor }, grid: { display: false }, border: {display: false} }
+      };
+
+      const cChart = (id, cfg) => {
+          if(window.appCharts[id]) window.appCharts[id].destroy();
+          const ctx = document.getElementById(id).getContext('2d');
+          window.appCharts[id] = new Chart(ctx, cfg);
+      };
+
+      const chartMonths = [
+         { key: '09/2026', label: 'Set/26' }, { key: '10/2026', label: 'Out/26' },
+         { key: '11/2026', label: 'Nov/26' }, { key: '12/2026', label: 'Dez/26' },
+         { key: '01/2027', label: 'Jan/27' }, { key: '02/2027', label: 'Fev/27' },
+         { key: '03/2027', label: 'Mar/27' }, { key: '04/2027', label: 'Abr/27' },
+         { key: '05/2027', label: 'Mai/27' }, { key: '06/2027', label: 'Jun/27' },
+         { key: '07/2027', label: 'Jul/27' }, { key: '08/2027', label: 'Ago/27' }
+      ];
+
+      const procsAprov = DB.data.processos.filter(p => p.status === 'aprovado');
+      let cumOCs = 0;
+      const evolData = chartMonths.map(m => {
+          const inMonth = procsAprov.filter(p => {
+              const dt = p.oc.emissao || p.criadoEm;
+              return dt && dt.substring(3) === m.key;
+          }).length;
+          cumOCs += inMonth;
+          return cumOCs;
+      });
+
+      cChart('chartEvolucao', {
+          type: 'line',
+          data: {
+              labels: chartMonths.map(m=>m.label),
+              datasets: [{
+                  label: 'OCs Emitidas (Acumulado)',
+                  data: evolData,
+                  borderColor: '#24783d',
+                  backgroundColor: isDark ? 'rgba(36, 120, 61, 0.5)' : 'rgba(36, 120, 61, 0.2)',
+                  borderWidth: 3, fill: true, tension: 0.3, pointBackgroundColor: isDark ? '#b0c90a' : '#0d3b1f'
+              }]
+          },
+          options: { responsive: true, maintainAspectRatio: false, plugins: { legend: {display: false} }, scales: defScales }
+      });
+
+      const countField = (key) => {
+          const c = {};
+          DB.data.fornecedores.forEach(f => { if(f[key]) c[f[key]] = (c[f[key]]||0)+1; });
+          return Object.entries(c).sort((a,b)=>b[1]-a[1]);
+      };
+
+      const topCidades = countField('cidade').slice(0,7);
+      cChart('chartCidades', {
+          type: 'bar',
+          data: {
+              labels: topCidades.map(i => i[0].split('/')[0]),
+              datasets: [{ data: topCidades.map(i => i[1]), backgroundColor: '#24783d', borderRadius: 4 }]
+          },
+          options: { responsive: true, maintainAspectRatio: false, plugins: { legend: {display: false} }, scales: defScales }
+      });
+
+      const obraC = { 'Mirante da Lagoa': 0, 'Joaquim Leme': 0, 'Parque das Nações': 0, 'Cidade Nova': 0 };
+      DB.data.fornecedores.forEach(f => {
+          if(f.lat && f.lng) {
+              if(Util.haversine(f.lat, f.lng, SPES.bocaiuva.lat, SPES.bocaiuva.lng) <= 100) obraC['Mirante da Lagoa']++;
+              if(Util.haversine(f.lat, f.lng, SPES.jleme.lat, SPES.jleme.lng) <= 100) obraC['Joaquim Leme']++;
+              if(Util.haversine(f.lat, f.lng, SPES.mife.lat, SPES.mife.lng) <= 100) obraC['Parque das Nações']++;
+              if(Util.haversine(f.lat, f.lng, SPES.nazareno.lat, SPES.nazareno.lng) <= 100) obraC['Cidade Nova']++;
+          }
+      });
+      const topObras = Object.entries(obraC).filter(i=>i[1]>0).sort((a,b)=>b[1]-a[1]);
+
+      cChart('chartObras', {
+          type: 'doughnut',
+          data: {
+              labels: topObras.map(i => i[0]),
+              datasets: [{
+                  data: topObras.map(i => i[1]),
+                  backgroundColor: isDark ? ['#b0c90a', '#8da608', '#24783d', '#7da885'] : ['#0d3b1f', '#24783d', '#4a9c63', '#b0c90a'],
+                  borderWidth: 0 
+              }]
+          },
+          options: { 
+              responsive: true, 
+              maintainAspectRatio: false, 
+              plugins: { 
+                  legend: { 
+                      position: 'right', 
+                      labels: { color: textColor, usePointStyle: true, boxWidth: 10 } 
+                  } 
+              }, 
+              cutout: '60%' 
+          }
+      });
+
+      const topRated = [...DB.data.fornecedores].sort((a,b)=>(b.score||0)-(a.score||0)).slice(0,10);
+      cChart('chartAvaliacoes', {
+          type: 'bar',
+          data: {
+              labels: topRated.map(i => i.nome.length > 20 ? i.nome.substring(0,20)+'...' : i.nome),
+              datasets: [{ data: topRated.map(i => i.score||0), backgroundColor: '#24783d', borderRadius: 4 }]
+          },
+          options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: {display: false} }, scales: { x: { min: 0, max: 100, ticks: {color:textColor}, grid:{display:false}, border:{display:false} }, y: { ticks: {color:textColor}, grid:{display:false}, border:{display:false} } } }
+      });
+
+      const filterBySPE = (f, speKey) => {
+          if(!f.lat || !f.lng) return false;
+          const spe = SPES[speKey];
+          return Util.haversine(f.lat, f.lng, spe.lat, spe.lng) <= 100;
+      };
+
+      const areaFornMais = DB.data.fornecedores.filter(f => App.areaFilterMais === 'todas' || filterBySPE(f, App.areaFilterMais));
+      const cAreasMais = {};
+      areaFornMais.forEach(f => { if(f.cats) cAreasMais[f.cats] = (cAreasMais[f.cats]||0)+1; });
+      const topA = Object.entries(cAreasMais).sort((a,b)=>b[1]-a[1]).slice(0,5);
+
+      const areaFornMenos = DB.data.fornecedores.filter(f => App.areaFilterMenos === 'todas' || filterBySPE(f, App.areaFilterMenos));
+      const cAreasMenos = {};
+      areaFornMenos.forEach(f => { if(f.cats) cAreasMenos[f.cats] = (cAreasMenos[f.cats]||0)+1; });
+      const botA = Object.entries(cAreasMenos).sort((a,b)=>a[1]-b[1]).slice(0,5);
+
+      cChart('chartAreasMais', {
+          type: 'bar',
+          data: {
+              labels: topA.map(i => i[0].length > 15 ? i[0].substring(0,15)+'...' : i[0]),
+              datasets: [{ data: topA.map(i => i[1]), backgroundColor: isDark ? '#b0c90a' : '#24783d', borderRadius: 4 }]
+          },
+          options: { responsive: true, maintainAspectRatio: false, plugins: { legend: {display: false} }, scales: defScales }
+      });
+
+      cChart('chartAreasMenos', {
+          type: 'bar',
+          data: {
+              labels: botA.map(i => i[0].length > 15 ? i[0].substring(0,15)+'...' : i[0]),
+              datasets: [{ data: botA.map(i => i[1]), backgroundColor: isDark ? '#b0c90a' : '#0d3b1f', borderRadius: 4 }]
+          },
+          options: { responsive: true, maintainAspectRatio: false, plugins: { legend: {display: false} }, scales: defScales }
+      });
+  },
+  renderFornMap: () => {
+      if(window.appMap) { window.appMap.remove(); }
+      window.appMap = L.map('mapContainer').setView([-19.9, -43.9], 6);
+      const isDark = document.body.classList.contains('dark-mode');
+      const tileUrl = isDark ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png' : 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png';
+      L.tileLayer(tileUrl, { attribution: '&copy; OpenStreetMap & CARTO', subdomains: 'abcd', maxZoom: 19 }).addTo(window.appMap);
+
+      const cityGroups = {};
+      DB.data.fornecedores.forEach(d => {
+          if(!d.cidade) return;
+          if(!cityGroups[d.cidade]) { cityGroups[d.cidade] = { lat: d.lat||0, lng: d.lng||0, suppliers: [] }; }
+          cityGroups[d.cidade].suppliers.push(d);
+      });
+
+      const dIcon = L.divIcon({ className: 'custom-div-icon', html: "<div style='background-color:#b0c90a; width:14px; height:14px; border-radius:50%; border:2px solid white; box-shadow:0 0 4px rgba(0,0,0,0.5);'></div>", iconSize: [14, 14], iconAnchor: [7, 7] });
+
+      for(let city in cityGroups) {
+          let info = cityGroups[city];
+          if(info.lat !== 0 && info.lng !== 0) {
+              let m = L.marker([info.lat, info.lng], {icon: dIcon}).addTo(window.appMap);
+              let pHtml = `<div style="max-height:220px; overflow-y:auto;"><strong style="color:var(--navy); display:block; border-bottom:1px solid #DDE1E6; padding-bottom:4px; margin-bottom:8px;">${city} (${info.suppliers.length})</strong>`;
+              info.suppliers.forEach(s => { pHtml += `<div style="font-size:11px; margin-bottom:8px; line-height:1.2;"><b>${s.nome}</b><br><span style="color:#6B7280">Área: ${s.cats||'-'}</span></div>`; });
+              pHtml += `</div>`;
+              m.bindPopup(pHtml);
+              m.bindTooltip(city, {direction: 'top', offset: [0, -10]});
+          }
+      }
+  },
+  exportExcel: () => {
+      const filterNome = (document.getElementById('filter-nome')?.value || '').toLowerCase();
+      const catDrop = document.getElementById('dropdown-cat');
+      const cidDrop = document.getElementById('dropdown-cid');
+      const selectedCats = catDrop ? Array.from(catDrop.querySelectorAll('input:checked')).map(cb => cb.value) : [];
+      const selectedCids = cidDrop ? Array.from(cidDrop.querySelectorAll('input:checked')).map(cb => cb.value) : [];
+
+      let filtered = DB.data.fornecedores.filter(f => {
+        const matchNome = (f.nome || '').toLowerCase().includes(filterNome);
+        const matchCat = selectedCats.length === 0 || selectedCats.includes(f.cats || '');
+        const matchCid = selectedCids.length === 0 || selectedCids.includes(f.cidade || '');
+        return matchNome && matchCat && matchCid;
+      });
+
+      const exportData = filtered.map(f => ({
+          'Fornecedor': f.nome, 'E-mail': f.email, 'Categoria': f.cats, 
+          'Cidade/UF': f.cidade, 'Score IA': f.score, 'Prazo': f.prazo, 
+          'Telefone': f.tel, 'Contato': f.contato
+      }));
+
+      const ws = XLSX.utils.json_to_sheet(exportData);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Fornecedores");
+      XLSX.writeFile(wb, "Base_Fornecedores.xlsx");
+  },
+  exportPDF: () => {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF('landscape');
+      doc.text("Relatório de Fornecedores", 14, 15);
+      
+      const filterNome = (document.getElementById('filter-nome')?.value || '').toLowerCase();
+      const catDrop = document.getElementById('dropdown-cat');
+      const cidDrop = document.getElementById('dropdown-cid');
+      const selectedCats = catDrop ? Array.from(catDrop.querySelectorAll('input:checked')).map(cb => cb.value) : [];
+      const selectedCids = cidDrop ? Array.from(cidDrop.querySelectorAll('input:checked')).map(cb => cb.value) : [];
+
+      let filtered = DB.data.fornecedores.filter(f => {
+        const matchNome = (f.nome || '').toLowerCase().includes(filterNome);
+        const matchCat = selectedCats.length === 0 || selectedCats.includes(f.cats || '');
+        const matchCid = selectedCids.length === 0 || selectedCids.includes(f.cidade || '');
+        return matchNome && matchCat && matchCid;
+      });
+
+      const tableData = filtered.map(f => [
+          f.nome || '-', f.email || '-', f.cats || '-', 
+          f.cidade || '-', f.score || '0', f.tel || '-'
+      ]);
+
+      doc.autoTable({
+          head: [['Fornecedor', 'E-mail', 'Categoria', 'Cidade/UF', 'Score IA', 'Telefone']],
+          body: tableData,
+          startY: 25,
+          styles: { fontSize: 8 }
+      });
+      doc.save("Relatorio_Fornecedores.pdf");
+  },
+  editForn: (id) => {
+    const f = DB.data.fornecedores.find(x => x.id === id);
+    if(f) {
+        document.getElementById('modal-add-forn-title').textContent = "✏️ Editar Fornecedor";
+        document.getElementById('af_id').value = f.id;
+        document.getElementById('af_nome').value = f.nome || '';
+        document.getElementById('af_cnpj').value = f.cnpj || '';
+        document.getElementById('af_email').value = f.email || '';
+        document.getElementById('af_cat').value = f.cats || '';
+        document.getElementById('af_score').value = f.score || 0;
+        document.getElementById('af_prazo').value = f.prazo || '';
+        document.getElementById('af_tel').value = f.tel || '';
+        document.getElementById('af_contato').value = f.contato || '';
+        document.getElementById('af_cidade').value = f.cidade || '';
+        document.getElementById('af_lat').value = f.lat || '';
+        document.getElementById('af_lng').value = f.lng || '';
+        UI.openModal('modal-add-forn');
+    }
   },
   delForn: (id) => {
     if(confirm("Deseja realmente excluir este fornecedor?")) {
        DB.data.fornecedores = DB.data.fornecedores.filter(x => x.id !== id);
        DB.save();
+       App.updateFiltrosForn();
        App.renderForn();
        UI.toast("Fornecedor excluído!");
     }
@@ -926,7 +1488,6 @@ const Req = {
     document.getElementById('rc-subtitle').textContent = `PROCESSO ${p.id}`;
     document.getElementById('rcNum').textContent = p.req.numero;
     
-    // Fill Category Dropdown
     const catSelect = document.getElementById('rcCat');
     if (catSelect) {
       catSelect.innerHTML = '<option value="">Selecione...</option>';
@@ -1391,6 +1952,15 @@ window.efetuarLogout = () => {
   setTimeout(() => document.getElementById('login-screen').style.opacity = '1', 10);
 };
 
+window.togglePassword = () => {
+    const input = document.getElementById('login-pass');
+    if (input.type === 'password') {
+        input.type = 'text';
+    } else {
+        input.type = 'password';
+    }
+};
+
 window.imprimirTela = () => {
   const view = document.querySelector('.view.active');
   if(!view) return;
@@ -1440,31 +2010,53 @@ window.imprimirTela = () => {
   });
 };
 
+window.abrirModalNovoFornecedor = () => {
+  document.getElementById('modal-add-forn-title').textContent = "🏢 Cadastrar Novo Fornecedor";
+  document.getElementById('af_id').value = '';
+  ['nome','cnpj','email','cat','score','prazo','cidade','lat','lng','tel','contato'].forEach(k => {
+     const el = document.getElementById('af_'+k);
+     if(el) el.value = '';
+  });
+  document.getElementById('af_score').value = '50';
+  UI.openModal('modal-add-forn');
+};
+
 window.salvarNovoFornecedor = () => {
+  const idInput = document.getElementById('af_id').value;
+  const isEdit = !!idInput;
+  const id = isEdit ? idInput : Util.genId();
+
   const f = {
-    id: Util.genId(),
+    id: id,
     nome: document.getElementById('af_nome').value || 'Novo Fornecedor',
     cnpj: document.getElementById('af_cnpj').value || '',
     email: document.getElementById('af_email').value || '',
-    contato: document.getElementById('af_email').value || '',
+    contato: document.getElementById('af_contato').value || '',
+    tel: document.getElementById('af_tel').value || '',
     cats: document.getElementById('af_cat').value || '',
-    score: parseInt(document.getElementById('af_score').value) || 50,
+    score: parseInt(document.getElementById('af_score').value) || 0,
     prazo: document.getElementById('af_prazo').value || '',
     cidade: document.getElementById('af_cidade').value || '',
     lat: parseFloat(document.getElementById('af_lat').value) || 0,
     lng: parseFloat(document.getElementById('af_lng').value) || 0,
-    precoHist: 'Sem histórico'
+    precoHist: isEdit ? (DB.data.fornecedores.find(x => x.id === id)?.precoHist || 'Sem histórico') : 'Sem histórico'
   };
-  DB.data.fornecedores.push(f);
+
+  if (isEdit) {
+      const idx = DB.data.fornecedores.findIndex(x => x.id === id);
+      if(idx > -1) DB.data.fornecedores[idx] = f;
+  } else {
+      DB.data.fornecedores.push(f);
+  }
+  
   DB.save();
   UI.closeModal('modal-add-forn');
-  UI.toast('Fornecedor cadastrado!');
-  App.renderForn();
+  UI.toast(isEdit ? 'Fornecedor atualizado!' : 'Fornecedor cadastrado!');
   
-  ['nome','cnpj','email','cat','score','prazo','cidade','lat','lng'].forEach(k => {
-     const el = document.getElementById('af_'+k);
-     if(el) el.value = '';
-  });
+  if(document.getElementById('view-fornecedores').classList.contains('active')) {
+      App.updateFiltrosForn(); 
+      App.renderForn();        
+  }
 };
 
 window.voltarParaMapa = () => { 
@@ -1552,7 +2144,9 @@ window.salvarFornDoMapaNoBanco = () => {
   
   DB.save();
   UI.toast('Fornecedor salvo no Banco de Dados global!');
-  App.renderForn();
+  if(document.getElementById('view-fornecedores').classList.contains('active')) {
+      App.renderForn();
+  }
 };
 
 window.removeFornecedorComp = (propId) => { if(!confirm('Remover fornecedor do Mapa?')) return; const p = DB.getProcess(currentPID); p.propostas = p.propostas.filter(x => x.fornId !== propId); if(p.vencedorId === propId) p.vencedorId = null; DB.save(); MapaPrecos.load(p); document.getElementById('comp-form-forn').style.display = 'none'; };
@@ -1585,6 +2179,13 @@ window.selecionarVencedor = (propId) => {
   UI.toast('Fornecedor vencedor selecionado!'); 
   App.abrir(p.id, 'oc'); 
 };
+
+// Fecha os filtros flutuantes ao clicar fora deles
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('.custom-select')) {
+    document.querySelectorAll('.dropdown-list').forEach(d => d.classList.remove('show'));
+  }
+});
 
 window.onload = App.init;
 </script>
