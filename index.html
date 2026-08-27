@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -115,6 +116,8 @@
     color: var(--ink); border: 1px solid var(--line); border-radius: 4px; padding: 0 11px; 
     height: 38px; outline: none; background: transparent; transition: border-color .15s ease; 
   }
+  /* Remove eye icon from edge browsers */
+  .field input[type="password"]::-ms-reveal, .field input[type="password"]::-ms-clear { display: none; }
   .field input:focus, .field select:focus, .field textarea:focus { border-color: var(--navy); }
   .field input:disabled, .field textarea:disabled, .field select:disabled { background: var(--bg); color: var(--muted); }
   .field textarea { padding: 10px 11px; resize: vertical; min-height: 64px; height: auto; }
@@ -184,6 +187,14 @@
   .winner-col { background-color: var(--highlight); border: 2px solid var(--success) !important; }
   .best-price { background-color: var(--highlight) !important; border: 1px solid var(--success) !important; color: var(--success) !important; font-weight: 800; }
   
+  /* DOCUMENTOS NATIVOS E TIPOGRAFIA */
+  .doc-text { font-size: 13px; line-height: 1.6; margin-bottom: 12px; color: var(--ink); text-align: justify; }
+  .doc-list { font-size: 13px; line-height: 1.6; margin-bottom: 16px; color: var(--ink); padding-left: 20px; text-align: justify; }
+  .doc-list li { margin-bottom: 6px; }
+  .doc-card { background: var(--highlight); border: 1px solid var(--line); border-left: 3px solid var(--navy-2); border-radius: 4px; padding: 16px; margin-bottom: 16px; transition: 0.3s; }
+  .doc-card h4 { margin: 0 0 8px 0; font-size: 12px; color: var(--navy); text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px; }
+  .doc-card p { margin: 0; font-size: 12.5px; line-height: 1.5; color: var(--ink); text-align: justify; }
+
   /* OVERLAYS E TEMAS DE ABAS */
   .modal-overlay { position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(13,59,31,0.7); display:flex; justify-content:center; align-items:center; z-index:100; opacity:0; pointer-events:none; transition:0.2s;}
   .modal-overlay.show { opacity:1; pointer-events:all;}
@@ -226,6 +237,7 @@
     .table-wrapper { max-height: none !important; overflow: visible !important; border: none !important; }
     input, select, textarea { border: none !important; background: transparent !important; color: #000 !important; -webkit-appearance: none; outline: none; resize: none; box-shadow: none !important; }
     input::placeholder, textarea::placeholder { color: transparent !important; }
+    .doc-card { break-inside: avoid; border-left: 3px solid #24783d !important; background: #e8f0e9 !important; }
   }
 </style>
 </head>
@@ -272,14 +284,14 @@
 
     <div class="nav-group">
       <div class="nav-label">Navegação</div>
-      <button class="nav-btn active" onclick="App.nav('processos', this)">Processos</button>
-      <button class="nav-btn" onclick="App.nav('dashboard', this)">Dashboard</button>
-      <button class="nav-btn" onclick="App.nav('fornecedores', this)">Fornecedores</button>
-      <button class="nav-btn" onclick="App.nav('recebimento', this)">Inbox & IA Real</button>
+      <button class="nav-btn active" onclick="App.nav('processos')">Processos</button>
+      <button class="nav-btn" onclick="App.nav('dashboard')">Dashboard</button>
+      <button class="nav-btn" onclick="App.nav('fornecedores')">Fornecedores</button>
+      <button class="nav-btn" onclick="App.nav('recebimento')">Inbox & IA Real</button>
       
       <div class="nav-label" style="margin-top:24px;">Documentos</div>
-      <button class="nav-btn" onclick="alert('Documento em breve será adicionado.')">Política de Fornecedores</button>
-      <button class="nav-btn" onclick="alert('Documento em breve será adicionado.')">Manual de Compras e Contratações</button>
+      <button class="nav-btn" onclick="App.nav('politica')">Política de Fornecedores</button>
+      <button class="nav-btn" onclick="App.nav('manual')">Manual de Compras</button>
 
       <div class="nav-label" style="margin-top:24px;">Ações Globais</div>
       <button class="nav-btn" onclick="imprimirTela()">Imprimir Tela Atual</button>
@@ -405,16 +417,14 @@
           </div>
 
           <section class="block">
-            <!-- Botão Adicionar isolado acima -->
             <div style="display:flex; justify-content:flex-end; margin-bottom: 16px;">
                <button class="btn btn-ai" style="padding:10px 20px; color:#000;" onclick="window.abrirModalNovoFornecedor()">+ Adicionar Fornecedor</button>
             </div>
             
-            <!-- Filtros e botões de exportação perfeitamente alinhados na base -->
             <div style="display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:16px; flex-wrap:wrap; gap:16px;">
               <div class="grid cols-3" style="flex:1; min-width:600px; margin-bottom:0;">
                 <div class="field">
-                   <label>🔍 Filtrar por fornecedor</label>
+                   <label>🔍 Buscar por Nome do Fornecedor</label>
                    <input type="text" id="filter-nome" placeholder="Digite o nome..." oninput="App.renderForn()">
                 </div>
                 <div class="field">
@@ -692,6 +702,534 @@
           <tbody id="ocItemsBody"></tbody>
         </table>
         <div class="totals"><div class="box"><div class="label">Total OC</div><div class="value" id="ocTotal">R$ 0,00</div></div></div>
+      </section>
+    </div>
+
+    <!-- ==================== VIEW: POLÍTICA DE FORNECEDORES ==================== -->
+    <div id="view-politica" class="view">
+      <div class="doc-head">
+        <div class="doc-title">Política de Fornecedores<small>Casa Grande Urbanismo</small></div>
+        <div class="header-actions">
+          <button class="btn btn-pdf" onclick="window.print()">🖨️ Exportar PDF</button>
+        </div>
+      </div>
+
+      <section class="block">
+        <h2 style="font-size: 16px; color: var(--navy); border-bottom: 2px solid var(--navy-2); padding-bottom: 8px; margin-bottom: 16px;">1. Objetivo</h2>
+        <div class="doc-text"><strong>Propósito e Diretrizes:</strong> Esta Política tem por objetivo estabelecer as diretrizes, princípios e procedimentos que regem o relacionamento da CasaGrande Urbanismo com seus fornecedores, prestadores de serviço, empreiteiras, subcontratados e demais parceiros de negócio.</div>
+        <div class="doc-text"><strong>Compromisso Ético:</strong> Asseguramos processos de cadastro, qualificação, contratação, avaliação e desenvolvimento de fornecedores pautados pela ética, transparência, conformidade legal e busca pela melhor relação entre custo, qualidade, prazo e segurança nas obras de infraestrutura e loteamentos conduzidos pela companhia.</div>
+        <div class="doc-text"><strong>Mitigação de Riscos:</strong> Busca-se, ainda, mitigar riscos contratuais, trabalhistas, ambientais, tributários e reputacionais, fortalecendo uma cadeia de suprimentos sustentável, segura e alinhada aos valores e ao Código de Conduta da Casa Grande Urbanismo.</div>
+      </section>
+
+      <section class="block">
+        <h2 style="font-size: 16px; color: var(--navy); border-bottom: 2px solid var(--navy-2); padding-bottom: 8px; margin-bottom: 16px;">2. Abrangência e Aplicação</h2>
+        <div class="doc-text">Esta Política aplica-se a todos os colaboradores, gestores e diretores da CasaGrande Urbanismo envolvidos em processos de compras, contratação de serviços e gestão de obras, bem como a todos os fornecedores, pessoas físicas ou jurídicas, nacionais ou estrangeiras, que pretendam fornecer materiais, equipamentos, mão de obra ou serviços à companhia, incluindo, mas não se limitando a:</div>
+        <ul class="doc-list">
+            <li>Empresas de terraplenagem, movimentação de terra e pavimentação;</li>
+            <li>Fornecedores de materiais de construção, agregados, concreto e asfalto;</li>
+            <li>Prestadores de serviços de infraestrutura urbana (redes de água, esgoto, energia elétrica);</li>
+            <li>Empresas de topografia, georreferenciamento e projetos de engenharia;</li>
+            <li>Empreiteiras e subcontratadas de mão de obra para obras civis;</li>
+            <li>Locadoras de máquinas, equipamentos e veículos;</li>
+            <li>Consultorias técnicas, jurídicas, ambientais e de licenciamento;</li>
+            <li>Fornecedores de paisagismo, urbanização e mobiliário urbano;</li>
+            <li>Prestadores de serviços administrativos e de apoio.</li>
+        </ul>
+        <div class="doc-text" style="font-size: 11px; color: var(--muted);">*Esta lista é exemplificativa e não exaustiva, devendo a companhia adaptá-la conforme a natureza de cada empreendimento.</div>
+      </section>
+
+      <section class="block">
+        <h2 style="font-size: 16px; color: var(--navy); border-bottom: 2px solid var(--navy-2); padding-bottom: 8px; margin-bottom: 16px;">3. Documentos de Referência</h2>
+        <div class="doc-text">Esta Política deve ser interpretada em conjunto com os seguintes documentos internos e normas legais aplicáveis:</div>
+        <ul class="doc-list">
+            <li><strong>Normas Internas:</strong> Baseado no Manual de Compras e Contratações.</li>
+            <li><strong>Leis Federais:</strong> Lei nº 14.133/2021 (quando aplicável); Lei nº 12.846/2013 (Lei Anticorrupção) e Lei nº 13.709/2018 (LGPD).</li>
+            <li><strong>Normas Regulamentadoras de Segurança:</strong> NRs aplicáveis à construção pesada, com destaque para a NR-18 (Indústria da Construção), NR-10 (Eletricidade), NR-11 (Movimentação de Materiais) e NR-12 (Máquinas).</li>
+            <li><strong>Meio Ambiente e Trabalhista:</strong> Legislação ambiental de parcelamento do solo (Lei nº 6.766/1979); Convenções coletivas vigentes.</li>
+        </ul>
+      </section>
+
+      <section class="block">
+        <h2 style="font-size: 16px; color: var(--navy); border-bottom: 2px solid var(--navy-2); padding-bottom: 8px; margin-bottom: 16px;">4. Definições</h2>
+        <table class="items" style="margin-bottom: 16px;">
+          <thead>
+            <tr>
+              <th style="width: 25%;">TERMO</th>
+              <th>DEFINIÇÃO</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Fornecedor</strong></td><td>Pessoa física ou jurídica que fornece bens, materiais, equipamentos ou serviços à Casa Grande Urbanismo.</td></tr>
+            <tr><td><strong>Prestador de Serviço</strong></td><td>Fornecedor cuja obrigação principal é a execução de serviços, com ou sem fornecimento de material.</td></tr>
+            <tr><td><strong>Subcontratada</strong></td><td>Empresa contratada por um fornecedor para executar parte do escopo contratado (exige anuência prévia).</td></tr>
+            <tr><td><strong>Homologação / Qualificação</strong></td><td>Avaliação documental, técnica e financeira que habilita o fornecedor a participar de contratações.</td></tr>
+            <tr><td><strong>Due Diligence</strong></td><td>Processo de verificação de integridade, reputação e conformidade legal do fornecedor.</td></tr>
+            <tr><td><strong>Loteamento / Obra</strong></td><td>Empreendimento que compreende terraplenagem, drenagem, pavimentação, utilidades e arborização.</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section class="block">
+        <h2 style="font-size: 16px; color: var(--navy); border-bottom: 2px solid var(--navy-2); padding-bottom: 8px; margin-bottom: 16px;">5. Princípios e Diretrizes Gerais</h2>
+        <div class="doc-text">O relacionamento da CasaGrande Urbanismo com seus fornecedores pauta-se pelos seguintes princípios:</div>
+        <div class="grid cols-2">
+            <div class="doc-card">
+                <h4>1. Legalidade e Conformidade</h4>
+                <p>Cumprimento integral da legislação trabalhista, tributária, ambiental, urbanística e de segurança.</p>
+            </div>
+            <div class="doc-card">
+                <h4>2. Ética e Integridade</h4>
+                <p>Rejeição a qualquer prática de corrupção, suborno, fraude, conluio ou favorecimento indevido.</p>
+            </div>
+            <div class="doc-card">
+                <h4>3. Impessoalidade e Isonomia</h4>
+                <p>Tratamento equânime a todos, sem favorecimentos pessoais ou conflitos de interesse.</p>
+            </div>
+            <div class="doc-card">
+                <h4>4. Transparência</h4>
+                <p>Critérios de seleção e avaliação claros, objetivos e auditáveis em todos os processos.</p>
+            </div>
+            <div class="doc-card">
+                <h4>5. Qualidade e Excelência</h4>
+                <p>Priorização de fornecedores com capacidade técnica comprovada e histórico robusto de entrega.</p>
+            </div>
+            <div class="doc-card">
+                <h4>6. Sustentabilidade</h4>
+                <p>Incentivo a práticas de responsabilidade socioambiental e uso racional de recursos naturais.</p>
+            </div>
+            <div class="doc-card">
+                <h4>7. Segurança</h4>
+                <p>Exigência de padrões rigorosos de saúde e segurança do trabalho na construção civil.</p>
+            </div>
+            <div class="doc-card">
+                <h4>8. Relação de Longo Prazo</h4>
+                <p>Desenvolvimento de parcerias estratégicas e duradouras com os nossos fornecedores chaves.</p>
+            </div>
+        </div>
+      </section>
+
+      <section class="block">
+        <h2 style="font-size: 16px; color: var(--navy); border-bottom: 2px solid var(--navy-2); padding-bottom: 8px; margin-bottom: 16px;">6. Cadastro e Qualificação de Fornecedores</h2>
+        <div class="doc-text"><strong>6.1. Cadastro Inicial:</strong> Todo fornecedor que deseje se relacionar com a CasaGrande Urbanismo deverá fornecer, no mínimo (eventuais impossibilidades de atendimento a estes requisitos básicos serão analisadas internamente para possível flexibilização do aceite):</div>
+        <ul class="doc-list">
+            <li>Contrato social/estatuto e alterações;</li>
+            <li>Cartão CNPJ e inscrições estadual/municipal;</li>
+            <li>Certidões negativas (federais, estaduais, municipais, CNDT e FGTS);</li>
+            <li>Regularidade junto a conselhos (CREA/CAU);</li>
+            <li>Atestados técnicos e relação de obras similares;</li>
+            <li>Comprovação financeira (balanço patrimonial);</li>
+            <li>Apólices de seguro (responsabilidade civil, riscos);</li>
+            <li>Programas/certificados SSMA (PCMSO, NRs);</li>
+            <li>Política de compliance ou adesão anticorrupção.</li>
+        </ul>
+        <div class="doc-text"><strong>6.2. Due Diligence e Integridade:</strong> Previamente à contratação, a área de Compliance/Jurídico e o setor de Gestão de Suprimentos realizarão a verificação de integridade do fornecedor (listas restritivas, antecedentes de trabalho escravo/infantil, histórico de litígios e reputação). Esta etapa é fundamental para resguardar a companhia de passivos legais e riscos reputacionais decorrentes de associações indevidas na cadeia de valor.</div>
+        <div class="doc-text"><strong>6.3. Classificação de Fornecedores:</strong> Os fornecedores serão classificados conforme criticidade e risco, definindo o rigor dos requisitos documentais e a periodicidade de reavaliação:</div>
+        <table class="items" style="margin-bottom: 16px;">
+          <thead>
+            <tr>
+              <th>CLASSE</th>
+              <th>CRITÉRIO</th>
+              <th>EXEMPLOS</th>
+              <th>REAVALIAÇÃO</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>A - Crítico</strong></td><td>Alto valor contratual e/ou impacto direto em segurança, estrutura ou cronograma da obra.</td><td>Empreiteiras de terraplenagem, redes de infraestrutura, pavimentação.</td><td>Anual</td></tr>
+            <tr><td><strong>B - Relevante</strong></td><td>Fornecimento recorrente de materiais/serviços de média complexidade.</td><td>Concreto, agregados, locação de equipamentos.</td><td>Bienal</td></tr>
+            <tr><td><strong>C - Comum</strong></td><td>Baixo risco e baixo valor, sem impacto estrutural relevante na obra.</td><td>Materiais de escritório, serviços de apoio administrativo.</td><td>Conforme necessidade</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section class="block">
+        <h2 style="font-size: 16px; color: var(--navy); border-bottom: 2px solid var(--navy-2); padding-bottom: 8px; margin-bottom: 16px;">7. Critérios de Seleção e Contratação</h2>
+        <div class="doc-text">A seleção deverá considerar, em mapa comparativo ou ferramenta de cotação:</div>
+        <ul class="doc-list">
+            <li>Histórico de desempenho em contratações anteriores;</li>
+            <li>Regularidade documental, fiscal e trabalhista;</li>
+            <li>Preço e condições comerciais (pagamento, prazos, reajuste);</li>
+            <li>Qualidade técnica e aderência ao memorial/projeto;</li>
+            <li>Prazo de execução e atendimento ao cronograma;</li>
+            <li>Capacidade operacional (equipe, equipamentos, frota);</li>
+            <li>Aderência aos requisitos de SSMA e licenciamento ambiental;</li>
+            <li>Garantias contratuais (seguro, retenção, multas).</li>
+        </ul>
+        <div class="doc-text"><strong>7.1. Processo de Cotação:</strong> Recomenda-se a obtenção de, no mínimo, 3 (três) propostas/cotações de fornecedores distintos para contratações acima do valor de alçada, ressalvadas hipóteses de exclusividade ou emergência.</div>
+        <div class="doc-text"><strong>7.2. Alçadas de Aprovação:</strong> As aprovações devem observar a matriz de alçadas vigente, contemplando: coordenação, gerência e diretoria, conforme faixas de valor e criticidade. Recomenda-se a segregação entre quem solicita, cota e aprova.</div>
+      </section>
+
+      <section class="block">
+        <h2 style="font-size: 16px; color: var(--navy); border-bottom: 2px solid var(--navy-2); padding-bottom: 8px; margin-bottom: 16px;">8. Gestão de Contratos</h2>
+        <ul class="doc-list">
+            <li><strong>1. Formalização:</strong> Todo fornecimento ou serviço relevante deve ser formalizado por contrato escrito contendo objeto, prazo, valor, garantias e foro de resolução aplicável.</li>
+            <li><strong>2. Cronograma:</strong> Contratos de obra devem prever obrigatoriamente um cronograma físico-financeiro rigorosamente vinculado a medições periódicas do serviço.</li>
+            <li><strong>3. Aditivos e Alterações:</strong> Alterações de escopo, prazo ou valor devem ser formalizadas previamente à execução com justificativa técnica, aprovadas na alçada correspondente.</li>
+            <li><strong>4. Liberação de Pagamentos:</strong> Pagamentos somente serão liberados mediante comprovação estrita de regularidade fiscal, previdenciária e atesto conclusivo da fiscalização.</li>
+            <li><strong>5. Fiscalização:</strong> Fiscais de contrato deverão ser formalmente designados para acompanhamento técnico in loco, registro de medições e atestos precisos.</li>
+        </ul>
+      </section>
+
+      <section class="block">
+        <h2 style="font-size: 16px; color: var(--navy); border-bottom: 2px solid var(--navy-2); padding-bottom: 8px; margin-bottom: 16px;">9. Avaliação de Desempenho de Fornecedores</h2>
+        <div class="doc-text">Fornecedores classificados como "A" e "B" serão submetidos a avaliação de desempenho, considerando os seguintes indicadores:</div>
+        <table class="items" style="margin-bottom: 16px;">
+          <thead>
+            <tr>
+              <th style="width: 25%;">INDICADOR</th>
+              <th>DESCRIÇÃO DA AVALIAÇÃO</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Qualidade</strong></td><td>Conformidade da entrega/serviço com especificações técnicas e ausência de retrabalho.</td></tr>
+            <tr><td><strong>Prazo</strong></td><td>Cumprimento de cronogramas e datas de entrega acordadas em contrato.</td></tr>
+            <tr><td><strong>Segurança (SSMA)</strong></td><td>Ocorrência de acidentes, não conformidades e aderência a procedimentos de segurança.</td></tr>
+            <tr><td><strong>Documental</strong></td><td>Regularidade fiscal, trabalhista e previdenciária mantida durante a vigência contratual.</td></tr>
+            <tr><td><strong>Relacionamento</strong></td><td>Comunicação, capacidade de resposta e resolução ágil de não conformidades apontadas.</td></tr>
+          </tbody>
+        </table>
+        <div class="doc-text" style="font-size: 11px; color: var(--muted);">*Fornecedores com avaliação insatisfatória reiterada poderão ser submetidos a plano de ação corretiva e/ou suspensos/descredenciados.</div>
+      </section>
+
+      <section class="block">
+        <h2 style="font-size: 16px; color: var(--navy); border-bottom: 2px solid var(--navy-2); padding-bottom: 8px; margin-bottom: 16px;">10. Compliance, Ética e Anticorrupção</h2>
+        <ul class="doc-list">
+            <li>É vedado oferecer, prometer, solicitar ou aceitar, direta ou indiretamente, qualquer vantagem indevida a colaboradores, gestores ou terceiros vinculados à companhia ou a agentes públicos relacionados ao licenciamento dos empreendimentos.</li>
+            <li>É vedada a contratação de empresas que utilizem mão de obra em condição análoga à escravidão, trabalho infantil ou que constem em listas restritivas de órgãos públicos.</li>
+            <li>Conflitos de interesse entre colaboradores e fornecedores (relações familiares, societárias ou financeiras) devem ser declarados e tratados conforme o Código de Conduta.</li>
+            <li>Brindes, presentes e hospitalidades devem observar rigorosamente os limites e procedimentos definidos na Política de Compliance interna.</li>
+            <li>A companhia mantém canal de denúncias independente para recebimento de relatos de irregularidades envolvendo fornecedores.</li>
+        </ul>
+      </section>
+
+      <section class="block">
+        <h2 style="font-size: 16px; color: var(--navy); border-bottom: 2px solid var(--navy-2); padding-bottom: 8px; margin-bottom: 16px;">11. Saúde, Segurança do Trabalho e Meio Ambiente</h2>
+        <div class="doc-text">Considerando a natureza das atividades de infraestrutura e loteamento, exige-se de todos os fornecedores que atuem em campo:</div>
+        <div class="grid cols-2">
+            <div class="doc-card">
+                <h4>Treinamentos (NRs)</h4>
+                <p>Comprovação de treinamentos e certificações exigidos pelas Normas Regulamentadoras aplicáveis (NR-18, NR-35, etc).</p>
+            </div>
+            <div class="doc-card">
+                <h4>Uso de EPIs e EPCs</h4>
+                <p>Fornecimento e uso obrigatório de Equipamentos de Proteção Individual (EPIs) e Coletiva (EPCs) adequados.</p>
+            </div>
+            <div class="doc-card">
+                <h4>Comunicação de Incidentes</h4>
+                <p>Comunicação imediata de acidentes de trabalho e incidentes ambientais à fiscalização da companhia.</p>
+            </div>
+            <div class="doc-card">
+                <h4>Preservação Ambiental</h4>
+                <p>Respeito a áreas de preservação permanente (APPs), licenças ambientais e condicionantes específicas.</p>
+            </div>
+            <div class="doc-card">
+                <h4>Gestão de Resíduos</h4>
+                <p>Gestão adequada de resíduos de construção civil, conforme legislação ambiental e Plano (PGRCC).</p>
+            </div>
+            <div class="doc-card">
+                <h4>Auditorias e Inspeções</h4>
+                <p>Sujeição a auditorias e inspeções de SSMA realizadas pela companhia ou terceiros, sem aviso prévio.</p>
+            </div>
+        </div>
+      </section>
+
+      <section class="block">
+        <h2 style="font-size: 16px; color: var(--navy); border-bottom: 2px solid var(--navy-2); padding-bottom: 8px; margin-bottom: 16px;">12. Responsabilidade Socioambiental</h2>
+        <div class="doc-text">A CasaGrande Urbanismo incentiva e valoriza na cadeia de fornecedores:</div>
+        <ul class="doc-list">
+            <li>Adoção de práticas de eficiência no uso de água, energia e materiais;</li>
+            <li>Utilização de materiais com menor impacto ambiental e gestão responsável de resíduos;</li>
+            <li>Apoio a fornecedores de pequeno e médio porte e a iniciativas de economia local, quando compatível com critérios técnicos e de qualidade.</li>
+        </ul>
+      </section>
+
+      <section class="block">
+        <h2 style="font-size: 16px; color: var(--navy); border-bottom: 2px solid var(--navy-2); padding-bottom: 8px; margin-bottom: 16px;">13. Canal de Denúncias e Ouvidoria</h2>
+        <div class="doc-text">Fornecedores, colaboradores e demais partes interessadas podem reportar, de forma confidencial e, se desejado, anônima, suspeitas de irregularidades, fraudes, condutas antiéticas ou descumprimento desta Política por meio do canal de denúncias da CasaGrande Urbanismo: <strong>canaldenuncias@casagrandeurbanismo.com.br</strong>.</div>
+        <div class="doc-text">É vedada qualquer forma de retaliação contra quem realizar denúncia de boa-fé.</div>
+      </section>
+
+      <section class="block">
+        <h2 style="font-size: 16px; color: var(--navy); border-bottom: 2px solid var(--navy-2); padding-bottom: 8px; margin-bottom: 16px;">14. Confidencialidade e LGPD</h2>
+        <ul class="doc-list">
+            <li>Informações técnicas, comerciais, projetos e dados de empreendimentos compartilhados possuem caráter confidencial e não podem ser divulgados a terceiros sem autorização;</li>
+            <li>Projetos, plantas, memoriais e demais materiais elaborados para a companhia são de sua propriedade, salvo disposição contratual em sentido diverso;</li>
+            <li>O tratamento de dados pessoais de representantes de fornecedores deve observar a LGPD, limitando-se às finalidades da relação contratual.</li>
+        </ul>
+      </section>
+
+      <section class="block">
+        <h2 style="font-size: 16px; color: var(--navy); border-bottom: 2px solid var(--navy-2); padding-bottom: 8px; margin-bottom: 16px;">15. Disposições Gerais</h2>
+        <ul class="doc-list">
+            <li>Casos omissos serão resolvidos pela Gestão de Suprimentos e Contratos, em conjunto com as áreas de Compliance e Jurídico;</li>
+            <li>Esta Política não cria direitos adquiridos, podendo ser alterada a qualquer tempo pela companhia, mediante comunicação aos fornecedores ativos;</li>
+            <li>O descumprimento desta Política por colaboradores da CasaGrande Urbanismo sujeita-os às medidas disciplinares previstas no Código de Conduta.</li>
+        </ul>
+      </section>
+
+      <section class="block" style="margin-bottom: 80px;">
+        <h2 style="font-size: 16px; color: var(--navy); border-bottom: 2px solid var(--navy-2); padding-bottom: 8px; margin-bottom: 16px;">Revisão e Aprovação</h2>
+        <div class="doc-text">Esta Política entra em vigor na data de sua aprovação e deverá ser revisada, no mínimo, anualmente, ou sempre que houver alteração legislativa relevante, mudança organizacional ou recomendação das áreas de Compliance, Jurídico ou Auditoria Interna.</div>
+        <table class="items" style="margin-top: 16px;">
+          <thead>
+            <tr>
+              <th>VERSÃO</th>
+              <th>DATA</th>
+              <th>DESCRIÇÃO DA ALTERAÇÃO</th>
+              <th>APROVAÇÃO</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>1.0</td>
+              <td>24/06/2026</td>
+              <td>Emissão original</td>
+              <td>Diretoria Executiva</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+    </div>
+
+    <!-- ==================== VIEW: MANUAL DE COMPRAS ==================== -->
+    <div id="view-manual" class="view">
+      <div class="doc-head">
+        <div class="doc-title">Manual de Compras e Contratações<small>Guia Técnico, Diretrizes Operacionais, Boas Práticas e Compliance</small></div>
+        <div class="header-actions">
+          <button class="btn btn-pdf" onclick="window.print()">🖨️ Exportar PDF</button>
+        </div>
+      </div>
+
+      <section class="block">
+        <h2 style="font-size: 16px; color: var(--navy); border-bottom: 2px solid var(--navy-2); padding-bottom: 8px; margin-bottom: 16px;">1. Introdução e Importância Estratégica</h2>
+        <div class="doc-text">Na indústria do desenvolvimento urbano e da construção civil, a cadeia de suprimentos representa um dos pilares mais críticos para a viabilidade financeira, cumprimento de prazos e manutenção do padrão de qualidade de cada empreendimento.</div>
+        <div class="doc-text">Para a CasaGrande Urbanismo, a área de Suprimentos não atua meramente como uma função de suporte operacional, mas sim como um departamento altamente estratégico. Uma gestão eficiente garante:</div>
+        <ul class="doc-list">
+            <li><strong>Mitigação de Riscos Jurídicos e Trabalhistas:</strong> A contratação correta de prestadores de serviços protege a empresa de passivos solidários, resguardando o capital financeiro e a imagem institucional.</li>
+            <li><strong>Previsibilidade Orçamentária:</strong> Alinhamento rigoroso entre o orçado e o realizado na engenharia, permitindo um controle robusto dos custos de cada loteamento e projeto executivo.</li>
+            <li><strong>Garantia de Qualidade Técnica:</strong> Homologação de parceiros que utilizam insumos certificados e de alta durabilidade, e boas práticas de execução conforme normas técnicas de engenharia vigentes.</li>
+            <li><strong>Agilidade no Canteiro (Just-in-Time):</strong> Redução de gargalos logísticos e operacionais através do planejamento contínuo, garantindo a entrega pontual de insumos essenciais e evitando paralisações nas frentes de serviço.</li>
+            <li><strong>Otimização do Fluxo de Caixa:</strong> Negociação estratégica de prazos de pagamento e cronogramas de desembolso alinhados com a receita dos loteamentos, garantindo saúde financeira contínua à empresa.</li>
+        </ul>
+      </section>
+
+      <section class="block">
+        <h2 style="font-size: 16px; color: var(--navy); border-bottom: 2px solid var(--navy-2); padding-bottom: 8px; margin-bottom: 16px;">2. Objetivos do Manual</h2>
+        <div class="doc-text">Este documento foi elaborado para consolidar e padronizar todas as etapas operacionais, critérios de governança e posturas éticas exigidas na condução de aquisições e contratações. Seus principais objetivos são:</div>
+        <div class="grid cols-2 mt-4">
+            <div class="doc-card">
+                <h4>1. Padronização de Processos</h4>
+                <p>Servir como roteiro obrigatório e material de treinamento, assegurando uniformidade na execução das atividades do setor e garantindo a continuidade do trabalho.</p>
+            </div>
+            <div class="doc-card">
+                <h4>2. Transparência e Rastreabilidade</h4>
+                <p>Garantir que todas as decisões comerciais sejam baseadas em critérios técnicos e financeiros auditáveis, passíveis de verificação e controle interno contínuo.</p>
+            </div>
+            <div class="doc-card">
+                <h4>3. Eficiência Operacional (SLA)</h4>
+                <p>Estabelecer consciência de prazo para atendimento para as requisições de materiais e serviços vindas do canteiro de obras, reduzindo esperas injustificadas.</p>
+            </div>
+            <div class="doc-card">
+                <h4>4. Fortalecimento do Compliance</h4>
+                <p>Blindar a organização contra conflitos de interesse, fraudes e desvios de conduta nas negociações de mercado, promovendo um ambiente ético e profissional.</p>
+            </div>
+        </div>
+      </section>
+
+      <section class="block">
+        <h2 style="font-size: 16px; color: var(--navy); border-bottom: 2px solid var(--navy-2); padding-bottom: 8px; margin-bottom: 16px;">3. Governança, Papéis e Responsabilidades</h2>
+        <div class="doc-text">Para assegurar o máximo aproveitamento técnico da equipe e alinhamento com a realidade da CasaGrande Urbanismo, as funções no setor de Suprimentos dividem-se em atuação estratégica e apoio sistêmico operacional.</div>
+        <div class="grid cols-2 mt-4">
+            <div>
+                <h3 style="color: var(--navy-2); font-size: 14px; margin-bottom: 12px; text-transform: uppercase;">Analista de Suprimentos</h3>
+                <ul class="doc-list">
+                    <li><strong>Strategic Sourcing:</strong> Desenvolvimento de alianças e visão corporativa de mercado.</li>
+                    <li><strong>Negociação de Alto Impacto:</strong> Equalização e negociação direta de escopos com maior complexidade financeira.</li>
+                    <li><strong>Análise de Dados:</strong> Gestão, Atualização e Visualização Estratégica do orçamento das obra através de dashboards executivos.</li>
+                    <li><strong>Liderança Ativa:</strong> Participação ativa nas demandas mais impactantes e resolução de conflitos críticos.</li>
+                </ul>
+            </div>
+            <div>
+                <h3 style="color: var(--navy-2); font-size: 14px; margin-bottom: 12px; text-transform: uppercase;">Comprador / Adm</h3>
+                <ul class="doc-list">
+                    <li><strong>Condução de RFQs:</strong> Lançamento e coleta de orçamentos junto aos fornecedores no mercado.</li>
+                    <li><strong>Apoio Sistêmico:</strong> Realização de cadastros e lançamentos de pedidos no ERP (Sienge).</li>
+                    <li><strong>Diligenciamento (Follow-up):</strong> Acompanhamento contínuo de entregas e status de contratos.</li>
+                    <li><strong>Interface Financeira:</strong> Contato direto para o envio e organização do fluxo de contas a pagar.</li>
+                </ul>
+            </div>
+        </div>
+      </section>
+
+      <section class="block">
+        <h2 style="font-size: 16px; color: var(--navy); border-bottom: 2px solid var(--navy-2); padding-bottom: 8px; margin-bottom: 16px;">4. Compliance, Ética e Regras de Atuação</h2>
+        <div class="doc-text">O relacionamento com o mercado deve ser estritamente profissional, pautado pela igualdade de condições a todos os proponentes e proteção da imagem institucional da CasaGrande Urbanismo. Todas as interações devem prezar pela transparência, integridade e rastreabilidade documental. A adoção de práticas justas de concorrência não apenas resguarda a empresa contra passivos jurídicos e riscos de imagem, mas também atrai parceiros de negócios mais qualificados, fomentando um ecossistema de fornecimento sustentável, eficiente e altamente confiável a longo prazo.</div>
+        
+        <h3 style="color: var(--navy-2); font-size: 13px; margin: 20px 0 10px 0; text-transform: uppercase;">Diretrizes de Compliance</h3>
+        <ul class="doc-list">
+            <li><strong>Brindes e Favores:</strong> É terminantemente proibido a qualquer colaborador do setor aceitar presentes, comissões, jantares de cortesia, viagens, ingressos ou facilidades pessoais. Brindes institucionais comuns não podem exceder o valor de R$ 100,00.</li>
+            <li><strong>Anticorrupção:</strong> Repúdio absoluto e tolerância zero a qualquer forma de suborno, extorsão ou pagamentos facilitadores a agentes públicos ou privados.</li>
+            <li><strong>Informações Privilegiadas:</strong> É estritamente vedado o uso ou compartilhamento de dados confidenciais, orçamentos e estratégias da empresa para obter vantagens pessoais ou favorecer terceiros.</li>
+        </ul>
+
+        <h3 style="color: var(--navy-2); font-size: 13px; margin: 20px 0 10px 0; text-transform: uppercase;">Conflito de Interesses e Confidencialidades</h3>
+        <div class="doc-text">Caso haja parentesco ou amizade íntima com fornecedores, o responsável deve declarar o conflito e se abster da negociação imediatamente. O compartilhamento de valores ou condições comerciais entre concorrentes com o intuito de estimular a competitividade é permitido, desde que conduzido de forma ética, imparcial e transparente. A negociação deve focar em atingir as metas e o orçamento-alvo da empresa, resguardando o sigilo de documentos proprietários, composições técnicas e propostas formais de cada fornecedor.</div>
+      </section>
+
+      <section class="block">
+        <h2 style="font-size: 16px; color: var(--navy); border-bottom: 2px solid var(--navy-2); padding-bottom: 8px; margin-bottom: 16px;">5. Fluxo de Processos: Visão Geral</h2>
+        <div class="grid cols-4" style="margin-bottom: 24px;">
+            <div class="doc-card" style="text-align: center; padding: 20px 10px;">
+                <h4 style="font-size: 14px; margin-bottom: 4px;">1</h4>
+                <p style="font-weight: 600;">Definição de Escopo e Requisição</p>
+            </div>
+            <div class="doc-card" style="text-align: center; padding: 20px 10px;">
+                <h4 style="font-size: 14px; margin-bottom: 4px;">2</h4>
+                <p style="font-weight: 600;">Homologação de Fornecedores</p>
+            </div>
+            <div class="doc-card" style="text-align: center; padding: 20px 10px;">
+                <h4 style="font-size: 14px; margin-bottom: 4px;">3</h4>
+                <p style="font-weight: 600;">Cotação e Coleta de Propostas</p>
+            </div>
+            <div class="doc-card" style="text-align: center; padding: 20px 10px;">
+                <h4 style="font-size: 14px; margin-bottom: 4px;">4</h4>
+                <p style="font-weight: 600;">Equalização Técnica e Comercial</p>
+            </div>
+            <div class="doc-card" style="text-align: center; padding: 20px 10px;">
+                <h4 style="font-size: 14px; margin-bottom: 4px;">5</h4>
+                <p style="font-weight: 600;">Decisão de Contratação</p>
+            </div>
+            <div class="doc-card" style="text-align: center; padding: 20px 10px;">
+                <h4 style="font-size: 14px; margin-bottom: 4px;">6</h4>
+                <p style="font-weight: 600;">Formalização Jurídica</p>
+            </div>
+            <div class="doc-card" style="text-align: center; padding: 20px 10px;">
+                <h4 style="font-size: 14px; margin-bottom: 4px;">7</h4>
+                <p style="font-weight: 600;">Emissão de Pedido / OS</p>
+            </div>
+            <div class="doc-card" style="text-align: center; padding: 20px 10px;">
+                <h4 style="font-size: 14px; margin-bottom: 4px;">8</h4>
+                <p style="font-weight: 600;">Recebimento e Integração</p>
+            </div>
+        </div>
+
+        <h3 style="color: var(--navy-2); font-size: 13px; margin: 20px 0 10px 0; text-transform: uppercase;">5.1 Detalhamento das Fases (1 a 4)</h3>
+        <ul class="doc-list">
+            <li><strong>1. Definição de Escopo e Requisição Formal:</strong> A Engenharia emite Memorial Descritivo, Projetos e Quantitativos Homologados. A requisição formal deve estar integrada ao ERP e amparada rigorosamente pelo orçamento do loteamento ou projeto vigente.</li>
+            <li><strong>2. Homologação de Fornecedores:</strong> A análise de fornecedores deve ser flexível e ágil, de modo a não criar barreiras desnecessárias ao processo comercial. Para o cadastro e abertura de cotações, exige-se como documentação mínima apenas o Cartão CNPJ ativo e, quando houver necessidade de formalização jurídica, o Contrato Social da empresa.</li>
+            <li><strong>3. Cotação e Coleta de Propostas (RFQ):</strong> Mínimo de 3 fornecedores válidos consultados via canais oficiais, com prazos idênticos de resposta para garantir a isonomia total do processo comercial perante a organização.</li>
+            <li><strong>4. Equalização Técnica e Comercial:</strong> Planilhamento comparativo ajustando minunciosamente regimes tributários (ICMS, ST, ISS), regras de logística (FOB/CIF) e prazos de pagamento ofertados entre os concorrentes para garantir justa comparação.</li>
+        </ul>
+
+        <h3 style="color: var(--navy-2); font-size: 13px; margin: 20px 0 10px 0; text-transform: uppercase;">5.2 Detalhamento das Fases (5 a 8)</h3>
+        <ul class="doc-list">
+            <li><strong>5. Decisão de Contratação:</strong> Emissão do Parecer de Escolha fundamentado no menor custo global (TCO), melhor prazo e menor risco operacional, congelando as condições técnicas para a fase final de aprovação e emissão sistêmica.</li>
+            <li><strong>6. Formalização Jurídica e Contratual:</strong> Elaboração de contrato de prestação de serviços prevendo penalidades, exigências de segurança do trabalho, obrigações das partes, garantias, detalhamento do escopo, etc.</li>
+            <li><strong>7. Emissão de Pedido / OS:</strong> Liberação formal do início dos trabalhos no Sienge (ERP) após todas as devidas assinaturas das partes, bloqueando automaticamente o saldo orçamentário para evitar qualquer distorção financeira no projeto.</li>
+            <li><strong>8. Integração Financeira (Kit Pagamento):</strong> Materiais e Locação de Equipamentos/Máquinas: Cadastro de compras e entrega das: NF/Boletos/Fatura de Locação + AF (Autorização de Fornecimento). Para serviços: Cadastro de medições e entrega das: NFSE's + AF.</li>
+        </ul>
+      </section>
+
+      <section class="block">
+        <h2 style="font-size: 16px; color: var(--navy); border-bottom: 2px solid var(--navy-2); padding-bottom: 8px; margin-bottom: 16px;">6. Matriz de Alçadas e Regras de Negócio</h2>
+        <div class="doc-text">Nenhuma compra ou contratação de impacto pode ser efetuada sob o arbítrio de um único indivíduo. A governança da CasaGrande Urbanismo exige a aprovação em níveis crescentes de responsabilidade, baseados no valor total acumulado do pedido ou contrato:</div>
+        <table class="items" style="margin-top: 16px;">
+          <thead>
+            <tr>
+              <th>FAIXA DE VALOR (R$)</th>
+              <th>NÍVEL DE ALÇADA EXIGIDO PARA APROVAÇÃO</th>
+              <th>REQUISITOS MÍNIMOS</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Até R$ 1.000,00</td>
+              <td>Encarregado residente da obra + Comprador</td>
+              <td>02 Cotações de fornecedores locais</td>
+            </tr>
+            <tr>
+              <td>De R$ 1.000,01 a R$ 5.000,00</td>
+              <td>Comprador</td>
+              <td>03 cotações formalizadas</td>
+            </tr>
+            <tr>
+              <td>De R$ 5.000,01 a R$ 15.000,00</td>
+              <td>Comprador + Analista de Suprimentos</td>
+              <td>03 cotações formalizadas</td>
+            </tr>
+            <tr>
+              <td>De R$ 15.000,01 a R$ 150.000,00</td>
+              <td>Analista de Suprimentos + Acompanhamento da Diretoria Executiva</td>
+              <td>3 Cotações Formalizadas + Quadro de Equalização + Relatório de Decisão</td>
+            </tr>
+            <tr>
+              <td>Acima de R$ 150.000,00</td>
+              <td>Analista de Suprimentos + Diretoria Executiva</td>
+              <td>3 Cotações Formalizadas + Quadro de Equalização + Relatório de Decisão</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section class="block">
+        <h2 style="font-size: 16px; color: var(--navy); border-bottom: 2px solid var(--navy-2); padding-bottom: 8px; margin-bottom: 16px;">7. Indicadores de Desempenho (KPIs)</h2>
+        <div class="doc-text">A excelência da área é medida através do acompanhamento rigoroso dos seguintes indicadores, analisados pelo setor em seus Dashboards Executivos e reportados estrategicamente à Diretoria:</div>
+        <div class="grid cols-4 mt-4">
+            <div class="doc-card">
+                <h4>Saving (%)</h4>
+                <p>Economia obtida nas negociações comparando a melhor proposta inicial com o valor contratado pós-negociação, garantindo proteção ao orçamento base.</p>
+            </div>
+            <div class="doc-card">
+                <h4>Lead Time de Compras</h4>
+                <p>Tempo transcorrido desde o recebimento da requisição correta pela engenharia até a efetiva emissão do pedido ou assinatura do contrato.</p>
+            </div>
+            <div class="doc-card">
+                <h4>IDF (Desempenho)</h4>
+                <p>Avaliação contínua dos parceiros em campo baseada nos quesitos de Pontualidade, Segurança do Trabalho, Qualidade e Postura Comercial.</p>
+            </div>
+            <div class="doc-card">
+                <h4>Entregas no prazo (%)</h4>
+                <p>Percentual de entregas realizadas rigorosamente dentro do prazo estipulado, garantindo o fluxo contínuo e ininterrupto das frentes de obra.</p>
+            </div>
+            <div class="doc-card">
+                <h4>Performance (Fornecedores)</h4>
+                <p>Monitoramento global do parceiro comercial, englobando a saúde financeira a longo prazo, conformidade ética e qualidade das entregas.</p>
+            </div>
+            <div class="doc-card">
+                <h4>Custo por Lote</h4>
+                <p>Acompanhamento estratégico do impacto financeiro das aquisições e contratos, rateado sistematicamente pelo número de lotes do empreendimento.</p>
+            </div>
+            <div class="doc-card">
+                <h4>Controle (Custo/Etapa)</h4>
+                <p>Monitoramento detalhado dos gastos com materiais e serviços segmentados e analisados pelas diferentes fases executivas do projeto.</p>
+            </div>
+            <div class="doc-card">
+                <h4>Curva ABC (Fornecedores)</h4>
+                <p>Classificação estratégica do volume de compras para priorizar esforços e estreitar relacionamento com os fornecedores de maior impacto.</p>
+            </div>
+        </div>
+      </section>
+
+      <section class="block" style="margin-bottom: 80px;">
+        <h2 style="font-size: 16px; color: var(--navy); border-bottom: 2px solid var(--navy-2); padding-bottom: 8px; margin-bottom: 16px;">8. Aprovação e Validação</h2>
+        <div class="doc-text"><strong>Revisão e Vigência:</strong> Este documento entra em vigor na data de sua aprovação, revogando disposições anteriores. A revisão deve ser realizada anualmente ou sempre que houver mudanças significativas nas políticas da empresa ou processos no Sienge.</div>
+        <table class="items" style="margin-top: 16px;">
+          <thead>
+            <tr>
+              <th>VERSÃO</th>
+              <th>DATA</th>
+              <th>DESCRIÇÃO DA ALTERAÇÃO</th>
+              <th>APROVAÇÃO</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>1.0</td>
+              <td>01/07/2026</td>
+              <td>Emissão Inicial do Documento</td>
+              <td>Diretoria Executiva</td>
+            </tr>
+          </tbody>
+        </table>
       </section>
     </div>
 
