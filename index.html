@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -16,6 +15,7 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
 <style>
   :root {
@@ -116,7 +116,6 @@
     color: var(--ink); border: 1px solid var(--line); border-radius: 4px; padding: 0 11px; 
     height: 38px; outline: none; background: transparent; transition: border-color .15s ease; 
   }
-  /* Remove eye icon from edge browsers */
   .field input[type="password"]::-ms-reveal, .field input[type="password"]::-ms-clear { display: none; }
   .field input:focus, .field select:focus, .field textarea:focus { border-color: var(--navy); }
   .field input:disabled, .field textarea:disabled, .field select:disabled { background: var(--bg); color: var(--muted); }
@@ -237,35 +236,52 @@
     .table-wrapper { max-height: none !important; overflow: visible !important; border: none !important; }
     input, select, textarea { border: none !important; background: transparent !important; color: #000 !important; -webkit-appearance: none; outline: none; resize: none; box-shadow: none !important; }
     input::placeholder, textarea::placeholder { color: transparent !important; }
-    .doc-card { break-inside: avoid; border-left: 3px solid #24783d !important; background: #e8f0e9 !important; }
+    
+    /* Configurações específicas de impressão para os Manuais */
+    #view-politica .grid, #view-manual .grid { display: block !important; margin-bottom: 0 !important; gap: 0 !important;}
+    .doc-card { break-inside: auto !important; border: none !important; background: transparent !important; padding: 0 !important; margin: 0 0 10px 0 !important; }
+    .doc-card h4 { display: block !important; margin: 0 0 2px 0 !important; font-size: 12px !important;}
+    .doc-card p { display: block !important; margin: 0 0 8px 0 !important; font-size: 11px !important;}
+    .doc-text, .doc-list { margin-bottom: 8px !important; }
+    section.block { padding: 10px 0 !important; margin-bottom: 10px !important; border: none !important;}
+    h2 { margin-bottom: 8px !important; padding-bottom: 4px !important; }
   }
 </style>
 </head>
 <body>
 
-<div id="login-screen" style="position:fixed; top:0; left:0; width:100%; height:100%; background:#0d3b1f; display:flex; flex-direction:column; justify-content:center; align-items:center; z-index:100000; transition: opacity 0.5s ease;">
-  
-  <div style="position:absolute; top:40px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:8px; padding:15px 30px;">
-     <h1 style="font-weight:800; font-size:22px; color:#b0c90a; letter-spacing:1px; line-height:1.2; text-align:center; margin:0;">PLATAFORMA DE GESTÃO DE SUPRIMENTOS<br><span style="color:#efefef; font-size:16px;">DA CASAGRANDE URBANISMO</span></h1>
-  </div>
+<!-- TELA DE LOGIN APRIMORADA -->
+<div id="login-screen" style="position:fixed; top:0; left:0; width:100%; height:100%; background:var(--bg); padding:20px; display:flex; justify-content:center; align-items:center; z-index:100000; transition: opacity 0.5s ease;">
+  <div style="position:relative; width:100%; height:100%; border-radius:24px; overflow:hidden; display:flex; flex-direction:column; justify-content:center; align-items:center; background-color:#0d3b1f; box-shadow: 0 10px 30px rgba(0,0,0,0.2);">
+    
+    <!-- Imagem de Fundo (DJI_0853.JPG) -->
+    <div style="position:absolute; top:0; left:0; width:100%; height:100%; background-image:url('DJI_0853.JPG'); background-size:cover; background-position:center; opacity:0.4; mix-blend-mode: overlay;"></div>
+    
+    <!-- Título Solto no Topo -->
+    <div style="position:absolute; top:40px; z-index:2; text-align:center; padding: 15px 30px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:8px;">
+      <h1 style="font-weight:800; font-size:26px; color:#b0c90a; letter-spacing:1px; line-height:1.3; margin:0; text-shadow: 0px 2px 4px rgba(0,0,0,0.5);">PLATAFORMA DE GESTÃO DE SUPRIMENTOS<br><span style="color:#efefef; font-size:18px;">CASAGRANDE URBANISMO</span></h1>
+    </div>
 
-  <div style="background:#fff; padding:30px; border-radius:8px; width:90%; max-width:320px; box-shadow: 0 10px 25px rgba(0,0,0,0.3);">
-    <div class="field" style="text-align:left; margin-bottom:15px;">
-      <label style="font-size:11px; margin-bottom:8px; color:#777777;">Usuário:</label>
-      <input type="text" id="login-user" placeholder="Digite seu usuário" onkeypress="if(event.key === 'Enter') efetuarLogin()" style="width:100%; padding:0 12px; height:42px; border:1px solid #cccccc; border-radius:4px; font-family:'Montserrat', sans-serif; outline:none; color:#000 !important; background:#fff !important;">
+    <!-- Caixa Branca de Login -->
+    <div style="background:#fff; padding:40px 30px; border-radius:12px; width:90%; max-width:340px; box-shadow: 0 15px 35px rgba(0,0,0,0.3); z-index:2; margin-top:80px;">
+      <div class="field" style="text-align:left; margin-bottom:15px;">
+        <label style="font-size:11px; margin-bottom:8px; color:#777777; font-weight:700;">Usuário:</label>
+        <input type="text" id="login-user" placeholder="Digite seu usuário" onkeypress="if(event.key === 'Enter') efetuarLogin()" style="width:100%; padding:0 12px; height:42px; border:1px solid #cccccc; border-radius:4px; font-family:'Montserrat', sans-serif; outline:none; color:#000 !important; background:#fff !important; font-weight:500;">
+      </div>
+      <div class="field" style="text-align:left; margin-bottom:25px; position:relative;">
+        <label style="font-size:11px; margin-bottom:8px; color:#777777; font-weight:700;">Senha:</label>
+        <input type="password" id="login-pass" placeholder="Digite sua senha" onkeypress="if(event.key === 'Enter') efetuarLogin()" style="width:100%; padding:0 12px; height:42px; border:1px solid #cccccc; border-radius:4px; font-family:'Montserrat', sans-serif; outline:none; color:#000 !important; background:#fff !important; font-weight:500;">
+        <span onclick="window.togglePassword()" style="position:absolute; right:12px; top:33px; cursor:pointer; font-size:16px; color:#777;">👁️</span>
+      </div>
+      <div style="text-align:center; display: flex; justify-content: center;">
+        <button class="btn" style="background:#0d3b1f; color:#fff; width:100%; padding:14px; font-size:13px; margin: 0 auto; transition:0.2s;" onclick="efetuarLogin()">Acessar Painel</button>
+      </div>
     </div>
-    <div class="field" style="text-align:left; margin-bottom:25px; position:relative;">
-      <label style="font-size:11px; margin-bottom:8px; color:#777777;">Senha:</label>
-      <input type="password" id="login-pass" placeholder="Digite sua senha" onkeypress="if(event.key === 'Enter') efetuarLogin()" style="width:100%; padding:0 12px; height:42px; border:1px solid #cccccc; border-radius:4px; font-family:'Montserrat', sans-serif; outline:none; color:#000 !important; background:#fff !important;">
-      <span onclick="window.togglePassword()" style="position:absolute; right:12px; top:32px; cursor:pointer; font-size:16px; color:#777;">👁️</span>
-    </div>
-    <div style="text-align:center; display: flex; justify-content: center;">
-      <button class="btn" style="background:#0d3b1f; color:#fff; width:100%; max-width:200px; padding:14px; font-size:13px; margin: 0 auto;" onclick="efetuarLogin()">Acessar Painel</button>
-    </div>
-  </div>
-  
-  <div style="position:absolute; bottom:20px; color:rgba(255,255,255,0.4); font-size:10px; font-weight:600; letter-spacing:1px;">
+    
+    <!-- Texto do Rodapé -->
+    <div style="position:absolute; bottom:24px; z-index:2; color:rgba(255,255,255,0.6); font-size:10px; font-weight:600; letter-spacing:1px;">
       Plataforma scgurb.v01.26082026
+    </div>
   </div>
 </div>
 
@@ -709,20 +725,17 @@
     <div id="view-politica" class="view">
       <div class="doc-head">
         <div class="doc-title">Política de Fornecedores<small>Casa Grande Urbanismo</small></div>
-        <div class="header-actions">
-          <button class="btn btn-pdf" onclick="window.print()">🖨️ Exportar PDF</button>
-        </div>
       </div>
 
       <section class="block">
-        <h2 style="font-size: 16px; color: var(--navy); border-bottom: 2px solid var(--navy-2); padding-bottom: 8px; margin-bottom: 16px;">1. Objetivo</h2>
+        <h2 style="font-size: 16px; color: var(--navy); border-bottom: 2px solid var(--navy-2); padding-bottom: 8px; margin-bottom: 16px;">1. Objetivo <i class="fa-solid fa-bullseye" style="color: var(--navy); margin-left: 8px;"></i></h2>
         <div class="doc-text"><strong>Propósito e Diretrizes:</strong> Esta Política tem por objetivo estabelecer as diretrizes, princípios e procedimentos que regem o relacionamento da CasaGrande Urbanismo com seus fornecedores, prestadores de serviço, empreiteiras, subcontratados e demais parceiros de negócio.</div>
         <div class="doc-text"><strong>Compromisso Ético:</strong> Asseguramos processos de cadastro, qualificação, contratação, avaliação e desenvolvimento de fornecedores pautados pela ética, transparência, conformidade legal e busca pela melhor relação entre custo, qualidade, prazo e segurança nas obras de infraestrutura e loteamentos conduzidos pela companhia.</div>
         <div class="doc-text"><strong>Mitigação de Riscos:</strong> Busca-se, ainda, mitigar riscos contratuais, trabalhistas, ambientais, tributários e reputacionais, fortalecendo uma cadeia de suprimentos sustentável, segura e alinhada aos valores e ao Código de Conduta da Casa Grande Urbanismo.</div>
       </section>
 
       <section class="block">
-        <h2 style="font-size: 16px; color: var(--navy); border-bottom: 2px solid var(--navy-2); padding-bottom: 8px; margin-bottom: 16px;">2. Abrangência e Aplicação</h2>
+        <h2 style="font-size: 16px; color: var(--navy); border-bottom: 2px solid var(--navy-2); padding-bottom: 8px; margin-bottom: 16px;">2. Abrangência e Aplicação <i class="fa-solid fa-sitemap" style="color: var(--navy); margin-left: 8px;"></i></h2>
         <div class="doc-text">Esta Política aplica-se a todos os colaboradores, gestores e diretores da CasaGrande Urbanismo envolvidos em processos de compras, contratação de serviços e gestão de obras, bem como a todos os fornecedores, pessoas físicas ou jurídicas, nacionais ou estrangeiras, que pretendam fornecer materiais, equipamentos, mão de obra ou serviços à companhia, incluindo, mas não se limitando a:</div>
         <ul class="doc-list">
             <li>Empresas de terraplenagem, movimentação de terra e pavimentação;</li>
@@ -739,7 +752,7 @@
       </section>
 
       <section class="block">
-        <h2 style="font-size: 16px; color: var(--navy); border-bottom: 2px solid var(--navy-2); padding-bottom: 8px; margin-bottom: 16px;">3. Documentos de Referência</h2>
+        <h2 style="font-size: 16px; color: var(--navy); border-bottom: 2px solid var(--navy-2); padding-bottom: 8px; margin-bottom: 16px;">3. Documentos de Referência <i class="fa-solid fa-file-contract" style="color: var(--navy); margin-left: 8px;"></i></h2>
         <div class="doc-text">Esta Política deve ser interpretada em conjunto com os seguintes documentos internos e normas legais aplicáveis:</div>
         <ul class="doc-list">
             <li><strong>Normas Internas:</strong> Baseado no Manual de Compras e Contratações.</li>
@@ -750,7 +763,7 @@
       </section>
 
       <section class="block">
-        <h2 style="font-size: 16px; color: var(--navy); border-bottom: 2px solid var(--navy-2); padding-bottom: 8px; margin-bottom: 16px;">4. Definições</h2>
+        <h2 style="font-size: 16px; color: var(--navy); border-bottom: 2px solid var(--navy-2); padding-bottom: 8px; margin-bottom: 16px;">4. Definições <i class="fa-solid fa-book-open" style="color: var(--navy); margin-left: 8px;"></i></h2>
         <table class="items" style="margin-bottom: 16px;">
           <thead>
             <tr>
@@ -770,46 +783,46 @@
       </section>
 
       <section class="block">
-        <h2 style="font-size: 16px; color: var(--navy); border-bottom: 2px solid var(--navy-2); padding-bottom: 8px; margin-bottom: 16px;">5. Princípios e Diretrizes Gerais</h2>
+        <h2 style="font-size: 16px; color: var(--navy); border-bottom: 2px solid var(--navy-2); padding-bottom: 8px; margin-bottom: 16px;">5. Princípios e Diretrizes Gerais <i class="fa-solid fa-scale-balanced" style="color: var(--navy); margin-left: 8px;"></i></h2>
         <div class="doc-text">O relacionamento da CasaGrande Urbanismo com seus fornecedores pauta-se pelos seguintes princípios:</div>
         <div class="grid cols-2">
             <div class="doc-card">
-                <h4>1. Legalidade e Conformidade</h4>
+                <h4>1. Legalidade e Conformidade <i class="fa-solid fa-check" style="color: var(--navy-2); margin-left: 6px;"></i></h4>
                 <p>Cumprimento integral da legislação trabalhista, tributária, ambiental, urbanística e de segurança.</p>
             </div>
             <div class="doc-card">
-                <h4>2. Ética e Integridade</h4>
+                <h4>2. Ética e Integridade <i class="fa-solid fa-check" style="color: var(--navy-2); margin-left: 6px;"></i></h4>
                 <p>Rejeição a qualquer prática de corrupção, suborno, fraude, conluio ou favorecimento indevido.</p>
             </div>
             <div class="doc-card">
-                <h4>3. Impessoalidade e Isonomia</h4>
+                <h4>3. Impessoalidade e Isonomia <i class="fa-solid fa-check" style="color: var(--navy-2); margin-left: 6px;"></i></h4>
                 <p>Tratamento equânime a todos, sem favorecimentos pessoais ou conflitos de interesse.</p>
             </div>
             <div class="doc-card">
-                <h4>4. Transparência</h4>
+                <h4>4. Transparência <i class="fa-solid fa-check" style="color: var(--navy-2); margin-left: 6px;"></i></h4>
                 <p>Critérios de seleção e avaliação claros, objetivos e auditáveis em todos os processos.</p>
             </div>
             <div class="doc-card">
-                <h4>5. Qualidade e Excelência</h4>
+                <h4>5. Qualidade e Excelência <i class="fa-solid fa-check" style="color: var(--navy-2); margin-left: 6px;"></i></h4>
                 <p>Priorização de fornecedores com capacidade técnica comprovada e histórico robusto de entrega.</p>
             </div>
             <div class="doc-card">
-                <h4>6. Sustentabilidade</h4>
+                <h4>6. Sustentabilidade <i class="fa-solid fa-check" style="color: var(--navy-2); margin-left: 6px;"></i></h4>
                 <p>Incentivo a práticas de responsabilidade socioambiental e uso racional de recursos naturais.</p>
             </div>
             <div class="doc-card">
-                <h4>7. Segurança</h4>
+                <h4>7. Segurança <i class="fa-solid fa-check" style="color: var(--navy-2); margin-left: 6px;"></i></h4>
                 <p>Exigência de padrões rigorosos de saúde e segurança do trabalho na construção civil.</p>
             </div>
             <div class="doc-card">
-                <h4>8. Relação de Longo Prazo</h4>
+                <h4>8. Relação de Longo Prazo <i class="fa-solid fa-check" style="color: var(--navy-2); margin-left: 6px;"></i></h4>
                 <p>Desenvolvimento de parcerias estratégicas e duradouras com os nossos fornecedores chaves.</p>
             </div>
         </div>
       </section>
 
       <section class="block">
-        <h2 style="font-size: 16px; color: var(--navy); border-bottom: 2px solid var(--navy-2); padding-bottom: 8px; margin-bottom: 16px;">6. Cadastro e Qualificação de Fornecedores</h2>
+        <h2 style="font-size: 16px; color: var(--navy); border-bottom: 2px solid var(--navy-2); padding-bottom: 8px; margin-bottom: 16px;">6. Cadastro e Qualificação de Fornecedores <i class="fa-solid fa-id-card-clip" style="color: var(--navy); margin-left: 8px;"></i></h2>
         <div class="doc-text"><strong>6.1. Cadastro Inicial:</strong> Todo fornecedor que deseje se relacionar com a CasaGrande Urbanismo deverá fornecer, no mínimo (eventuais impossibilidades de atendimento a estes requisitos básicos serão analisadas internamente para possível flexibilização do aceite):</div>
         <ul class="doc-list">
             <li>Contrato social/estatuto e alterações;</li>
@@ -842,7 +855,7 @@
       </section>
 
       <section class="block">
-        <h2 style="font-size: 16px; color: var(--navy); border-bottom: 2px solid var(--navy-2); padding-bottom: 8px; margin-bottom: 16px;">7. Critérios de Seleção e Contratação</h2>
+        <h2 style="font-size: 16px; color: var(--navy); border-bottom: 2px solid var(--navy-2); padding-bottom: 8px; margin-bottom: 16px;">7. Critérios de Seleção e Contratação <i class="fa-solid fa-filter" style="color: var(--navy); margin-left: 8px;"></i></h2>
         <div class="doc-text">A seleção deverá considerar, em mapa comparativo ou ferramenta de cotação:</div>
         <ul class="doc-list">
             <li>Histórico de desempenho em contratações anteriores;</li>
@@ -859,7 +872,7 @@
       </section>
 
       <section class="block">
-        <h2 style="font-size: 16px; color: var(--navy); border-bottom: 2px solid var(--navy-2); padding-bottom: 8px; margin-bottom: 16px;">8. Gestão de Contratos</h2>
+        <h2 style="font-size: 16px; color: var(--navy); border-bottom: 2px solid var(--navy-2); padding-bottom: 8px; margin-bottom: 16px;">8. Gestão de Contratos <i class="fa-solid fa-handshake" style="color: var(--navy); margin-left: 8px;"></i></h2>
         <ul class="doc-list">
             <li><strong>1. Formalização:</strong> Todo fornecimento ou serviço relevante deve ser formalizado por contrato escrito contendo objeto, prazo, valor, garantias e foro de resolução aplicável.</li>
             <li><strong>2. Cronograma:</strong> Contratos de obra devem prever obrigatoriamente um cronograma físico-financeiro rigorosamente vinculado a medições periódicas do serviço.</li>
@@ -870,7 +883,7 @@
       </section>
 
       <section class="block">
-        <h2 style="font-size: 16px; color: var(--navy); border-bottom: 2px solid var(--navy-2); padding-bottom: 8px; margin-bottom: 16px;">9. Avaliação de Desempenho de Fornecedores</h2>
+        <h2 style="font-size: 16px; color: var(--navy); border-bottom: 2px solid var(--navy-2); padding-bottom: 8px; margin-bottom: 16px;">9. Avaliação de Desempenho de Fornecedores <i class="fa-solid fa-chart-line" style="color: var(--navy); margin-left: 8px;"></i></h2>
         <div class="doc-text">Fornecedores classificados como "A" e "B" serão submetidos a avaliação de desempenho, considerando os seguintes indicadores:</div>
         <table class="items" style="margin-bottom: 16px;">
           <thead>
@@ -891,7 +904,7 @@
       </section>
 
       <section class="block">
-        <h2 style="font-size: 16px; color: var(--navy); border-bottom: 2px solid var(--navy-2); padding-bottom: 8px; margin-bottom: 16px;">10. Compliance, Ética e Anticorrupção</h2>
+        <h2 style="font-size: 16px; color: var(--navy); border-bottom: 2px solid var(--navy-2); padding-bottom: 8px; margin-bottom: 16px;">10. Compliance, Ética e Anticorrupção <i class="fa-solid fa-shield-halved" style="color: var(--navy); margin-left: 8px;"></i></h2>
         <ul class="doc-list">
             <li>É vedado oferecer, prometer, solicitar ou aceitar, direta ou indiretamente, qualquer vantagem indevida a colaboradores, gestores ou terceiros vinculados à companhia ou a agentes públicos relacionados ao licenciamento dos empreendimentos.</li>
             <li>É vedada a contratação de empresas que utilizem mão de obra em condição análoga à escravidão, trabalho infantil ou que constem em listas restritivas de órgãos públicos.</li>
@@ -902,38 +915,38 @@
       </section>
 
       <section class="block">
-        <h2 style="font-size: 16px; color: var(--navy); border-bottom: 2px solid var(--navy-2); padding-bottom: 8px; margin-bottom: 16px;">11. Saúde, Segurança do Trabalho e Meio Ambiente</h2>
+        <h2 style="font-size: 16px; color: var(--navy); border-bottom: 2px solid var(--navy-2); padding-bottom: 8px; margin-bottom: 16px;">11. Saúde, Segurança do Trabalho e Meio Ambiente <i class="fa-solid fa-hard-hat" style="color: var(--navy); margin-left: 8px;"></i></h2>
         <div class="doc-text">Considerando a natureza das atividades de infraestrutura e loteamento, exige-se de todos os fornecedores que atuem em campo:</div>
         <div class="grid cols-2">
             <div class="doc-card">
-                <h4>Treinamentos (NRs)</h4>
+                <h4>Treinamentos (NRs) <i class="fa-solid fa-check" style="color: var(--navy-2); margin-left: 6px;"></i></h4>
                 <p>Comprovação de treinamentos e certificações exigidos pelas Normas Regulamentadoras aplicáveis (NR-18, NR-35, etc).</p>
             </div>
             <div class="doc-card">
-                <h4>Uso de EPIs e EPCs</h4>
+                <h4>Uso de EPIs e EPCs <i class="fa-solid fa-check" style="color: var(--navy-2); margin-left: 6px;"></i></h4>
                 <p>Fornecimento e uso obrigatório de Equipamentos de Proteção Individual (EPIs) e Coletiva (EPCs) adequados.</p>
             </div>
             <div class="doc-card">
-                <h4>Comunicação de Incidentes</h4>
+                <h4>Comunicação de Incidentes <i class="fa-solid fa-check" style="color: var(--navy-2); margin-left: 6px;"></i></h4>
                 <p>Comunicação imediata de acidentes de trabalho e incidentes ambientais à fiscalização da companhia.</p>
             </div>
             <div class="doc-card">
-                <h4>Preservação Ambiental</h4>
+                <h4>Preservação Ambiental <i class="fa-solid fa-check" style="color: var(--navy-2); margin-left: 6px;"></i></h4>
                 <p>Respeito a áreas de preservação permanente (APPs), licenças ambientais e condicionantes específicas.</p>
             </div>
             <div class="doc-card">
-                <h4>Gestão de Resíduos</h4>
+                <h4>Gestão de Resíduos <i class="fa-solid fa-check" style="color: var(--navy-2); margin-left: 6px;"></i></h4>
                 <p>Gestão adequada de resíduos de construção civil, conforme legislação ambiental e Plano (PGRCC).</p>
             </div>
             <div class="doc-card">
-                <h4>Auditorias e Inspeções</h4>
+                <h4>Auditorias e Inspeções <i class="fa-solid fa-check" style="color: var(--navy-2); margin-left: 6px;"></i></h4>
                 <p>Sujeição a auditorias e inspeções de SSMA realizadas pela companhia ou terceiros, sem aviso prévio.</p>
             </div>
         </div>
       </section>
 
       <section class="block">
-        <h2 style="font-size: 16px; color: var(--navy); border-bottom: 2px solid var(--navy-2); padding-bottom: 8px; margin-bottom: 16px;">12. Responsabilidade Socioambiental</h2>
+        <h2 style="font-size: 16px; color: var(--navy); border-bottom: 2px solid var(--navy-2); padding-bottom: 8px; margin-bottom: 16px;">12. Responsabilidade Socioambiental <i class="fa-solid fa-leaf" style="color: var(--navy); margin-left: 8px;"></i></h2>
         <div class="doc-text">A CasaGrande Urbanismo incentiva e valoriza na cadeia de fornecedores:</div>
         <ul class="doc-list">
             <li>Adoção de práticas de eficiência no uso de água, energia e materiais;</li>
@@ -943,13 +956,13 @@
       </section>
 
       <section class="block">
-        <h2 style="font-size: 16px; color: var(--navy); border-bottom: 2px solid var(--navy-2); padding-bottom: 8px; margin-bottom: 16px;">13. Canal de Denúncias e Ouvidoria</h2>
+        <h2 style="font-size: 16px; color: var(--navy); border-bottom: 2px solid var(--navy-2); padding-bottom: 8px; margin-bottom: 16px;">13. Canal de Denúncias e Ouvidoria <i class="fa-solid fa-bullhorn" style="color: var(--navy); margin-left: 8px;"></i></h2>
         <div class="doc-text">Fornecedores, colaboradores e demais partes interessadas podem reportar, de forma confidencial e, se desejado, anônima, suspeitas de irregularidades, fraudes, condutas antiéticas ou descumprimento desta Política por meio do canal de denúncias da CasaGrande Urbanismo: <strong>canaldenuncias@casagrandeurbanismo.com.br</strong>.</div>
         <div class="doc-text">É vedada qualquer forma de retaliação contra quem realizar denúncia de boa-fé.</div>
       </section>
 
       <section class="block">
-        <h2 style="font-size: 16px; color: var(--navy); border-bottom: 2px solid var(--navy-2); padding-bottom: 8px; margin-bottom: 16px;">14. Confidencialidade e LGPD</h2>
+        <h2 style="font-size: 16px; color: var(--navy); border-bottom: 2px solid var(--navy-2); padding-bottom: 8px; margin-bottom: 16px;">14. Confidencialidade e LGPD <i class="fa-solid fa-user-lock" style="color: var(--navy); margin-left: 8px;"></i></h2>
         <ul class="doc-list">
             <li>Informações técnicas, comerciais, projetos e dados de empreendimentos compartilhados possuem caráter confidencial e não podem ser divulgados a terceiros sem autorização;</li>
             <li>Projetos, plantas, memoriais e demais materiais elaborados para a companhia são de sua propriedade, salvo disposição contratual em sentido diverso;</li>
@@ -958,7 +971,7 @@
       </section>
 
       <section class="block">
-        <h2 style="font-size: 16px; color: var(--navy); border-bottom: 2px solid var(--navy-2); padding-bottom: 8px; margin-bottom: 16px;">15. Disposições Gerais</h2>
+        <h2 style="font-size: 16px; color: var(--navy); border-bottom: 2px solid var(--navy-2); padding-bottom: 8px; margin-bottom: 16px;">15. Disposições Gerais <i class="fa-solid fa-gavel" style="color: var(--navy); margin-left: 8px;"></i></h2>
         <ul class="doc-list">
             <li>Casos omissos serão resolvidos pela Gestão de Suprimentos e Contratos, em conjunto com as áreas de Compliance e Jurídico;</li>
             <li>Esta Política não cria direitos adquiridos, podendo ser alterada a qualquer tempo pela companhia, mediante comunicação aos fornecedores ativos;</li>
@@ -967,7 +980,7 @@
       </section>
 
       <section class="block" style="margin-bottom: 80px;">
-        <h2 style="font-size: 16px; color: var(--navy); border-bottom: 2px solid var(--navy-2); padding-bottom: 8px; margin-bottom: 16px;">Revisão e Aprovação</h2>
+        <h2 style="font-size: 16px; color: var(--navy); border-bottom: 2px solid var(--navy-2); padding-bottom: 8px; margin-bottom: 16px;">Revisão e Aprovação <i class="fa-solid fa-clipboard-check" style="color: var(--navy); margin-left: 8px;"></i></h2>
         <div class="doc-text">Esta Política entra em vigor na data de sua aprovação e deverá ser revisada, no mínimo, anualmente, ou sempre que houver alteração legislativa relevante, mudança organizacional ou recomendação das áreas de Compliance, Jurídico ou Auditoria Interna.</div>
         <table class="items" style="margin-top: 16px;">
           <thead>
@@ -994,13 +1007,10 @@
     <div id="view-manual" class="view">
       <div class="doc-head">
         <div class="doc-title">Manual de Compras e Contratações<small>Guia Técnico, Diretrizes Operacionais, Boas Práticas e Compliance</small></div>
-        <div class="header-actions">
-          <button class="btn btn-pdf" onclick="window.print()">🖨️ Exportar PDF</button>
-        </div>
       </div>
 
       <section class="block">
-        <h2 style="font-size: 16px; color: var(--navy); border-bottom: 2px solid var(--navy-2); padding-bottom: 8px; margin-bottom: 16px;">1. Introdução e Importância Estratégica</h2>
+        <h2 style="font-size: 16px; color: var(--navy); border-bottom: 2px solid var(--navy-2); padding-bottom: 8px; margin-bottom: 16px;">1. Introdução e Importância Estratégica <i class="fa-solid fa-rocket" style="color: var(--navy); margin-left: 8px;"></i></h2>
         <div class="doc-text">Na indústria do desenvolvimento urbano e da construção civil, a cadeia de suprimentos representa um dos pilares mais críticos para a viabilidade financeira, cumprimento de prazos e manutenção do padrão de qualidade de cada empreendimento.</div>
         <div class="doc-text">Para a CasaGrande Urbanismo, a área de Suprimentos não atua meramente como uma função de suporte operacional, mas sim como um departamento altamente estratégico. Uma gestão eficiente garante:</div>
         <ul class="doc-list">
@@ -1013,30 +1023,30 @@
       </section>
 
       <section class="block">
-        <h2 style="font-size: 16px; color: var(--navy); border-bottom: 2px solid var(--navy-2); padding-bottom: 8px; margin-bottom: 16px;">2. Objetivos do Manual</h2>
+        <h2 style="font-size: 16px; color: var(--navy); border-bottom: 2px solid var(--navy-2); padding-bottom: 8px; margin-bottom: 16px;">2. Objetivos do Manual <i class="fa-solid fa-crosshairs" style="color: var(--navy); margin-left: 8px;"></i></h2>
         <div class="doc-text">Este documento foi elaborado para consolidar e padronizar todas as etapas operacionais, critérios de governança e posturas éticas exigidas na condução de aquisições e contratações. Seus principais objetivos são:</div>
         <div class="grid cols-2 mt-4">
             <div class="doc-card">
-                <h4>1. Padronização de Processos</h4>
+                <h4>1. Padronização de Processos <i class="fa-solid fa-check" style="color: var(--navy-2); margin-left: 6px;"></i></h4>
                 <p>Servir como roteiro obrigatório e material de treinamento, assegurando uniformidade na execução das atividades do setor e garantindo a continuidade do trabalho.</p>
             </div>
             <div class="doc-card">
-                <h4>2. Transparência e Rastreabilidade</h4>
+                <h4>2. Transparência e Rastreabilidade <i class="fa-solid fa-check" style="color: var(--navy-2); margin-left: 6px;"></i></h4>
                 <p>Garantir que todas as decisões comerciais sejam baseadas em critérios técnicos e financeiros auditáveis, passíveis de verificação e controle interno contínuo.</p>
             </div>
             <div class="doc-card">
-                <h4>3. Eficiência Operacional (SLA)</h4>
+                <h4>3. Eficiência Operacional (SLA) <i class="fa-solid fa-check" style="color: var(--navy-2); margin-left: 6px;"></i></h4>
                 <p>Estabelecer consciência de prazo para atendimento para as requisições de materiais e serviços vindas do canteiro de obras, reduzindo esperas injustificadas.</p>
             </div>
             <div class="doc-card">
-                <h4>4. Fortalecimento do Compliance</h4>
+                <h4>4. Fortalecimento do Compliance <i class="fa-solid fa-check" style="color: var(--navy-2); margin-left: 6px;"></i></h4>
                 <p>Blindar a organização contra conflitos de interesse, fraudes e desvios de conduta nas negociações de mercado, promovendo um ambiente ético e profissional.</p>
             </div>
         </div>
       </section>
 
       <section class="block">
-        <h2 style="font-size: 16px; color: var(--navy); border-bottom: 2px solid var(--navy-2); padding-bottom: 8px; margin-bottom: 16px;">3. Governança, Papéis e Responsabilidades</h2>
+        <h2 style="font-size: 16px; color: var(--navy); border-bottom: 2px solid var(--navy-2); padding-bottom: 8px; margin-bottom: 16px;">3. Governança, Papéis e Responsabilidades <i class="fa-solid fa-users-gear" style="color: var(--navy); margin-left: 8px;"></i></h2>
         <div class="doc-text">Para assegurar o máximo aproveitamento técnico da equipe e alinhamento com a realidade da CasaGrande Urbanismo, as funções no setor de Suprimentos dividem-se em atuação estratégica e apoio sistêmico operacional.</div>
         <div class="grid cols-2 mt-4">
             <div>
@@ -1061,7 +1071,7 @@
       </section>
 
       <section class="block">
-        <h2 style="font-size: 16px; color: var(--navy); border-bottom: 2px solid var(--navy-2); padding-bottom: 8px; margin-bottom: 16px;">4. Compliance, Ética e Regras de Atuação</h2>
+        <h2 style="font-size: 16px; color: var(--navy); border-bottom: 2px solid var(--navy-2); padding-bottom: 8px; margin-bottom: 16px;">4. Compliance, Ética e Regras de Atuação <i class="fa-solid fa-scale-balanced" style="color: var(--navy); margin-left: 8px;"></i></h2>
         <div class="doc-text">O relacionamento com o mercado deve ser estritamente profissional, pautado pela igualdade de condições a todos os proponentes e proteção da imagem institucional da CasaGrande Urbanismo. Todas as interações devem prezar pela transparência, integridade e rastreabilidade documental. A adoção de práticas justas de concorrência não apenas resguarda a empresa contra passivos jurídicos e riscos de imagem, mas também atrai parceiros de negócios mais qualificados, fomentando um ecossistema de fornecimento sustentável, eficiente e altamente confiável a longo prazo.</div>
         
         <h3 style="color: var(--navy-2); font-size: 13px; margin: 20px 0 10px 0; text-transform: uppercase;">Diretrizes de Compliance</h3>
@@ -1076,39 +1086,39 @@
       </section>
 
       <section class="block">
-        <h2 style="font-size: 16px; color: var(--navy); border-bottom: 2px solid var(--navy-2); padding-bottom: 8px; margin-bottom: 16px;">5. Fluxo de Processos: Visão Geral</h2>
+        <h2 style="font-size: 16px; color: var(--navy); border-bottom: 2px solid var(--navy-2); padding-bottom: 8px; margin-bottom: 16px;">5. Fluxo de Processos: Visão Geral <i class="fa-solid fa-diagram-project" style="color: var(--navy); margin-left: 8px;"></i></h2>
         <div class="grid cols-4" style="margin-bottom: 24px;">
             <div class="doc-card" style="text-align: center; padding: 20px 10px;">
                 <h4 style="font-size: 14px; margin-bottom: 4px;">1</h4>
-                <p style="font-weight: 600;">Definição de Escopo e Requisição</p>
+                <p style="font-weight: 600; text-align: center;">Definição de Escopo e Requisição</p>
             </div>
             <div class="doc-card" style="text-align: center; padding: 20px 10px;">
                 <h4 style="font-size: 14px; margin-bottom: 4px;">2</h4>
-                <p style="font-weight: 600;">Homologação de Fornecedores</p>
+                <p style="font-weight: 600; text-align: center;">Homologação de Fornecedores</p>
             </div>
             <div class="doc-card" style="text-align: center; padding: 20px 10px;">
                 <h4 style="font-size: 14px; margin-bottom: 4px;">3</h4>
-                <p style="font-weight: 600;">Cotação e Coleta de Propostas</p>
+                <p style="font-weight: 600; text-align: center;">Cotação e Coleta de Propostas</p>
             </div>
             <div class="doc-card" style="text-align: center; padding: 20px 10px;">
                 <h4 style="font-size: 14px; margin-bottom: 4px;">4</h4>
-                <p style="font-weight: 600;">Equalização Técnica e Comercial</p>
+                <p style="font-weight: 600; text-align: center;">Equalização Técnica e Comercial</p>
             </div>
             <div class="doc-card" style="text-align: center; padding: 20px 10px;">
                 <h4 style="font-size: 14px; margin-bottom: 4px;">5</h4>
-                <p style="font-weight: 600;">Decisão de Contratação</p>
+                <p style="font-weight: 600; text-align: center;">Decisão de Contratação</p>
             </div>
             <div class="doc-card" style="text-align: center; padding: 20px 10px;">
                 <h4 style="font-size: 14px; margin-bottom: 4px;">6</h4>
-                <p style="font-weight: 600;">Formalização Jurídica</p>
+                <p style="font-weight: 600; text-align: center;">Formalização Jurídica</p>
             </div>
             <div class="doc-card" style="text-align: center; padding: 20px 10px;">
                 <h4 style="font-size: 14px; margin-bottom: 4px;">7</h4>
-                <p style="font-weight: 600;">Emissão de Pedido / OS</p>
+                <p style="font-weight: 600; text-align: center;">Emissão de Pedido / OS</p>
             </div>
             <div class="doc-card" style="text-align: center; padding: 20px 10px;">
                 <h4 style="font-size: 14px; margin-bottom: 4px;">8</h4>
-                <p style="font-weight: 600;">Recebimento e Integração</p>
+                <p style="font-weight: 600; text-align: center;">Recebimento e Integração</p>
             </div>
         </div>
 
@@ -1130,7 +1140,7 @@
       </section>
 
       <section class="block">
-        <h2 style="font-size: 16px; color: var(--navy); border-bottom: 2px solid var(--navy-2); padding-bottom: 8px; margin-bottom: 16px;">6. Matriz de Alçadas e Regras de Negócio</h2>
+        <h2 style="font-size: 16px; color: var(--navy); border-bottom: 2px solid var(--navy-2); padding-bottom: 8px; margin-bottom: 16px;">6. Matriz de Alçadas e Regras de Negócio <i class="fa-solid fa-sitemap" style="color: var(--navy); margin-left: 8px;"></i></h2>
         <div class="doc-text">Nenhuma compra ou contratação de impacto pode ser efetuada sob o arbítrio de um único indivíduo. A governança da CasaGrande Urbanismo exige a aprovação em níveis crescentes de responsabilidade, baseados no valor total acumulado do pedido ou contrato:</div>
         <table class="items" style="margin-top: 16px;">
           <thead>
@@ -1171,46 +1181,46 @@
       </section>
 
       <section class="block">
-        <h2 style="font-size: 16px; color: var(--navy); border-bottom: 2px solid var(--navy-2); padding-bottom: 8px; margin-bottom: 16px;">7. Indicadores de Desempenho (KPIs)</h2>
+        <h2 style="font-size: 16px; color: var(--navy); border-bottom: 2px solid var(--navy-2); padding-bottom: 8px; margin-bottom: 16px;">7. Indicadores de Desempenho (KPIs) <i class="fa-solid fa-chart-pie" style="color: var(--navy); margin-left: 8px;"></i></h2>
         <div class="doc-text">A excelência da área é medida através do acompanhamento rigoroso dos seguintes indicadores, analisados pelo setor em seus Dashboards Executivos e reportados estrategicamente à Diretoria:</div>
         <div class="grid cols-4 mt-4">
             <div class="doc-card">
-                <h4>Saving (%)</h4>
+                <h4>Saving (%) <i class="fa-solid fa-check" style="color: var(--navy-2); margin-left: 6px;"></i></h4>
                 <p>Economia obtida nas negociações comparando a melhor proposta inicial com o valor contratado pós-negociação, garantindo proteção ao orçamento base.</p>
             </div>
             <div class="doc-card">
-                <h4>Lead Time de Compras</h4>
+                <h4>Lead Time de Compras <i class="fa-solid fa-check" style="color: var(--navy-2); margin-left: 6px;"></i></h4>
                 <p>Tempo transcorrido desde o recebimento da requisição correta pela engenharia até a efetiva emissão do pedido ou assinatura do contrato.</p>
             </div>
             <div class="doc-card">
-                <h4>IDF (Desempenho)</h4>
+                <h4>IDF (Desempenho) <i class="fa-solid fa-check" style="color: var(--navy-2); margin-left: 6px;"></i></h4>
                 <p>Avaliação contínua dos parceiros em campo baseada nos quesitos de Pontualidade, Segurança do Trabalho, Qualidade e Postura Comercial.</p>
             </div>
             <div class="doc-card">
-                <h4>Entregas no prazo (%)</h4>
+                <h4>Entregas no prazo (%) <i class="fa-solid fa-check" style="color: var(--navy-2); margin-left: 6px;"></i></h4>
                 <p>Percentual de entregas realizadas rigorosamente dentro do prazo estipulado, garantindo o fluxo contínuo e ininterrupto das frentes de obra.</p>
             </div>
             <div class="doc-card">
-                <h4>Performance (Fornecedores)</h4>
+                <h4>Performance (Fornecedores) <i class="fa-solid fa-check" style="color: var(--navy-2); margin-left: 6px;"></i></h4>
                 <p>Monitoramento global do parceiro comercial, englobando a saúde financeira a longo prazo, conformidade ética e qualidade das entregas.</p>
             </div>
             <div class="doc-card">
-                <h4>Custo por Lote</h4>
+                <h4>Custo por Lote <i class="fa-solid fa-check" style="color: var(--navy-2); margin-left: 6px;"></i></h4>
                 <p>Acompanhamento estratégico do impacto financeiro das aquisições e contratos, rateado sistematicamente pelo número de lotes do empreendimento.</p>
             </div>
             <div class="doc-card">
-                <h4>Controle (Custo/Etapa)</h4>
+                <h4>Controle (Custo/Etapa) <i class="fa-solid fa-check" style="color: var(--navy-2); margin-left: 6px;"></i></h4>
                 <p>Monitoramento detalhado dos gastos com materiais e serviços segmentados e analisados pelas diferentes fases executivas do projeto.</p>
             </div>
             <div class="doc-card">
-                <h4>Curva ABC (Fornecedores)</h4>
+                <h4>Curva ABC (Fornecedores) <i class="fa-solid fa-check" style="color: var(--navy-2); margin-left: 6px;"></i></h4>
                 <p>Classificação estratégica do volume de compras para priorizar esforços e estreitar relacionamento com os fornecedores de maior impacto.</p>
             </div>
         </div>
       </section>
 
       <section class="block" style="margin-bottom: 80px;">
-        <h2 style="font-size: 16px; color: var(--navy); border-bottom: 2px solid var(--navy-2); padding-bottom: 8px; margin-bottom: 16px;">8. Aprovação e Validação</h2>
+        <h2 style="font-size: 16px; color: var(--navy); border-bottom: 2px solid var(--navy-2); padding-bottom: 8px; margin-bottom: 16px;">8. Aprovação e Validação <i class="fa-solid fa-check-double" style="color: var(--navy); margin-left: 8px;"></i></h2>
         <div class="doc-text"><strong>Revisão e Vigência:</strong> Este documento entra em vigor na data de sua aprovação, revogando disposições anteriores. A revisão deve ser realizada anualmente ou sempre que houver mudanças significativas nas políticas da empresa ou processos no Sienge.</div>
         <table class="items" style="margin-top: 16px;">
           <thead>
