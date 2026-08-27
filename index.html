@@ -1873,8 +1873,17 @@ const App = {
       if(window.appMap) { window.appMap.remove(); }
       window.appMap = L.map('mapContainer').setView([-19.9, -43.9], 6);
       const isDark = document.body.classList.contains('dark-mode');
-      const tileUrl = isDark ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png' : 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png';
-      L.tileLayer(tileUrl, { attribution: '&copy; OpenStreetMap & CARTO', subdomains: 'abcd', maxZoom: 19 }).addTo(window.appMap);
+      
+      // Provedor 100% gratuito e livre de bloqueios de API (OpenStreetMap Oficial)
+      const tiles = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { 
+          attribution: '&copy; OpenStreetMap contributors', 
+          maxZoom: 19 
+      }).addTo(window.appMap);
+
+      // Truque cirúrgico para manter a estética noturna do mapa ativa sem depender do servidor antigo
+      if (isDark && tiles.getContainer()) {
+          tiles.getContainer().style.filter = 'invert(100%) hue-rotate(180deg) brightness(95%) contrast(90%)';
+      }
 
       const cityGroups = {};
       DB.data.fornecedores.forEach(d => {
