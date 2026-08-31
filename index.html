@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -224,10 +223,14 @@
   
   .dark-mode .leaflet-popup-content-wrapper, .dark-mode .leaflet-popup-tip { background-color: var(--paper); color: var(--ink); }
 
+  /* ATD GALLERY PREVIEW */
+  .atd-gallery { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+  .atd-gallery img { width: 80px; height: 80px; object-fit: cover; border-radius: 4px; border: 1px solid var(--line); }
+
   /* ====== PRINT STYLES ====== */
   @media print {
     @page { size: A4 portrait; margin: 15mm; }
-    body { background: #fff !important; color: #000 !important; font-size: 11px !important; }
+    body { background: #fff !important; color: #000 !important; font-size: 11px !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
     #login-screen, #db-loader, .sidebar, .header-actions, .add-row-btn, .del-btn, .toast, .nav-group, .sidebar-foot, .modal-overlay, button.btn { display: none !important; }
     .app { display: block !important; }
     main { padding: 0 !important; margin: 0 !important; max-width: 100% !important; }
@@ -246,6 +249,27 @@
     .doc-text, .doc-list { margin-bottom: 8px !important; }
     section.block { padding: 10px 0 !important; margin-bottom: 10px !important; border: none !important;}
     h2 { margin-bottom: 8px !important; padding-bottom: 4px !important; }
+
+   /* Estilo Específico ATD Impressão */
+    #view-atd-print { display: block !important; width: 100%; background: #fff !important; }
+    #view-atd-print .print-header { text-align: center; border-bottom: 3px solid #0d3b1f; padding-bottom: 12px; margin-bottom: 25px; }
+    #view-atd-print .print-header h1 { font-size: 20px; color: #0d3b1f; margin: 0; font-weight: 800; text-transform: uppercase; }
+    #view-atd-print .print-header p { font-size: 13px; color: #777; margin: 6px 0 0 0; text-transform: uppercase; font-weight: 700; }
+    #view-atd-print .print-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; margin-bottom: 30px; }
+    #view-atd-print .print-box { border: 2px solid #ccc; padding: 15px; text-align: center; border-radius: 6px; background: #f9f9f9; }
+    #view-atd-print .print-box strong { display: block; font-size: 11px; color: #777; text-transform: uppercase; margin-bottom: 6px; }
+    #view-atd-print .print-box span { font-size: 18px; font-weight: 800; color: #0d3b1f; }
+    #view-atd-print .print-section { margin-bottom: 30px; width: 100%; }
+    #view-atd-print .print-section h3 { font-size: 14px; color: #0d3b1f; text-transform: uppercase; border-bottom: 2px solid #ccc; padding-bottom: 6px; margin-bottom: 12px; }
+    #view-atd-print .print-justificativa { font-size: 12px; line-height: 1.6; color: #000; text-align: justify; }
+    #view-atd-print .print-images { display: block; text-align: center; }
+    #view-atd-print .print-images img { max-width: 45%; max-height: 250px; object-fit: contain; border: 1px solid #ccc; border-radius: 6px; margin: 5px; display: inline-block; }
+    
+    /* Forçando a tabela a ocupar todo o espaço horizontal livre de quebras */
+    #view-atd-print table.items { width: 100%; border-collapse: collapse; table-layout: fixed; margin-bottom: 20px; }
+    #view-atd-print table.items th { background-color: #e8f0e9 !important; color: #0d3b1f !important; font-size: 11px; padding: 10px; border: 1px solid #ccc; }
+    #view-atd-print table.items td { font-size: 11px; padding: 8px; border: 1px solid #ccc; word-wrap: break-word; }
+    #view-atd-print .winner-col { background-color: #e8f0e9 !important; border: 2px solid #24783d !important; }
   }
 </style>
 </head>
@@ -307,6 +331,7 @@
       <button class="nav-btn" onclick="App.nav('recebimento')">Inbox & IA Real</button>
       
       <div class="nav-label" style="margin-top:24px;">Documentos</div>
+      <button class="nav-btn" onclick="App.nav('atds')">ATD's (Histórico)</button>
       <button class="nav-btn" onclick="App.nav('politica')">Política de Fornecedores</button>
       <button class="nav-btn" onclick="App.nav('manual')">Manual de Compras</button>
 
@@ -413,6 +438,28 @@
       </section>
     </div>
 
+    <!-- ==================== VIEW: HISTÓRICO ATDs ==================== -->
+    <div id="view-atds" class="view">
+      <div class="doc-head">
+        <div class="doc-title">ATD's Salvas<small>Histórico de Análises para Tomada de Decisão</small></div>
+      </div>
+      <section class="block">
+        <table class="items">
+          <thead>
+            <tr>
+              <th>Processo Vinculado</th>
+              <th>Data da ATD</th>
+              <th>Indicação</th>
+              <th>Target</th>
+              <th>Desvio Obtido</th>
+              <th style="text-align:right">Ação</th>
+            </tr>
+          </thead>
+          <tbody id="atd-list-body"></tbody>
+        </table>
+      </section>
+    </div>
+
     <!-- ==================== VIEW: FORNECEDORES (COM ABAS) ==================== -->
     <div id="view-fornecedores" class="view">
       <div class="doc-head">
@@ -434,14 +481,16 @@
           </div>
 
           <section class="block">
+            <!-- Botão Adicionar isolado acima -->
             <div style="display:flex; justify-content:flex-end; margin-bottom: 16px;">
                <button class="btn btn-ai" style="padding:10px 20px; color:#000;" onclick="window.abrirModalNovoFornecedor()">+ Adicionar Fornecedor</button>
             </div>
             
+            <!-- Filtros e botões de exportação perfeitamente alinhados na base -->
             <div style="display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:16px; flex-wrap:wrap; gap:16px;">
               <div class="grid cols-3" style="flex:1; min-width:600px; margin-bottom:0;">
                 <div class="field">
-                   <label>🔍 Filtrar por fornecedor</label>
+                   <label>🔍 Buscar por Nome do Fornecedor</label>
                    <input type="text" id="filter-nome" placeholder="Digite o nome..." oninput="App.renderForn()">
                 </div>
                 <div class="field">
@@ -617,6 +666,8 @@
         <div class="header-actions">
           <button class="btn btn-outline" onclick="editarRequisicao()">← Editar Requisição de Compra</button>
           <button class="btn btn-solid" onclick="abrirModalAddFornMapa()">➕ Adicionar Fornecedor Existente</button>
+          <!-- BOTÃO NOVO ATD INTEGRADO -->
+          <button class="btn btn-ai" style="padding:10px 20px; font-size:13px;" onclick="ATD.openModal()">📊 Montar ATD (Apresentação)</button>
         </div>
       </div>
 
@@ -788,35 +839,35 @@
         <div class="doc-text">O relacionamento da CasaGrande Urbanismo com seus fornecedores pauta-se pelos seguintes princípios:</div>
         <div class="grid cols-2">
             <div class="doc-card">
-                <h4>1. Legalidade e Conformidade <i class="fa-solid fa-check" style="color: var(--navy-2); margin-left: 6px;"></i></h4>
+                <h4>1. Legalidade e Conformidade</h4>
                 <p>Cumprimento integral da legislação trabalhista, tributária, ambiental, urbanística e de segurança.</p>
             </div>
             <div class="doc-card">
-                <h4>2. Ética e Integridade <i class="fa-solid fa-check" style="color: var(--navy-2); margin-left: 6px;"></i></h4>
+                <h4>2. Ética e Integridade</h4>
                 <p>Rejeição a qualquer prática de corrupção, suborno, fraude, conluio ou favorecimento indevido.</p>
             </div>
             <div class="doc-card">
-                <h4>3. Impessoalidade e Isonomia <i class="fa-solid fa-check" style="color: var(--navy-2); margin-left: 6px;"></i></h4>
+                <h4>3. Impessoalidade e Isonomia</h4>
                 <p>Tratamento equânime a todos, sem favorecimentos pessoais ou conflitos de interesse.</p>
             </div>
             <div class="doc-card">
-                <h4>4. Transparência <i class="fa-solid fa-check" style="color: var(--navy-2); margin-left: 6px;"></i></h4>
+                <h4>4. Transparência</h4>
                 <p>Critérios de seleção e avaliação claros, objetivos e auditáveis em todos os processos.</p>
             </div>
             <div class="doc-card">
-                <h4>5. Qualidade e Excelência <i class="fa-solid fa-check" style="color: var(--navy-2); margin-left: 6px;"></i></h4>
+                <h4>5. Qualidade e Excelência</h4>
                 <p>Priorização de fornecedores com capacidade técnica comprovada e histórico robusto de entrega.</p>
             </div>
             <div class="doc-card">
-                <h4>6. Sustentabilidade <i class="fa-solid fa-check" style="color: var(--navy-2); margin-left: 6px;"></i></h4>
+                <h4>6. Sustentabilidade</h4>
                 <p>Incentivo a práticas de responsabilidade socioambiental e uso racional de recursos naturais.</p>
             </div>
             <div class="doc-card">
-                <h4>7. Segurança <i class="fa-solid fa-check" style="color: var(--navy-2); margin-left: 6px;"></i></h4>
+                <h4>7. Segurança</h4>
                 <p>Exigência de padrões rigorosos de saúde e segurança do trabalho na construção civil.</p>
             </div>
             <div class="doc-card">
-                <h4>8. Relação de Longo Prazo <i class="fa-solid fa-check" style="color: var(--navy-2); margin-left: 6px;"></i></h4>
+                <h4>8. Relação de Longo Prazo</h4>
                 <p>Desenvolvimento de parcerias estratégicas e duradouras com os nossos fornecedores chaves.</p>
             </div>
         </div>
@@ -920,27 +971,27 @@
         <div class="doc-text">Considerando a natureza das atividades de infraestrutura e loteamento, exige-se de todos os fornecedores que atuem em campo:</div>
         <div class="grid cols-2">
             <div class="doc-card">
-                <h4>Treinamentos (NRs) <i class="fa-solid fa-check" style="color: var(--navy-2); margin-left: 6px;"></i></h4>
+                <h4>Treinamentos (NRs)</h4>
                 <p>Comprovação de treinamentos e certificações exigidos pelas Normas Regulamentadoras aplicáveis (NR-18, NR-35, etc).</p>
             </div>
             <div class="doc-card">
-                <h4>Uso de EPIs e EPCs <i class="fa-solid fa-check" style="color: var(--navy-2); margin-left: 6px;"></i></h4>
+                <h4>Uso de EPIs e EPCs</h4>
                 <p>Fornecimento e uso obrigatório de Equipamentos de Proteção Individual (EPIs) e Coletiva (EPCs) adequados.</p>
             </div>
             <div class="doc-card">
-                <h4>Comunicação de Incidentes <i class="fa-solid fa-check" style="color: var(--navy-2); margin-left: 6px;"></i></h4>
+                <h4>Comunicação de Incidentes</h4>
                 <p>Comunicação imediata de acidentes de trabalho e incidentes ambientais à fiscalização da companhia.</p>
             </div>
             <div class="doc-card">
-                <h4>Preservação Ambiental <i class="fa-solid fa-check" style="color: var(--navy-2); margin-left: 6px;"></i></h4>
+                <h4>Preservação Ambiental</h4>
                 <p>Respeito a áreas de preservação permanente (APPs), licenças ambientais e condicionantes específicas.</p>
             </div>
             <div class="doc-card">
-                <h4>Gestão de Resíduos <i class="fa-solid fa-check" style="color: var(--navy-2); margin-left: 6px;"></i></h4>
+                <h4>Gestão de Resíduos</h4>
                 <p>Gestão adequada de resíduos de construção civil, conforme legislação ambiental e Plano (PGRCC).</p>
             </div>
             <div class="doc-card">
-                <h4>Auditorias e Inspeções <i class="fa-solid fa-check" style="color: var(--navy-2); margin-left: 6px;"></i></h4>
+                <h4>Auditorias e Inspeções</h4>
                 <p>Sujeição a auditorias e inspeções de SSMA realizadas pela companhia ou terceiros, sem aviso prévio.</p>
             </div>
         </div>
@@ -1028,19 +1079,19 @@
         <div class="doc-text">Este documento foi elaborado para consolidar e padronizar todas as etapas operacionais, critérios de governança e posturas éticas exigidas na condução de aquisições e contratações. Seus principais objetivos são:</div>
         <div class="grid cols-2 mt-4">
             <div class="doc-card">
-                <h4>1. Padronização de Processos <i class="fa-solid fa-check" style="color: var(--navy-2); margin-left: 6px;"></i></h4>
+                <h4>1. Padronização de Processos</h4>
                 <p>Servir como roteiro obrigatório e material de treinamento, assegurando uniformidade na execução das atividades do setor e garantindo a continuidade do trabalho.</p>
             </div>
             <div class="doc-card">
-                <h4>2. Transparência e Rastreabilidade <i class="fa-solid fa-check" style="color: var(--navy-2); margin-left: 6px;"></i></h4>
+                <h4>2. Transparência e Rastreabilidade</h4>
                 <p>Garantir que todas as decisões comerciais sejam baseadas em critérios técnicos e financeiros auditáveis, passíveis de verificação e controle interno contínuo.</p>
             </div>
             <div class="doc-card">
-                <h4>3. Eficiência Operacional (SLA) <i class="fa-solid fa-check" style="color: var(--navy-2); margin-left: 6px;"></i></h4>
+                <h4>3. Eficiência Operacional (SLA)</h4>
                 <p>Estabelecer consciência de prazo para atendimento para as requisições de materiais e serviços vindas do canteiro de obras, reduzindo esperas injustificadas.</p>
             </div>
             <div class="doc-card">
-                <h4>4. Fortalecimento do Compliance <i class="fa-solid fa-check" style="color: var(--navy-2); margin-left: 6px;"></i></h4>
+                <h4>4. Fortalecimento do Compliance</h4>
                 <p>Blindar a organização contra conflitos de interesse, fraudes e desvios de conduta nas negociações de mercado, promovendo um ambiente ético e profissional.</p>
             </div>
         </div>
@@ -1186,35 +1237,35 @@
         <div class="doc-text">A excelência da área é medida através do acompanhamento rigoroso dos seguintes indicadores, analisados pelo setor em seus Dashboards Executivos e reportados estrategicamente à Diretoria:</div>
         <div class="grid cols-4 mt-4">
             <div class="doc-card">
-                <h4>Saving (%) <i class="fa-solid fa-check" style="color: var(--navy-2); margin-left: 6px;"></i></h4>
+                <h4>Saving (%)</h4>
                 <p>Economia obtida nas negociações comparando a melhor proposta inicial com o valor contratado pós-negociação, garantindo proteção ao orçamento base.</p>
             </div>
             <div class="doc-card">
-                <h4>Lead Time de Compras <i class="fa-solid fa-check" style="color: var(--navy-2); margin-left: 6px;"></i></h4>
+                <h4>Lead Time de Compras</h4>
                 <p>Tempo transcorrido desde o recebimento da requisição correta pela engenharia até a efetiva emissão do pedido ou assinatura do contrato.</p>
             </div>
             <div class="doc-card">
-                <h4>IDF (Desempenho) <i class="fa-solid fa-check" style="color: var(--navy-2); margin-left: 6px;"></i></h4>
+                <h4>IDF (Desempenho)</h4>
                 <p>Avaliação contínua dos parceiros em campo baseada nos quesitos de Pontualidade, Segurança do Trabalho, Qualidade e Postura Comercial.</p>
             </div>
             <div class="doc-card">
-                <h4>Entregas no prazo (%) <i class="fa-solid fa-check" style="color: var(--navy-2); margin-left: 6px;"></i></h4>
+                <h4>Entregas no prazo (%)</h4>
                 <p>Percentual de entregas realizadas rigorosamente dentro do prazo estipulado, garantindo o fluxo contínuo e ininterrupto das frentes de obra.</p>
             </div>
             <div class="doc-card">
-                <h4>Performance (Fornecedores) <i class="fa-solid fa-check" style="color: var(--navy-2); margin-left: 6px;"></i></h4>
+                <h4>Performance (Fornecedores)</h4>
                 <p>Monitoramento global do parceiro comercial, englobando a saúde financeira a longo prazo, conformidade ética e qualidade das entregas.</p>
             </div>
             <div class="doc-card">
-                <h4>Custo por Lote <i class="fa-solid fa-check" style="color: var(--navy-2); margin-left: 6px;"></i></h4>
+                <h4>Custo por Lote</h4>
                 <p>Acompanhamento estratégico do impacto financeiro das aquisições e contratos, rateado sistematicamente pelo número de lotes do empreendimento.</p>
             </div>
             <div class="doc-card">
-                <h4>Controle (Custo/Etapa) <i class="fa-solid fa-check" style="color: var(--navy-2); margin-left: 6px;"></i></h4>
+                <h4>Controle (Custo/Etapa)</h4>
                 <p>Monitoramento detalhado dos gastos com materiais e serviços segmentados e analisados pelas diferentes fases executivas do projeto.</p>
             </div>
             <div class="doc-card">
-                <h4>Curva ABC (Fornecedores) <i class="fa-solid fa-check" style="color: var(--navy-2); margin-left: 6px;"></i></h4>
+                <h4>Curva ABC (Fornecedores)</h4>
                 <p>Classificação estratégica do volume de compras para priorizar esforços e estreitar relacionamento com os fornecedores de maior impacto.</p>
             </div>
         </div>
@@ -1244,10 +1295,99 @@
       </section>
     </div>
 
+    <!-- ==================== VIEW: PRINT ATD (OCULTA) ==================== -->
+    <div id="view-atd-print" class="view">
+        <div class="print-header">
+            <h1>ANÁLISE PARA TOMADA DE DECISÃO</h1>
+            <p id="print-atd-subtitle"></p>
+        </div>
+        
+        <div class="print-grid">
+            <div class="print-box">
+                <strong>Target (Orçamento)</strong>
+                <span id="print-atd-target"></span>
+            </div>
+            <div class="print-box">
+                <strong>Melhor Preço</strong>
+                <span id="print-atd-melhor"></span>
+            </div>
+            <div class="print-box">
+                <strong>Desvio Obtido</strong>
+                <span id="print-atd-desvio"></span>
+            </div>
+        </div>
+        
+        <div class="print-section">
+            <h3>Fornecedor Indicado</h3>
+            <p class="print-justificativa"><strong id="print-atd-indicacao" style="font-size:14px;"></strong></p>
+        </div>
+
+        <div class="print-section">
+            <h3>Mapa de Preços / Equalização</h3>
+            <table class="items table-comp" id="print-atd-table"></table>
+        </div>
+
+        <div class="print-section">
+            <h3>Escopo e Justificativa</h3>
+            <p class="print-justificativa" id="print-atd-escopo"></p>
+        </div>
+
+        <div class="print-section" id="print-atd-images-section">
+            <h3>Anexos e Imagens Complementares</h3>
+            <div class="print-images" id="print-atd-images"></div>
+        </div>
+    </div>
+
   </main>
 </div>
 
 <!-- ====== MODALS ====== -->
+
+<!-- MODAL: ATD -->
+<div class="modal-overlay" id="modal-atd">
+  <div class="modal" style="max-width:800px;">
+    <div class="modal-header">
+      <span>📊 Montar Análise para Tomada de Decisão (ATD)</span>
+      <button class="del-btn" onclick="UI.closeModal('modal-atd')" style="font-size:24px;">&times;</button>
+    </div>
+    
+    <div style="font-size:12px; color:var(--muted); margin-bottom:16px;">Preencha as informações executivas para gerar a apresentação. O Mapa de Preços será incluído automaticamente.</div>
+    
+    <div class="grid cols-3" style="margin-bottom:15px;">
+      <div class="field">
+         <label>Orçamento Aprovado (Target)</label>
+         <input type="text" id="atd-target" placeholder="R$ 0,00" oninput="Util.maskCur(this); ATD.calcDesvio()">
+      </div>
+      <div class="field">
+         <label>Melhor Preço (Prospectado)</label>
+         <input type="text" id="atd-melhor" placeholder="R$ 0,00" oninput="Util.maskCur(this); ATD.calcDesvio()">
+      </div>
+      <div class="field">
+         <label>Desvio (%)</label>
+         <div style="border:1px solid var(--line); border-radius:4px; height:38px; display:flex; align-items:center; padding:0 11px; background:var(--bg); font-weight:800;" id="atd-desvio-view">0%</div>
+      </div>
+    </div>
+    
+    <div class="field" style="margin-bottom:15px;">
+       <label>Fornecedor Indicado (Vencedor)</label>
+       <input type="text" id="atd-indicacao" placeholder="Nome do fornecedor escolhido...">
+    </div>
+    
+    <div class="field" style="margin-bottom:15px;">
+       <label>Escopo da Compra / Justificativa</label>
+       <textarea id="atd-escopo" placeholder="Detalhe o escopo, condições negociadas, técnica..."></textarea>
+    </div>
+    
+    <div class="field" style="margin-bottom:15px;">
+       <label>Anexar Fotos/Imagens (Projetos, Catálogos...)</label>
+       <input type="file" id="atd-upload" multiple accept="image/*" style="padding:7px; height:auto;" onchange="ATD.handleImageUpload(event)">
+       <div class="atd-gallery" id="atd-gallery-preview"></div>
+    </div>
+
+    <button class="btn btn-solid" style="width:100%; margin-top:10px; padding:15px;" onclick="ATD.saveAndPrint()">Salvar Histórico e Gerar Apresentação PDF</button>
+  </div>
+</div>
+
 <div class="modal-overlay" id="modal-ia-forn">
   <div class="modal">
     <div class="modal-header">
@@ -1520,6 +1660,7 @@ const App = {
     if(viewId === 'processos') App.renderProcessos();
     if(viewId === 'fornecedores') { App.updateFiltrosForn(); App.renderForn(); App.switchFornTab('lista'); }
     if(viewId === 'recebimento') App.initInbox();
+    if(viewId === 'atds') ATD.loadHistory();
   },
   novoProcesso: () => {
     const d = new Date();
@@ -1531,6 +1672,7 @@ const App = {
       req: { numero:`RC-${prefix + String(seq).padStart(3, '0')}`, emissao:Util.today(), prazo:'', resp:'', email:'', cat:'', cond:'', local:'', obs:'', itens:[] },
       fornecedoresSelecionados: [], propostas: [], compObs: '', vencedorId: null, economia: 0,
       oc: { numero:'', emissao:'', entrega:'', resp:'', cond:'', obs:'', local:'' },
+      atd: null,
       historico: [{ data: Util.today(), txt: 'Processo criado' }]
     };
     DB.data.processos.push(p); DB.save();
@@ -2049,6 +2191,246 @@ const App = {
   }
 };
 
+// ==================== MODULO: ATD ====================
+const ATD = {
+  currentImages: [],
+  loadHistory: () => {
+    const tb = document.getElementById('atd-list-body'); tb.innerHTML = '';
+    const atdList = DB.data.processos.filter(p => p.atd && p.atd.geradaEm);
+    if(atdList.length === 0) {
+       tb.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:20px; color:var(--muted)">Nenhuma ATD gerada até o momento.</td></tr>`;
+       return;
+    }
+    atdList.reverse().forEach(p => {
+       tb.innerHTML += `<tr>
+         <td><strong style="color:var(--navy)">${p.id}</strong></td>
+         <td>${p.atd.geradaEm}</td>
+         <td>${p.req.cat || 'Geral'}</td>
+         <td>${Util.formatBRL(p.atd.target)}</td>
+         <td><span style="font-weight:800; color:${p.atd.desvio <= 0 ? 'var(--success)' : 'var(--danger)'}">${p.atd.desvio.toFixed(1)}%</span></td>
+         <td style="text-align:right"><button class="btn btn-outline" onclick="ATD.reprint('${p.id}')">Ver PDF</button></td>
+       </tr>`;
+    });
+  },
+  openModal: () => {
+    const p = DB.getProcess(currentPID);
+    if(!p || p.propostas.length === 0) return alert("Não há propostas no mapa para gerar uma ATD.");
+    
+    ATD.currentImages = [];
+    document.getElementById('atd-gallery-preview').innerHTML = '';
+    document.getElementById('atd-upload').value = '';
+    
+    // Auto-calculate best price
+    let minTot = Infinity;
+    p.propostas.forEach(prop => {
+      let t = prop.frete + prop.imposto;
+      p.req.itens.forEach(i => t += (prop.itens[i.id]||0) * i.qtd);
+      if (t > 0 && t < minTot) minTot = t;
+    });
+
+    document.getElementById('atd-target').value = p.atd ? Util.formatBRL(p.atd.target) : '';
+    document.getElementById('atd-melhor').value = Util.formatBRL(minTot === Infinity ? 0 : minTot);
+    
+    let indNome = '';
+    if(p.vencedorId) {
+        const f = DB.data.fornecedores.find(x=>x.id===p.vencedorId);
+        indNome = f ? f.nome : '';
+    }
+    document.getElementById('atd-indicacao').value = p.atd && p.atd.indicacao ? p.atd.indicacao : indNome;
+    document.getElementById('atd-escopo').value = p.atd ? p.atd.escopo : '';
+    
+    if(p.atd && p.atd.imagens) {
+        ATD.currentImages = [...p.atd.imagens];
+        ATD.renderImagePreview();
+    }
+
+    ATD.calcDesvio();
+    UI.openModal('modal-atd');
+  },
+  calcDesvio: () => {
+    const target = Util.unmaskCur(document.getElementById('atd-target').value) || 0;
+    const melhor = Util.unmaskCur(document.getElementById('atd-melhor').value) || 0;
+    const view = document.getElementById('atd-desvio-view');
+    
+    if (target === 0) {
+        view.textContent = "0%";
+        view.style.color = "var(--ink)";
+        return;
+    }
+    
+    const desvio = ((melhor - target) / target) * 100;
+    view.textContent = (desvio > 0 ? "+" : "") + desvio.toFixed(1) + "%";
+    view.style.color = desvio <= 0 ? "var(--success)" : "var(--danger)";
+  },
+  handleImageUpload: (event) => {
+      const files = event.target.files;
+      for (let i = 0; i < files.length; i++) {
+          const file = files[i];
+          const reader = new FileReader();
+          reader.onload = (e) => {
+              const img = new Image();
+              img.onload = () => {
+                  // Compress and resize image to prevent 5MB storage limit breaking
+                  const canvas = document.createElement('canvas');
+                  const MAX_WIDTH = 800;
+                  let width = img.width;
+                  let height = img.height;
+                  if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; }
+                  canvas.width = width; canvas.height = height;
+                  const ctx = canvas.getContext('2d');
+                  ctx.drawImage(img, 0, 0, width, height);
+                  const dataUrl = canvas.toDataURL('image/jpeg', 0.6);
+                  ATD.currentImages.push(dataUrl);
+                  ATD.renderImagePreview();
+              };
+              img.src = e.target.result;
+          };
+          reader.readAsDataURL(file);
+      }
+  },
+  renderImagePreview: () => {
+      const gal = document.getElementById('atd-gallery-preview');
+      gal.innerHTML = '';
+      ATD.currentImages.forEach((src, idx) => {
+          gal.innerHTML += `<img src="${src}" onclick="ATD.removeImage(${idx})" title="Clique para remover" style="cursor:pointer;">`;
+      });
+  },
+  removeImage: (idx) => {
+      ATD.currentImages.splice(idx, 1);
+      ATD.renderImagePreview();
+  },
+  saveAndPrint: () => {
+      const p = DB.getProcess(currentPID);
+      const target = Util.unmaskCur(document.getElementById('atd-target').value) || 0;
+      const melhor = Util.unmaskCur(document.getElementById('atd-melhor').value) || 0;
+      let desvio = 0;
+      if (target > 0) desvio = ((melhor - target) / target) * 100;
+
+      p.atd = {
+          target: target,
+          melhorPreco: melhor,
+          desvio: desvio,
+          indicacao: document.getElementById('atd-indicacao').value,
+          escopo: document.getElementById('atd-escopo').value,
+          imagens: ATD.currentImages,
+          geradaEm: Util.today()
+      };
+      
+      DB.save();
+      UI.closeModal('modal-atd');
+      ATD.reprint(p.id);
+  },
+  reprint: (pid) => {
+      const p = DB.getProcess(pid);
+      if(!p || !p.atd) return;
+
+      document.getElementById('print-atd-subtitle').textContent = `PROCESSO: ${p.id} - ${p.req.cat || 'GERAL'}`;
+      document.getElementById('print-atd-target').textContent = Util.formatBRL(p.atd.target);
+      document.getElementById('print-atd-melhor').textContent = Util.formatBRL(p.atd.melhorPreco);
+      
+      const desv = document.getElementById('print-atd-desvio');
+      desv.textContent = (p.atd.desvio > 0 ? "+" : "") + p.atd.desvio.toFixed(1) + "%";
+      desv.style.color = p.atd.desvio <= 0 ? "#24783d" : "#8A2E2E";
+      
+      document.getElementById('print-atd-indicacao').textContent = p.atd.indicacao || 'Não preenchido';
+      document.getElementById('print-atd-escopo').textContent = p.atd.escopo || 'Não preenchido';
+
+      // Clone table HTML from map logic
+      currentPID = pid; // trick map logic to render correct table
+      const tempMapBody = document.createElement('tbody');
+      const tempMapHead = document.createElement('thead');
+      const tempMapFoot = document.createElement('tfoot');
+      
+      // Override DOM elements temporarily for MapaPrecos.load
+      const realHead = document.getElementById('map-head');
+      const realBody = document.getElementById('map-body');
+      const realFoot = document.getElementById('map-foot');
+      const realSub = document.getElementById('map-subtitle');
+      
+      document.getElementById('map-head').id = 'map-head-temp';
+      document.getElementById('map-body').id = 'map-body-temp';
+      document.getElementById('map-foot').id = 'map-foot-temp';
+      document.getElementById('map-subtitle').id = 'map-sub-temp';
+      
+      tempMapHead.id = 'map-head';
+      tempMapBody.id = 'map-body';
+      tempMapFoot.id = 'map-foot';
+      const tempSub = document.createElement('div'); tempSub.id = 'map-subtitle';
+      
+      document.body.appendChild(tempMapHead);
+      document.body.appendChild(tempMapBody);
+      document.body.appendChild(tempMapFoot);
+      document.body.appendChild(tempSub);
+      
+      MapaPrecos.load(p);
+      
+      const printTable = document.getElementById('print-atd-table');
+      printTable.innerHTML = '';
+      printTable.appendChild(tempMapHead.cloneNode(true));
+      printTable.appendChild(tempMapBody.cloneNode(true));
+      printTable.appendChild(tempMapFoot.cloneNode(true));
+      
+      // Cleanup temp DOM
+      tempMapHead.remove(); tempMapBody.remove(); tempMapFoot.remove(); tempSub.remove();
+      document.getElementById('map-head-temp').id = 'map-head';
+      document.getElementById('map-body-temp').id = 'map-body';
+      document.getElementById('map-foot-temp').id = 'map-foot';
+      document.getElementById('map-sub-temp').id = 'map-subtitle';
+
+      // Transform inputs to plain text for print
+      printTable.querySelectorAll('input').forEach(inp => {
+         const span = document.createElement('span');
+         span.textContent = inp.value;
+         span.style.fontWeight = 'bold';
+         inp.parentNode.replaceChild(span, inp);
+      });
+      // Remove delete buttons
+      printTable.querySelectorAll('.del-btn').forEach(btn => btn.remove());
+      // Remove (Editar Dados) text
+      printTable.querySelectorAll('small').forEach(sm => { if(sm.textContent.includes('Editar')) sm.remove(); });
+
+      // Images
+      const imgCont = document.getElementById('print-atd-images');
+      imgCont.innerHTML = '';
+      if(p.atd.imagens && p.atd.imagens.length > 0) {
+          document.getElementById('print-atd-images-section').style.display = 'block';
+          p.atd.imagens.forEach(src => { imgCont.innerHTML += `<img src="${src}">`; });
+      } else {
+          document.getElementById('print-atd-images-section').style.display = 'none';
+      }
+
+    // Limpa as telas ativas e força a tela de impressão a ser renderizada no DOM
+      document.querySelectorAll('.view').forEach(v => {
+          v.classList.remove('active');
+          v.style.display = ''; 
+      });
+      const printView = document.getElementById('view-atd-print');
+      printView.classList.add('active');
+      printView.style.display = 'block'; 
+      
+      // FORÇA A IMPRESSÃO NO MODO PAISAGEM (LANDSCAPE) APENAS PARA A ATD
+      const landscapeStyle = document.createElement('style');
+      landscapeStyle.innerHTML = '@media print { @page { size: A4 landscape !important; margin: 10mm; } }';
+      document.head.appendChild(landscapeStyle);
+      
+      // Dá tempo para o navegador "desenhar" a tabela antes de imprimir
+      setTimeout(() => {
+          window.print();
+          
+          // Limpa o estilo dinâmico e reseta a visualização
+          document.head.removeChild(landscapeStyle);
+          printView.classList.remove('active');
+          printView.style.display = '';
+          
+          if(document.getElementById('view-atds').querySelector('tbody').innerHTML !== '') {
+             App.nav('atds');
+          } else {
+             App.nav('mapa');
+          }
+      }, 800);
+  }
+};
+
 // ==================== MODULO: REQUISIÇÃO ====================
 const Req = {
   load: (p) => {
@@ -2178,12 +2560,15 @@ const Req = {
           const selectResp = document.getElementById('rcResp');
           const respNome = selectResp.options[selectResp.selectedIndex].text;
           
+          // Captura os dados da SPE para enviar na cotação
+          const speInfo = p.spe && SPES[p.spe] ? `${SPES[p.spe].nome} (CNPJ: ${SPES[p.spe].cnpj})` : "A confirmar";
+          
           await fetch('/api/enviar-email', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               fornecedores: fornecedoresData.map(f => ({ nome: f.nome, email: f.email || f.contato })),
-              rcData: { ...p.req, respNome: respNome }
+              rcData: { ...p.req, respNome: respNome, speInfo: speInfo }
             })
           });
         } catch (err) {
@@ -2495,7 +2880,7 @@ const OC = {
   }
 };
 
-window.App = App; window.Req = Req; window.MapaPrecos = MapaPrecos; window.OC = OC; window.AI = AI; window.Email = Email; window.UI = UI; window.Util = Util; window.DB = DB;
+window.App = App; window.Req = Req; window.MapaPrecos = MapaPrecos; window.OC = OC; window.AI = AI; window.Email = Email; window.UI = UI; window.Util = Util; window.DB = DB; window.ATD = ATD;
 
 // ==================== FUNÇÕES DE INTERFACE GLOBAIS ====================
 window.efetuarLogin = () => {
