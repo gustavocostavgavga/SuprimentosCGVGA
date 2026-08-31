@@ -3096,89 +3096,58 @@ window.confirmarAddFornMapa = () => {
 window.addFornecedorNovoNoMapa = () => {
   const p = DB.getProcess(currentPID);
   const newId = Util.genId();
+  
+  // 1. Cria o fornecedor no banco de dados global instantaneamente
+  const novoFornGlobal = { id: newId, nome: 'NOVO FORNECEDOR', cnpj: '', email: '', tel: '', cats: p.req.cat || '', score: 50, precoHist: 'Novo', cidade: '', lat: 0, lng: 0 };
+  DB.data.fornecedores.push(novoFornGlobal);
+
+  // 2. Vincula o fornecedor ao processo atual
   p.propostas.push({ 
-    fornId: newId, nome: 'NOVO FORNECEDOR (Editar)', doc: '', tel: '', email: '', 
+    fornId: newId, nome: 'NOVO FORNECEDOR', doc: '', tel: '', email: '', 
     status: 'pendente', itens: {}, frete: 0, imposto: 0, prazo: '', cond: '' 
   });
-  // Garante que ele faça parte da lista oficial do processo
-  p.fornecedoresSelecionados.push(newId);
+  if(!p.fornecedoresSelecionados.includes(newId)) {
+      p.fornecedoresSelecionados.push(newId);
+  }
   
   DB.save();
   MapaPrecos.load(p);
-  editFornDetails(newId);
-  UI.toast("Preencha os dados e clique em 'Salvar no Banco'!");
+  editFornDetails(newId); // Abre os dados complementares automaticamente
+  UI.toast("Fornecedor criado! Preencha os dados abaixo.");
 };
 
 window.salvarFornDoMapaNoBanco = () => {
   if(!currentCompFornId) return;
+  
   const p = DB.getProcess(currentPID);
   const prop = p.propostas.find(x => x.fornId === currentCompFornId);
   if(!prop) return;
-
-window.enviarCotacaoAvulsa = async (propId) => {
-  const p = DB.getProcess(currentPID);
-  const prop = p.propostas.find(x => x.fornId === propId);
-  const f = DB.data.fornecedores.find(x => x.id === propId);
   
-  // Prioriza rigorosamente o Nome e o E-mail que você preencheu na tela "Editar Dados" do Mapa
-  const nomeDestino = prop.nome || (f ? f.nome : 'Fornecedor');
-  const emailDestino = prop.email || (f ? f.email : '') || (f ? f.contato : '');
-  
-  if (!emailDestino || !emailDestino.includes('@')) {
-      return alert('Este fornecedor não possui um e-mail válido cadastrado. Clique em "(Editar)" abaixo do nome dele para inserir o e-mail antes de enviar.');
-  }
-  
-  if(!confirm(`Deseja disparar o e-mail de cotação agora para ${nomeDestino}?`)) return;
-  
-  UI.toast("Disparando e-mail...");
-  document.getElementById('db-loader').style.display = 'flex';
-  document.getElementById('db-loader').style.opacity = '1';
-  document.getElementById('db-loader').children[1].textContent = 'ENVIANDO E-MAIL...';
-  
-  try {
-      const speInfo = p.spe && SPES[p.spe] ? `${SPES[p.spe].nome} (CNPJ: ${SPES[p.spe].cnpj})` : "A confirmar";
-      const respNome = p.req.resp || "Gestão de Suprimentos";
-      
-      // Usa a rota relativa correta da Vercel
-      await fetch('/api/enviar-email', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-              fornecedores: [{ nome: nomeDestino, email: emailDestino }],
-              rcData: { ...p.req, respNome: respNome, speInfo: speInfo }
-          })
-      });
-      
-      UI.toast("E-mail enviado com sucesso!");
-      App.logHistory(p.id, `Cotação disparada avulsa para o fornecedor: ${nomeDestino}.`);
-  } catch (err) {
-      alert("Erro ao enviar o e-mail. Verifique se há algum bloqueio na API.");
-  }
-  
-  document.getElementById('db-loader').style.opacity = '0';
-  setTimeout(()=> {
-      document.getElementById('db-loader').style.display = 'none';
-      document.getElementById('db-loader').children[1].textContent = 'Conectando ao Firebase...'; 
-  }, 500);
-};  
+  // Procura se o fornecedor já existe no banco global, se não, cria a estrutura dele
   let f = DB.data.fornecedores.find(x => x.id === currentCompFornId);
   if(!f) {
      f = { id: currentCompFornId, lat: 0, lng: 0, score: 50, precoHist: 'Novo', cidade: '' };
      DB.data.fornecedores.push(f);
   }
   
-  f.nome = prop.nome || 'Novo Fornecedor';
-  f.cnpj = prop.doc || '';
-  f.tel = prop.tel || '';
-  f.email = prop.email || '';
+  // Puxa tudo o que você digitou nas caixinhas da tela no momento do clique
+  f.nome = document.getElementById('cfNome').value || prop.nome || 'Novo Fornecedor';
+  f.cnpj = document.getElementById('cfDoc').value || prop.doc || '';
+  f.tel = document.getElementById('cfTel').value || prop.tel || '';
+  f.email = document.getElementById('cfEmail').value || prop.email || '';
   f.cats = p.req.cat || '';
-  f.prazo = prop.prazo || '';
+  f.prazo = document.getElementById('cfPrazo').value || prop.prazo || '';
   
+  // Sincroniza as alterações (como o Nome e E-mail) com a cotação atual
+  prop.nome = f.nome;
+  prop.email = f.email;
+  
+  // Salva no banco de dados e exibe o aviso verde na tela
   DB.save();
-  UI.toast('Fornecedor salvo no Banco de Dados global!');
-  if(document.getElementById('view-fornecedores').classList.contains('active')) {
-      App.renderForn();
-  }
+  UI.toast('Fornecedor salvo com sucesso no Banco Geral!');
+  
+  // Atualiza a tabela do mapa de preços imediatamente para mostrar o novo nome digitado
+  MapaPrecos.load(p); 
 };
 
 window.removeFornecedorComp = (propId) => { if(!confirm('Remover fornecedor do Mapa?')) return; const p = DB.getProcess(currentPID); p.propostas = p.propostas.filter(x => x.fornId !== propId); if(p.vencedorId === propId) p.vencedorId = null; DB.save(); MapaPrecos.load(p); document.getElementById('comp-form-forn').style.display = 'none'; };
