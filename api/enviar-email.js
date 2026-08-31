@@ -43,6 +43,7 @@ export default async function handler(req, res) {
             </div>
 
             <p><strong>Prazo Máximo de Resposta:</strong> ${rcData.prazo || 'O mais breve possível'}</p>
+            <p><strong>Empresa de Faturamento (SPE):</strong> ${rcData.speInfo}</p>
             <p><strong>Local de Entrega:</strong> ${rcData.local}</p>
             <p><strong>Condição de Pagamento Esperada:</strong> ${rcData.cond || 'A combinar'}</p>
             
