@@ -1,3 +1,5 @@
+
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -120,6 +122,22 @@
   .field input:focus, .field select:focus, .field textarea:focus { border-color: var(--navy); }
   .field input:disabled, .field textarea:disabled, .field select:disabled { background: var(--bg); color: var(--muted); }
   .field textarea { padding: 10px 11px; resize: vertical; min-height: 64px; height: auto; }
+  
+  /* CORREÇÃO: Menu nativo dos selects (Dropdowns) */
+  select option {
+    background-color: var(--paper);
+    color: var(--ink);
+  }
+
+  /* CORREÇÃO: Preenchimento automático do navegador (Autofill) Chrome/Edge */
+  input:-webkit-autofill,
+  input:-webkit-autofill:hover, 
+  input:-webkit-autofill:focus, 
+  input:-webkit-autofill:active {
+      -webkit-box-shadow: 0 0 0 30px var(--paper) inset !important;
+      -webkit-text-fill-color: var(--ink) !important;
+      transition: background-color 5000s ease-in-out 0s;
+  }
 
   /* ====== DASHBOARD KPIs ====== */
   .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom:24px;}
@@ -331,7 +349,7 @@
       <button class="nav-btn" onclick="App.nav('recebimento')">Inbox & IA Real</button>
       
       <div class="nav-label" style="margin-top:24px;">Documentos</div>
-      <button class="nav-btn" onclick="App.nav('atds')">ATD's (Histórico)</button>
+      <button class="nav-btn" onclick="App.nav('atds')">ATD's</button>
       <button class="nav-btn" onclick="App.nav('politica')">Política de Fornecedores</button>
       <button class="nav-btn" onclick="App.nav('manual')">Manual de Compras</button>
 
