@@ -3083,6 +3083,9 @@ window.confirmarAddFornMapa = () => {
       fornId: f.id, nome: f.nome, doc: f.cnpj, tel: f.tel||'', email: f.email||f.contato||'', 
       status: 'pendente', itens: {}, frete: 0, imposto: 0, prazo: f.prazo||'', cond: '' 
     });
+    // Garante que ele faça parte da lista oficial do processo para não sumir
+    if(!p.fornecedoresSelecionados.includes(f.id)) p.fornecedoresSelecionados.push(f.id);
+    
     DB.save();
     MapaPrecos.load(p);
     UI.closeModal('modal-add-forn-mapa');
@@ -3095,8 +3098,11 @@ window.addFornecedorNovoNoMapa = () => {
   const newId = Util.genId();
   p.propostas.push({ 
     fornId: newId, nome: 'NOVO FORNECEDOR (Editar)', doc: '', tel: '', email: '', 
-    status: 'recebida', itens: {}, frete: 0, imposto: 0, prazo: '', cond: '' 
+    status: 'pendente', itens: {}, frete: 0, imposto: 0, prazo: '', cond: '' 
   });
+  // Garante que ele faça parte da lista oficial do processo
+  p.fornecedoresSelecionados.push(newId);
+  
   DB.save();
   MapaPrecos.load(p);
   editFornDetails(newId);
@@ -3112,15 +3118,17 @@ window.salvarFornDoMapaNoBanco = () => {
 window.enviarCotacaoAvulsa = async (propId) => {
   const p = DB.getProcess(currentPID);
   const prop = p.propostas.find(x => x.fornId === propId);
-  const f = DB.data.fornecedores.find(x => x.id === propId) || prop;
+  const f = DB.data.fornecedores.find(x => x.id === propId);
   
-  const emailDestino = f.email || prop.email || f.contato;
+  // Prioriza rigorosamente o Nome e o E-mail que você preencheu na tela "Editar Dados" do Mapa
+  const nomeDestino = prop.nome || (f ? f.nome : 'Fornecedor');
+  const emailDestino = prop.email || (f ? f.email : '') || (f ? f.contato : '');
   
   if (!emailDestino || !emailDestino.includes('@')) {
-      return alert('Este fornecedor não possui um e-mail válido cadastrado. Clique em "(Editar)" para inserir o e-mail antes de enviar.');
+      return alert('Este fornecedor não possui um e-mail válido cadastrado. Clique em "(Editar)" abaixo do nome dele para inserir o e-mail antes de enviar.');
   }
   
-  if(!confirm(`Deseja disparar o e-mail de cotação agora para ${f.nome}?`)) return;
+  if(!confirm(`Deseja disparar o e-mail de cotação agora para ${nomeDestino}?`)) return;
   
   UI.toast("Disparando e-mail...");
   document.getElementById('db-loader').style.display = 'flex';
@@ -3131,19 +3139,20 @@ window.enviarCotacaoAvulsa = async (propId) => {
       const speInfo = p.spe && SPES[p.spe] ? `${SPES[p.spe].nome} (CNPJ: ${SPES[p.spe].cnpj})` : "A confirmar";
       const respNome = p.req.resp || "Gestão de Suprimentos";
       
+      // Usa a rota relativa correta da Vercel
       await fetch('/api/enviar-email', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-              fornecedores: [{ nome: f.nome, email: emailDestino }],
+              fornecedores: [{ nome: nomeDestino, email: emailDestino }],
               rcData: { ...p.req, respNome: respNome, speInfo: speInfo }
           })
       });
       
       UI.toast("E-mail enviado com sucesso!");
-      App.logHistory(p.id, `Cotação disparada avulsa para o fornecedor: ${f.nome}.`);
+      App.logHistory(p.id, `Cotação disparada avulsa para o fornecedor: ${nomeDestino}.`);
   } catch (err) {
-      alert("Erro ao enviar o e-mail. Verifique sua conexão e os logs da API.");
+      alert("Erro ao enviar o e-mail. Verifique se há algum bloqueio na API.");
   }
   
   document.getElementById('db-loader').style.opacity = '0';
@@ -3151,8 +3160,7 @@ window.enviarCotacaoAvulsa = async (propId) => {
       document.getElementById('db-loader').style.display = 'none';
       document.getElementById('db-loader').children[1].textContent = 'Conectando ao Firebase...'; 
   }, 500);
-};
-  
+};  
   let f = DB.data.fornecedores.find(x => x.id === currentCompFornId);
   if(!f) {
      f = { id: currentCompFornId, lat: 0, lng: 0, score: 50, precoHist: 'Novo', cidade: '' };
