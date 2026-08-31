@@ -50,7 +50,7 @@ export default async function handler(req, res) {
               Por favor, respondam a este e-mail anexando sua proposta comercial (PDF) ou informando os valores diretamente no corpo do texto.
             </p>
             
-            <p>Atenciosamente,<br><strong>${rcData.respNome}</strong><br>Gestão de Suprimentos - Casagrande Urbanismo</p>
+            <p>Atenciosamente,<br><strong>${rcData.respNome}</strong><br>Gestão de Suprimentos</p>
           </div>
         `
       };
