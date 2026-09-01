@@ -1,3 +1,6 @@
+
+
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -537,12 +540,19 @@
       </div>
 
       <div class="atd-builder-toolbar">
-        <strong style="color:var(--navy); font-size:12px; width:100%; margin-bottom:4px;">Adicionar Elementos:</strong>
-        <button class="btn btn-outline" onclick="ATDLivre.addBloco('texto')"><i class="fa-solid fa-align-left"></i> Bloco de Texto</button>
+        <div style="width: 100%; display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+            <strong style="color:var(--navy); font-size:12px;">Adicionar Elementos:</strong>
+            <div style="display: flex; gap: 6px;">
+                <button class="btn btn-outline" style="font-size: 10px; padding: 6px 10px;" onclick="ATDLivre.desfazer()" title="Desfazer ação"><i class="fa-solid fa-undo"></i> Desfazer</button>
+                <button class="btn btn-outline" style="font-size: 10px; padding: 6px 10px;" onclick="ATDLivre.refazer()" title="Refazer ação"><i class="fa-solid fa-redo"></i> Refazer</button>
+            </div>
+        </div>
         <button class="btn btn-outline" onclick="ATDLivre.addBloco('kpi')"><i class="fa-solid fa-chart-simple"></i> Caixas de Destaque</button>
+        <button class="btn btn-outline" onclick="ATDLivre.addBloco('contexto')"><i class="fa-solid fa-align-left"></i> Contexto (Escopo)</button>
+        <button class="btn btn-outline" onclick="ATDLivre.addBloco('indicacao')"><i class="fa-solid fa-trophy"></i> Fornecedor Premiado</button>
+        <button class="btn btn-outline" onclick="ATDLivre.addBloco('texto')"><i class="fa-solid fa-font"></i> Texto Livre</button>
         <button class="btn btn-outline" onclick="ATDLivre.addBloco('imagem')"><i class="fa-solid fa-image"></i> Imagem</button>
-        <button class="btn btn-outline" onclick="ATDLivre.addBloco('icone-texto')"><i class="fa-solid fa-star"></i> Tópico</button>
-        <button class="btn btn-success" style="margin-left:auto; font-weight:800;" onclick="ATDLivre.abrirModalImportarMapa()"><i class="fa-solid fa-table"></i> Importar Mapa de Preços</button>
+        <button class="btn btn-success" style="font-weight:800;" onclick="ATDLivre.abrirModalImportarMapa()"><i class="fa-solid fa-table"></i> Importar Mapa de Preços</button>
       </div>
 
       <div class="atd-canvas" id="atd-livre-canvas">
@@ -3081,6 +3091,12 @@ const OC = {
 let draggedBlock = null;
 let currentAtdLivreId = null;
 
+// Variáveis da Memória (Desfazer / Refazer)
+let atdHistory = [];
+let atdHistoryStep = -1;
+let historyTimeout = null;
+let historyListenerAttached = false;
+
 const ATDLivre = {
   abrirNova: () => {
     currentAtdLivreId = Util.genId();
@@ -3090,8 +3106,12 @@ const ATDLivre = {
     document.getElementById('atd-livre-autor').textContent = "Nome do Responsável";
     document.getElementById('atd-drag-area').innerHTML = '';
     
+    ATDLivre.setupHistoryListener();
+    ATDLivre.resetHistory();
+    
     ATDLivre.addBloco('kpi');
-    ATDLivre.addBloco('texto');
+    ATDLivre.addBloco('contexto');
+    ATDLivre.addBloco('indicacao');
     
     App.nav('atd-livre', true);
   },
@@ -3107,6 +3127,10 @@ const ATDLivre = {
     document.getElementById('atd-drag-area').innerHTML = atd.htmlContent;
     
     document.querySelectorAll('.atd-block').forEach(block => ATDLivre.attachDragEvents(block));
+    
+    ATDLivre.setupHistoryListener();
+    ATDLivre.resetHistory();
+    ATDLivre.saveHistory(true); // Salva o estado inicial carregado
     
     App.nav('atd-livre', true);
   },
@@ -3137,16 +3161,107 @@ const ATDLivre = {
 
   imprimir: () => { window.print(); },
 
+  // ================= SISTEMA DE DESFAZER / REFAZER =================
+  setupHistoryListener: () => {
+      if(!historyListenerAttached) {
+          document.getElementById('atd-drag-area').addEventListener('input', () => ATDLivre.saveHistory(false));
+          historyListenerAttached = true;
+      }
+  },
+
+  resetHistory: () => {
+      atdHistory = [];
+      atdHistoryStep = -1;
+  },
+
+  saveHistory: (immediate = false) => {
+      const area = document.getElementById('atd-drag-area');
+      if(!area) return;
+      
+      const doSave = () => {
+          const state = area.innerHTML;
+          if(atdHistoryStep >= 0 && atdHistory[atdHistoryStep] === state) return;
+          atdHistory = atdHistory.slice(0, atdHistoryStep + 1);
+          atdHistory.push(state);
+          atdHistoryStep++;
+      };
+
+      if(immediate) {
+          clearTimeout(historyTimeout);
+          doSave();
+      } else {
+          clearTimeout(historyTimeout);
+          historyTimeout = setTimeout(doSave, 400); // Aguarda o usuário parar de digitar
+      }
+  },
+
+  desfazer: () => {
+      if (atdHistoryStep > 0) {
+          atdHistoryStep--;
+          document.getElementById('atd-drag-area').innerHTML = atdHistory[atdHistoryStep];
+          document.querySelectorAll('.atd-block').forEach(b => ATDLivre.attachDragEvents(b));
+          ATDLivre.calcDesvioLivre();
+      } else {
+          UI.toast("Nada mais para desfazer.");
+      }
+  },
+
+  refazer: () => {
+      if (atdHistoryStep < atdHistory.length - 1) {
+          atdHistoryStep++;
+          document.getElementById('atd-drag-area').innerHTML = atdHistory[atdHistoryStep];
+          document.querySelectorAll('.atd-block').forEach(b => ATDLivre.attachDragEvents(b));
+          ATDLivre.calcDesvioLivre();
+      } else {
+          UI.toast("Nada mais para refazer.");
+      }
+  },
+  // =================================================================
+
+  calcDesvioLivre: () => {
+      const orcEl = document.getElementById('atd-livre-orcamento');
+      const melEl = document.getElementById('atd-livre-melhor-preco');
+      const desvEl = document.getElementById('atd-livre-desvio');
+
+      if(orcEl && melEl && desvEl) {
+          const target = Util.unmaskCur(orcEl.value) || 0;
+          const melhor = Util.unmaskCur(melEl.value) || 0;
+
+          if (target === 0) {
+              desvEl.textContent = "0%";
+              desvEl.style.color = "var(--ink)";
+              return;
+          }
+
+          const desvio = ((melhor - target) / target) * 100;
+          desvEl.textContent = (desvio > 0 ? "+" : "") + desvio.toFixed(1) + "%";
+          desvEl.style.color = desvio <= 0 ? "var(--success)" : "var(--danger)";
+      }
+  },
+
   addKpiBox: (btn) => {
       const grid = btn.previousElementSibling;
       const box = document.createElement('div');
       box.className = 'atd-kpi-box';
       box.innerHTML = `
-          <button class="btn-remove-kpi" onclick="this.parentElement.remove()" title="Remover caixa">×</button>
-          <div contenteditable="true" style="font-size:11px; color:var(--muted); font-weight:700; text-transform:uppercase;">INFORMAÇÃO EXTRA</div>
-          <div contenteditable="true" style="font-size:20px; font-weight:800; color:var(--navy); margin-top:8px;">Dado</div>
+          <button class="btn-remove-kpi" onclick="ATDLivre.removerKpi(this)" title="Remover caixa">×</button>
+          <div contenteditable="true" style="font-size:11px; color:var(--muted); font-weight:700; text-transform:uppercase;"><i class="fa-solid fa-circle-info" style="color:var(--navy); margin-right:4px;"></i>NOVO DADO</div>
+          <input type="text" placeholder="Dado" value="Dado" style="font-size:20px; font-weight:800; color:var(--navy); margin-top:8px; text-align:center; border:none; background:transparent; width:100%; outline:none;" oninput="this.setAttribute('value', this.value);">
       `;
       grid.appendChild(box);
+      ATDLivre.saveHistory(true);
+  },
+
+  removerBloco: (btn) => {
+      btn.closest('.atd-block').remove();
+      ATDLivre.calcDesvioLivre();
+      ATDLivre.saveHistory(true);
+  },
+
+  removerKpi: (btn) => {
+      btn.parentElement.remove();
+      ATDLivre.calcDesvioLivre();
+      ATDLivre.saveHistory(true);
   },
 
   addBloco: (tipo) => {
@@ -3166,23 +3281,33 @@ const ATDLivre = {
           <div class="atd-kpi-container">
               <div class="atd-kpi-grid">
                  <div class="atd-kpi-box">
-                    <button class="btn-remove-kpi" onclick="this.parentElement.remove()">×</button>
-                    <div contenteditable="true" style="font-size:11px; color:var(--muted); font-weight:700; text-transform:uppercase;">ORÇAMENTO OBRA</div>
-                    <div contenteditable="true" style="font-size:20px; font-weight:800; color:var(--navy); margin-top:8px;">R$ 0,00</div>
+                    <button class="btn-remove-kpi" onclick="ATDLivre.removerKpi(this)">×</button>
+                    <div style="font-size:11px; color:var(--muted); font-weight:700; text-transform:uppercase;"><i class="fa-solid fa-bullseye" style="color:var(--navy); margin-right:6px;"></i>ORÇAMENTO APROVADO</div>
+                    <input type="text" id="atd-livre-orcamento" placeholder="R$ 0,00" value="R$ 0,00" style="font-size:20px; font-weight:800; color:var(--navy); margin-top:8px; text-align:center; border:none; background:transparent; width:100%; outline:none;" oninput="Util.maskCur(this); this.setAttribute('value', this.value); ATDLivre.calcDesvioLivre()">
                  </div>
                  <div class="atd-kpi-box">
-                    <button class="btn-remove-kpi" onclick="this.parentElement.remove()">×</button>
-                    <div contenteditable="true" style="font-size:11px; color:var(--muted); font-weight:700; text-transform:uppercase;">MELHOR PREÇO</div>
-                    <div contenteditable="true" style="font-size:20px; font-weight:800; color:var(--navy); margin-top:8px;">R$ 0,00</div>
+                    <button class="btn-remove-kpi" onclick="ATDLivre.removerKpi(this)">×</button>
+                    <div style="font-size:11px; color:var(--muted); font-weight:700; text-transform:uppercase;"><i class="fa-solid fa-tag" style="color:var(--navy); margin-right:6px;"></i>MELHOR PREÇO</div>
+                    <input type="text" id="atd-livre-melhor-preco" placeholder="R$ 0,00" value="R$ 0,00" style="font-size:20px; font-weight:800; color:var(--navy); margin-top:8px; text-align:center; border:none; background:transparent; width:100%; outline:none;" oninput="Util.maskCur(this); this.setAttribute('value', this.value); ATDLivre.calcDesvioLivre()">
                  </div>
                  <div class="atd-kpi-box">
-                    <button class="btn-remove-kpi" onclick="this.parentElement.remove()">×</button>
-                    <div contenteditable="true" style="font-size:11px; color:var(--muted); font-weight:700; text-transform:uppercase;">DESVIO TOTAL</div>
-                    <div contenteditable="true" style="font-size:20px; font-weight:800; color:var(--danger); margin-top:8px;">+0%</div>
+                    <button class="btn-remove-kpi" onclick="ATDLivre.removerKpi(this)">×</button>
+                    <div style="font-size:11px; color:var(--muted); font-weight:700; text-transform:uppercase;"><i class="fa-solid fa-chart-line" style="color:var(--navy); margin-right:6px;"></i>DESVIO TOTAL</div>
+                    <div id="atd-livre-desvio" style="font-size:20px; font-weight:800; color:var(--danger); margin-top:8px; text-align:center;">0%</div>
                  </div>
               </div>
               <button class="btn-add-kpi" onclick="ATDLivre.addKpiBox(this)" title="Adicionar caixa lateral"><i class="fa-solid fa-circle-plus"></i></button>
           </div>
+        `;
+    } else if (tipo === 'contexto') {
+        content = `
+          <h3 contenteditable="true" style="margin:0 0 10px 0; color:var(--navy); font-size:14px; text-transform:uppercase;">CONTEXTO:</h3>
+          <div contenteditable="true" style="font-size:13px; line-height:1.6; color:var(--ink); text-align:justify;"><ul><li>&nbsp;</li></ul></div>
+        `;
+    } else if (tipo === 'indicacao') {
+        content = `
+          <h3 contenteditable="true" style="margin:0 0 10px 0; color:var(--navy); font-size:14px; text-transform:uppercase;">INDICAÇÃO DE FORNECEDOR PREMIADO:</h3>
+          <div contenteditable="true" style="font-size:13px; line-height:1.6; color:var(--navy); background:var(--highlight); padding:12px; border:1px solid var(--navy-2); border-radius:6px; font-weight:bold; text-align:center;">Nome do Fornecedor Indicado...</div>
         `;
     } else if (tipo === 'imagem') {
         content = `
@@ -3203,11 +3328,12 @@ const ATDLivre = {
     block.innerHTML = `
       <div class="drag-handle" title="Arraste para reordenar">☰</div>
       <div class="atd-block-content">${content}</div>
-      <button class="btn-remove-block" onclick="this.closest('.atd-block').remove()" title="Excluir bloco">×</button>
+      <button class="btn-remove-block" onclick="ATDLivre.removerBloco(this)" title="Excluir bloco">×</button>
     `;
     
     area.appendChild(block);
     ATDLivre.attachDragEvents(block);
+    ATDLivre.saveHistory(true);
   },
 
   inserirImagem: (div) => {
@@ -3216,6 +3342,7 @@ const ATDLivre = {
          div.innerHTML = `<img src="${url}" style="max-width:100%; max-height:400px; object-fit:contain; border-radius:6px;">`;
          div.style.border = 'none';
          div.style.padding = '0';
+         ATDLivre.saveHistory(true);
      }
   },
 
@@ -3243,7 +3370,6 @@ const ATDLivre = {
       let html = `<h3 contenteditable="true" style="margin:0 0 10px 0; color:var(--navy); font-size:14px; text-transform:uppercase;">MAPA DE PREÇOS (IMPORTADO DO ${p.id})</h3>`;
       html += `<table class="items table-comp" style="width:100%; border-collapse:collapse; margin-bottom:15px; background:var(--paper);">`;
 
-      // CABEÇALHO DA TABELA
       html += `<thead><tr><th style="border:1px solid var(--line); padding:8px; text-align:left; font-size:11px; background:var(--highlight); color:var(--navy);">Item</th><th style="border:1px solid var(--line); padding:8px; text-align:center; font-size:11px; background:var(--highlight); color:var(--navy);">Qtd</th><th style="border:1px solid var(--line); padding:8px; text-align:center; font-size:11px; background:var(--highlight); color:var(--navy);">Unid</th>`;
       p.propostas.forEach(prop => {
           const isW = p.vencedorId === prop.fornId;
@@ -3253,7 +3379,6 @@ const ATDLivre = {
       });
       html += `</tr></thead><tbody>`;
 
-      // CORPO DA TABELA (ITENS)
       p.req.itens.forEach(i => {
           html += `<tr><td style="border:1px solid var(--line); padding:8px; text-align:left; font-size:11px; color:var(--ink);">${i.desc}</td><td style="border:1px solid var(--line); padding:8px; text-align:center; font-size:11px; color:var(--ink);">${i.qtd}</td><td style="border:1px solid var(--line); padding:8px; text-align:center; font-size:11px; color:var(--ink);">${i.unid}</td>`;
 
@@ -3280,7 +3405,6 @@ const ATDLivre = {
           html += `</tr>`;
       });
 
-      // LINHA DE FRETE
       html += `<tr><td colspan="3" style="border:1px solid var(--line); padding:8px; text-align:right; font-size:11px; color:var(--ink);">Frete R$</td>`;
       p.propostas.forEach(prop => {
           const isW = p.vencedorId === prop.fornId;
@@ -3289,7 +3413,6 @@ const ATDLivre = {
       });
       html += `</tr></tbody>`;
 
-      // RODAPÉ (TOTAIS)
       html += `<tfoot><tr><td colspan="3" style="border:1px solid var(--line); padding:8px; text-align:right; font-size:12px; font-weight:bold; color:var(--navy);">CUSTO TOTAL POSTO NA OBRA</td>`;
 
       let minTot = Infinity;
@@ -3316,7 +3439,6 @@ const ATDLivre = {
       });
       html += `</tr></tfoot></table>`;
 
-      // INJETA O BLOCO NA ATD LIVRE
       const area = document.getElementById('atd-drag-area');
       const block = document.createElement('div');
       block.className = 'atd-block';
@@ -3324,11 +3446,20 @@ const ATDLivre = {
       block.innerHTML = `
         <div class="drag-handle" title="Arraste para reordenar">☰</div>
         <div class="atd-block-content">${html}</div>
-        <button class="btn-remove-block" onclick="this.closest('.atd-block').remove()" title="Excluir bloco">×</button>
+        <button class="btn-remove-block" onclick="ATDLivre.removerBloco(this)" title="Excluir bloco">×</button>
       `;
       
       area.appendChild(block);
       ATDLivre.attachDragEvents(block);
+      
+      const melEl = document.getElementById('atd-livre-melhor-preco');
+      if (melEl && minTot !== Infinity && minTot > 0) {
+          melEl.value = Util.formatBRL(minTot);
+          melEl.setAttribute('value', melEl.value);
+          ATDLivre.calcDesvioLivre();
+      }
+
+      ATDLivre.saveHistory(true);
       UI.closeModal('modal-import-mapa-atd');
   },
 
@@ -3340,6 +3471,7 @@ const ATDLivre = {
     block.addEventListener('dragend', function() {
         draggedBlock.classList.remove('dragging');
         draggedBlock = null;
+        ATDLivre.saveHistory(true);
     });
     block.addEventListener('dragover', function(e) {
         e.preventDefault();
