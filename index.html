@@ -1,3 +1,5 @@
+
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -243,6 +245,34 @@
   .atd-gallery { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
   .atd-gallery img { width: 80px; height: 80px; object-fit: cover; border-radius: 4px; border: 1px solid var(--line); }
 
+  /* ====== ATD LIVRE (BUILDER) ====== */
+  .atd-builder-toolbar { display: flex; gap: 10px; background: var(--paper); padding: 12px; border: 1px solid var(--line); border-radius: 6px; margin-bottom: 20px; flex-wrap: wrap; }
+  .atd-canvas { background: #fff; border: 1px solid var(--line); border-radius: 6px; min-height: 600px; padding: 40px; display: flex; flex-direction: column; gap: 16px; position: relative; box-shadow: inset 0 0 10px rgba(0,0,0,0.02); }
+  .atd-block { display: flex; gap: 12px; align-items: flex-start; position: relative; padding: 10px; border: 1px dashed transparent; border-radius: 6px; transition: 0.2s; background: transparent; }
+  .atd-block:hover { border-color: var(--line); background: var(--bg); }
+  .atd-block-content { flex: 1; width: 100%; }
+  
+  .drag-handle { cursor: grab; color: var(--muted); padding: 5px; opacity: 0; transition: 0.2s; font-size: 16px; }
+  .atd-block:hover .drag-handle { opacity: 1; }
+  .atd-block.dragging { opacity: 0.5; background: var(--highlight); }
+  
+  .btn-remove-block { cursor: pointer; color: var(--danger); opacity: 0; border: none; background: transparent; font-size: 16px; padding: 5px; transition: 0.2s; }
+  .atd-block:hover .btn-remove-block { opacity: 1; }
+  
+  [contenteditable="true"] { outline: none; border-bottom: 1px dashed transparent; transition: 0.2s; min-height: 20px; display: inline-block; width: 100%; }
+  [contenteditable="true"]:hover, [contenteditable="true"]:focus { border-bottom-color: var(--navy); background: rgba(255,255,255,0.5); }
+  
+  .atd-kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 16px; width: 100%; }
+  .atd-kpi-box { border: 2px solid var(--line); border-radius: 6px; padding: 16px; text-align: center; background: #fafafa; }
+  .atd-title-input { font-size: 22px; font-weight: 800; color: var(--navy); text-transform: uppercase; border: none; width: 100%; border-bottom: 2px solid var(--navy); margin-bottom: 20px; padding-bottom: 10px; }
+
+  @media print {
+    #view-atd-livre .atd-builder-toolbar, #view-atd-livre .drag-handle, #view-atd-livre .btn-remove-block { display: none !important; }
+    #view-atd-livre .atd-canvas { border: none !important; box-shadow: none !important; padding: 0 !important; }
+    #view-atd-livre .atd-block { border: none !important; padding: 0 !important; background: transparent !important; margin-bottom: 15px; break-inside: avoid; }
+    [contenteditable="true"] { border: none !important; background: transparent !important; }
+  }
+
   /* ====== PRINT STYLES ====== */
   @media print {
     @page { size: A4 portrait; margin: 15mm; }
@@ -347,7 +377,7 @@
       <button class="nav-btn" onclick="App.nav('recebimento')">Inbox & IA Real</button>
       
       <div class="nav-label" style="margin-top:24px;">Documentos</div>
-      <button class="nav-btn" onclick="App.nav('atds')">ATD's</button>
+      <button class="nav-btn" onclick="App.nav('atds')">ATD</button>
       <button class="nav-btn" onclick="App.nav('politica')">Política de Fornecedores</button>
       <button class="nav-btn" onclick="App.nav('manual')">Manual de Compras</button>
 
@@ -458,22 +488,58 @@
     <div id="view-atds" class="view">
       <div class="doc-head">
         <div class="doc-title">ATD's Salvas<small>Histórico de Análises para Tomada de Decisão</small></div>
+        <div class="header-actions">
+           <button class="btn btn-ai" onclick="ATDLivre.abrirNova()">+ Criar ATD Livre (Avulsa)</button>
+        </div>
       </div>
       <section class="block">
-        <table class="items">
+        <h2>ATD's de Processos (Sistema)</h2>
+        <table class="items" style="margin-bottom: 30px;">
           <thead>
-            <tr>
-              <th>Processo Vinculado</th>
-              <th>Data da ATD</th>
-              <th>Indicação</th>
-              <th>Target</th>
-              <th>Desvio Obtido</th>
-              <th style="text-align:right">Ação</th>
-            </tr>
+            <tr><th>Processo Vinculado</th><th>Data da ATD</th><th>Indicação</th><th>Target</th><th>Desvio Obtido</th><th style="text-align:right">Ação</th></tr>
           </thead>
           <tbody id="atd-list-body"></tbody>
         </table>
+
+        <h2>ATD's Livres (Avulsas)</h2>
+        <table class="items">
+          <thead>
+            <tr><th>Título da ATD</th><th>Data de Criação</th><th>Autor/Responsável</th><th style="text-align:right">Ações</th></tr>
+          </thead>
+          <tbody id="atd-livre-list-body"></tbody>
+        </table>
       </section>
+    </div>
+
+    <!-- ==================== VIEW: ATD LIVRE (BUILDER) ==================== -->
+    <div id="view-atd-livre" class="view">
+      <div class="doc-head">
+        <div class="doc-title">Construtor de ATD Livre<small>Edite livremente clicando nos textos</small></div>
+        <div class="header-actions">
+          <button class="btn btn-outline" onclick="App.nav('atds')">← Voltar</button>
+          <button class="btn btn-solid" onclick="ATDLivre.salvar()">💾 Salvar ATD</button>
+          <button class="btn btn-outline" onclick="ATDLivre.imprimir()">🖨️ Imprimir PDF</button>
+        </div>
+      </div>
+
+      <div class="atd-builder-toolbar">
+        <strong style="color:var(--navy); font-size:12px; width:100%; margin-bottom:4px;">Adicionar Elementos:</strong>
+        <button class="btn btn-outline" onclick="ATDLivre.addBloco('texto')"><i class="fa-solid fa-align-left"></i> Bloco de Texto</button>
+        <button class="btn btn-outline" onclick="ATDLivre.addBloco('kpi')"><i class="fa-solid fa-chart-simple"></i> Caixas de Destaque (Valores)</button>
+        <button class="btn btn-outline" onclick="ATDLivre.addBloco('imagem')"><i class="fa-solid fa-image"></i> Espaço para Imagem</button>
+        <button class="btn btn-outline" onclick="ATDLivre.addBloco('icone-texto')"><i class="fa-solid fa-star"></i> Tópico com Ícone</button>
+      </div>
+
+      <div class="atd-canvas" id="atd-livre-canvas">
+          <!-- Título Fixo -->
+          <input type="text" id="atd-livre-titulo" class="atd-title-input" placeholder="DIGITE O TÍTULO DESTA ATD AQUI..." value="ANÁLISE PARA TOMADA DE DECISÃO AVULSA">
+          <div style="font-size:12px; color:var(--muted); text-align:right; width:100%; margin-top:-15px; margin-bottom: 20px;">
+              Data: <span id="atd-livre-data"></span> | Autor: <span contenteditable="true" id="atd-livre-autor" style="width:auto; min-width:100px;">Nome do Responsável</span>
+          </div>
+          
+          <!-- Área onde os blocos arrastáveis vão entrar -->
+          <div id="atd-drag-area" style="display:flex; flex-direction:column; gap:10px;"></div>
+      </div>
     </div>
 
     <!-- ==================== VIEW: FORNECEDORES (COM ABAS) ==================== -->
@@ -506,7 +572,7 @@
             <div style="display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:16px; flex-wrap:wrap; gap:16px;">
               <div class="grid cols-3" style="flex:1; min-width:600px; margin-bottom:0;">
                 <div class="field">
-                   <label>🔍 Buscar por Nome do Fornecedor</label>
+                   <label>🔍 Filtar Fornecedor</label>
                    <input type="text" id="filter-nome" placeholder="Digite o nome..." oninput="App.renderForn()">
                 </div>
                 <div class="field">
@@ -683,7 +749,7 @@
           <button class="btn btn-outline" onclick="editarRequisicao()">← Editar Requisição de Compra</button>
           <button class="btn btn-solid" style="background-color: var(--navy-2);" onclick="salvarMapaManual()">💾 Salvar Mapa</button>
           <button class="btn btn-solid" onclick="abrirModalAddFornMapa()">➕ Adicionar Fornecedor Existente</button>
-          <button class="btn btn-ai" style="padding:10px 20px; font-size:13px;" onclick="ATD.openModal()">📊 Montar ATD (Apresentação)</button>
+          <button class="btn btn-ai" style="padding:10px 20px; font-size:13px;" onclick="ATD.openModal()">📊 Montar ATD</button>
         </div>
       </div>
 
@@ -1538,7 +1604,7 @@ window.appCharts = {};
 window.appMap = null;
 
 const DB = {
-  data: { processos: [], fornecedores: [] },
+  data: { processos: [], fornecedores: [], atds_avulsas: [] },
   init: async () => {
     try {
       // 1. Tenta recuperar da memória local primeiro (Garante a velocidade e salva os fornecedores)
@@ -1550,6 +1616,7 @@ const DB = {
       // 2. CORREÇÃO CRÍTICA: Garante que as listas existam para não quebrar a tela de carregamento
       if (!DB.data.processos) DB.data.processos = [];
       if (!DB.data.fornecedores) DB.data.fornecedores = [];
+      if (!DB.data.atds_avulsas) DB.data.atds_avulsas = [];
 
       // 3. Tenta conectar com o Firebase silenciosamente
       try {
@@ -2234,6 +2301,26 @@ const ATD = {
          <td style="text-align:right"><button class="btn btn-outline" onclick="ATD.reprint('${p.id}')">Ver PDF</button></td>
        </tr>`;
     });
+
+    const tbLivre = document.getElementById('atd-livre-list-body');
+    if (tbLivre) {
+        tbLivre.innerHTML = '';
+        if(!DB.data.atds_avulsas || DB.data.atds_avulsas.length === 0) {
+           tbLivre.innerHTML = `<tr><td colspan="4" style="text-align:center; padding:20px; color:var(--muted)">Nenhuma ATD Avulsa criada.</td></tr>`;
+        } else {
+           [...DB.data.atds_avulsas].reverse().forEach(a => {
+              tbLivre.innerHTML += `<tr>
+                 <td><strong style="color:var(--navy)">${a.titulo}</strong></td>
+                 <td>${a.data}</td>
+                 <td>${a.autor}</td>
+                 <td style="text-align:right">
+                    <button class="btn btn-outline" onclick="ATDLivre.carregar('${a.id}')">✏️ Editar</button>
+                    <button class="del-btn" style="font-size:18px; margin-left:8px;" onclick="ATDLivre.excluir('${a.id}')">×</button>
+                 </td>
+              </tr>`;
+           });
+        }
+    }
   },
   openModal: () => {
     const p = DB.getProcess(currentPID);
@@ -2926,7 +3013,171 @@ const OC = {
   }
 };
 
-window.App = App; window.Req = Req; window.MapaPrecos = MapaPrecos; window.OC = OC; window.AI = AI; window.Email = Email; window.UI = UI; window.Util = Util; window.DB = DB; window.ATD = ATD;
+// ==================== MODULO: ATD LIVRE (BUILDER) ====================
+let draggedBlock = null;
+let currentAtdLivreId = null;
+
+const ATDLivre = {
+  abrirNova: () => {
+    currentAtdLivreId = Util.genId();
+    document.getElementById('atd-livre-titulo').value = "NOVA ANÁLISE PARA TOMADA DE DECISÃO";
+    document.getElementById('atd-livre-data').textContent = Util.today();
+    document.getElementById('atd-livre-autor').textContent = "Nome do Responsável";
+    document.getElementById('atd-drag-area').innerHTML = '';
+    
+    // Inicia com um bloco de texto por padrão
+    ATDLivre.addBloco('texto');
+    
+    App.nav('atd-livre', true);
+  },
+  
+  carregar: (id) => {
+    const atd = DB.data.atds_avulsas.find(x => x.id === id);
+    if(!atd) return;
+    currentAtdLivreId = atd.id;
+    document.getElementById('atd-livre-titulo').value = atd.titulo;
+    document.getElementById('atd-livre-data').textContent = atd.data;
+    document.getElementById('atd-livre-autor').textContent = atd.autor;
+    document.getElementById('atd-drag-area').innerHTML = atd.htmlContent;
+    
+    // Reativa as funções de arrastar os blocos
+    document.querySelectorAll('.atd-block').forEach(block => ATDLivre.attachDragEvents(block));
+    
+    App.nav('atd-livre', true);
+  },
+
+  salvar: () => {
+    const titulo = document.getElementById('atd-livre-titulo').value;
+    const autor = document.getElementById('atd-livre-autor').textContent;
+    const htmlContent = document.getElementById('atd-drag-area').innerHTML;
+    
+    const index = DB.data.atds_avulsas.findIndex(x => x.id === currentAtdLivreId);
+    const obj = {
+        id: currentAtdLivreId,
+        titulo: titulo,
+        autor: autor,
+        data: document.getElementById('atd-livre-data').textContent,
+        htmlContent: htmlContent
+    };
+
+    if(index > -1) DB.data.atds_avulsas[index] = obj;
+    else DB.data.atds_avulsas.push(obj);
+    
+    DB.save();
+    UI.toast("ATD Livre salva com sucesso!");
+    ATD.loadHistory(); // Atualiza a lista na tela principal de ATDs
+  },
+
+  imprimir: () => {
+    window.print();
+  },
+
+  addBloco: (tipo) => {
+    const area = document.getElementById('atd-drag-area');
+    const block = document.createElement('div');
+    block.className = 'atd-block';
+    block.draggable = true;
+    
+    let content = '';
+    if (tipo === 'texto') {
+        content = `
+          <h3 contenteditable="true" style="margin:0 0 10px 0; color:var(--navy); font-size:14px; text-transform:uppercase;">TÍTULO DA SESSÃO</h3>
+          <div contenteditable="true" style="font-size:13px; line-height:1.6; color:var(--ink); text-align:justify;">Clique aqui para digitar o conteúdo. Pressione Enter para novos parágrafos.</div>
+        `;
+    } else if (tipo === 'kpi') {
+        content = `
+          <div class="atd-kpi-grid">
+             <div class="atd-kpi-box">
+                <div contenteditable="true" style="font-size:11px; color:var(--muted); font-weight:700; text-transform:uppercase;">INFORMAÇÃO 1</div>
+                <div contenteditable="true" style="font-size:20px; font-weight:800; color:var(--navy); margin-top:8px;">R$ 0,00</div>
+             </div>
+             <div class="atd-kpi-box">
+                <div contenteditable="true" style="font-size:11px; color:var(--muted); font-weight:700; text-transform:uppercase;">INFORMAÇÃO 2</div>
+                <div contenteditable="true" style="font-size:20px; font-weight:800; color:var(--navy); margin-top:8px;">Dado Aqui</div>
+             </div>
+          </div>
+        `;
+    } else if (tipo === 'imagem') {
+        content = `
+          <h3 contenteditable="true" style="margin:0 0 10px 0; color:var(--navy); font-size:14px; text-transform:uppercase;">ANEXO / IMAGEM</h3>
+          <div style="border:2px dashed var(--line); border-radius:6px; padding:30px; text-align:center; color:var(--muted); font-size:12px; cursor:pointer;" onclick="ATDLivre.inserirImagem(this)">
+             Clique aqui para colar a URL de uma imagem. (Na impressão esta borda some).
+          </div>
+        `;
+    } else if (tipo === 'icone-texto') {
+        content = `
+          <div style="display:flex; gap:12px; align-items:center;">
+             <i class="fa-solid fa-circle-check" style="color:var(--success); font-size:24px;"></i>
+             <div contenteditable="true" style="font-size:13px; font-weight:600; color:var(--ink); width:100%;">Clique para digitar um ponto de destaque.</div>
+          </div>
+        `;
+    }
+
+    block.innerHTML = `
+      <div class="drag-handle" title="Arraste para reordenar">☰</div>
+      <div class="atd-block-content">${content}</div>
+      <button class="btn-remove-block" onclick="this.closest('.atd-block').remove()" title="Excluir bloco">×</button>
+    `;
+    
+    area.appendChild(block);
+    ATDLivre.attachDragEvents(block);
+  },
+
+  inserirImagem: (div) => {
+     const url = prompt("Cole o link (URL) da imagem desejada:");
+     if(url) {
+         div.innerHTML = `<img src="${url}" style="max-width:100%; max-height:400px; object-fit:contain; border-radius:6px;">`;
+         div.style.border = 'none';
+         div.style.padding = '0';
+     }
+  },
+
+  attachDragEvents: (block) => {
+    block.addEventListener('dragstart', function() {
+        draggedBlock = block;
+        setTimeout(() => block.classList.add('dragging'), 0);
+    });
+    
+    block.addEventListener('dragend', function() {
+        draggedBlock.classList.remove('dragging');
+        draggedBlock = null;
+    });
+    
+    block.addEventListener('dragover', function(e) {
+        e.preventDefault();
+        const afterElement = ATDLivre.getDragAfterElement(document.getElementById('atd-drag-area'), e.clientY);
+        const area = document.getElementById('atd-drag-area');
+        if (afterElement == null) {
+            area.appendChild(draggedBlock);
+        } else {
+            area.insertBefore(draggedBlock, afterElement);
+        }
+    });
+  },
+
+  getDragAfterElement: (container, y) => {
+    const draggableElements = [...container.querySelectorAll('.atd-block:not(.dragging)')];
+    return draggableElements.reduce((closest, child) => {
+      const box = child.getBoundingClientRect();
+      const offset = y - box.top - box.height / 2;
+      if (offset < 0 && offset > closest.offset) {
+        return { offset: offset, element: child };
+      } else {
+        return closest;
+      }
+    }, { offset: Number.NEGATIVE_INFINITY }).element;
+  },
+  
+  excluir: (id) => {
+      if(!confirm("Tem certeza que deseja excluir esta ATD Avulsa?")) return;
+      DB.data.atds_avulsas = DB.data.atds_avulsas.filter(x => x.id !== id);
+      DB.save();
+      ATD.loadHistory();
+  }
+};
+
+
+window.App = App; window.Req = Req; window.MapaPrecos = MapaPrecos; window.OC = OC; window.AI = AI; window.Email = Email; window.UI = UI; window.Util = Util; window.DB = DB; window.ATD = ATD; window.ATDLivre = ATDLivre;
 
 // ==================== FUNÇÕES DE INTERFACE GLOBAIS ====================
 window.efetuarLogin = () => {
