@@ -246,7 +246,7 @@
   /* ====== ATD LIVRE (BUILDER) ====== */
   .atd-builder-toolbar { display: flex; gap: 10px; background: var(--paper); padding: 12px; border: 1px solid var(--line); border-radius: 6px; margin-bottom: 20px; flex-wrap: wrap; }
   .atd-canvas { background: #fff; border: 1px solid var(--line); border-radius: 6px; min-height: 600px; padding: 40px; display: flex; flex-direction: column; gap: 16px; position: relative; box-shadow: inset 0 0 10px rgba(0,0,0,0.02); height: auto; }
-  .atd-block { display: flex; gap: 12px; align-items: flex-start; position: relative; padding: 10px; border: 1px dashed transparent; border-radius: 6px; transition: 0.2s; background: transparent; }
+  .atd-block { display: flex; gap: 12px; align-items: flex-start; position: relative; padding: 5px 10px; border: 1px dashed transparent; border-radius: 6px; transition: 0.2s; background: transparent; }
   .atd-block:hover { border-color: var(--line); background: var(--bg); }
   .atd-block-content { flex: 1; width: 100%; overflow-x: auto; }
   
@@ -272,12 +272,18 @@
   .atd-title-input { font-size: 22px; font-weight: 800; color: var(--navy); text-transform: uppercase; border: none; width: 100%; border-bottom: 2px solid var(--navy); padding-bottom: 5px; }
 
   /* ====== BLOCO: CENÁRIOS COMPARATIVOS ====== */
-  .atd-cenarios-wrapper { display: flex; gap: 15px; width: 100%; overflow-x: auto; padding-bottom: 10px; align-items: stretch; position: relative; }
-  .atd-cenario-card { flex: 1; min-width: 310px; border: 1px solid var(--navy); border-radius: 6px; padding: 15px; background: var(--paper); display: flex; flex-direction: column; position: relative; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+  .atd-cenarios-wrapper { display: flex; gap: 15px; width: 100%; overflow-x: auto; padding-bottom: 10px; align-items: stretch; position: relative; transition: 0.3s; }
+  .atd-cenarios-wrapper.stacked { flex-direction: column; align-items: center; overflow-x: hidden; }
+  .atd-cenario-card { flex: 1; min-width: 310px; border: 1px solid var(--navy); border-radius: 6px; padding: 15px; background: var(--paper); display: flex; flex-direction: column; position: relative; box-shadow: 0 4px 6px rgba(0,0,0,0.05); resize: horizontal; overflow: auto; max-width: 100%; }
+  .atd-cenarios-wrapper.stacked .atd-cenario-card { width: 100%; resize: vertical; overflow: hidden; }
   .c-input { width: 100%; border: 1px solid transparent; background: transparent; font-family: 'Montserrat'; font-size: 11px; outline: none; transition: 0.2s; color: var(--ink); }
   .c-input:hover, .c-input:focus { border-bottom: 1px dashed var(--navy); }
-  .btn-add-cenario { flex-shrink: 0; writing-mode: vertical-rl; text-orientation: mixed; padding: 10px 5px; font-weight: bold; cursor: pointer; color: var(--navy); border: 2px dashed var(--line); border-radius: 6px; background: transparent; transition: 0.2s; }
+  .c-textarea { width: 100%; border: 1px solid transparent; background: transparent; font-family: 'Montserrat'; font-size: 11px; outline: none; resize: none; overflow: hidden; color: var(--ink); line-height: 1.4; padding: 0; }
+  .c-textarea:hover, .c-textarea:focus { border-bottom: 1px dashed var(--navy); }
+  .btn-add-cenario { flex-shrink: 0; padding: 10px; font-weight: bold; cursor: pointer; color: var(--navy); border: 2px dashed var(--line); border-radius: 6px; background: transparent; transition: 0.2s; display: flex; align-items: center; justify-content: center; }
   .btn-add-cenario:hover { background: var(--highlight); border-color: var(--navy); }
+  .atd-cenarios-wrapper:not(.stacked) .btn-add-cenario { writing-mode: vertical-rl; text-orientation: mixed; width: 40px; }
+  .atd-cenarios-wrapper.stacked .btn-add-cenario { width: 100%; height: 40px; writing-mode: horizontal-tb; }
 
   @media print {
     #view-atd-livre .doc-head, 
@@ -285,19 +291,28 @@
     #view-atd-livre .drag-handle, 
     #view-atd-livre .btn-remove-block, 
     #view-atd-livre .btn-add-kpi, 
-    #view-atd-livre .btn-remove-kpi { display: none !important; }
+    #view-atd-livre .btn-remove-kpi,
+    .btn-toggle-layout { display: none !important; }
     
-    #view-atd-livre .atd-canvas { border: none !important; box-shadow: none !important; padding: 0 !important; margin: 0 !important; }
-    #view-atd-livre .atd-block { border: none !important; padding: 0 !important; background: transparent !important; margin-bottom: 15px; break-inside: avoid; }
+    /* Espaçamentos Cirúrgicos de Impressão */
+    #view-atd-livre .atd-canvas { border: none !important; box-shadow: none !important; padding: 0 !important; margin: 0 !important; gap: 5px !important; }
+    #view-atd-livre .atd-block { border: none !important; padding: 0 !important; background: transparent !important; margin-bottom: 5px !important; break-inside: avoid; }
     [contenteditable="true"] { border: none !important; background: transparent !important; }
     
     .btn-add-row, .btn-add-cenario, .btn-remove-row, .btn-remover-cenario { display: none !important; }
-    .atd-cenarios-wrapper { flex-wrap: wrap !important; display: flex !important; gap: 15px !important; overflow: visible !important; }
-    .atd-cenario-card { flex: 1; min-width: 45% !important; break-inside: avoid; border: 1px solid #ccc !important; box-shadow: none !important; }
-    .c-input { border: none !important; }
+    
+    .atd-cenarios-wrapper { gap: 10px !important; overflow: visible !important; }
+    .atd-cenarios-wrapper:not(.stacked) { flex-wrap: wrap !important; display: flex !important; }
+    .atd-cenario-card { resize: none !important; break-inside: avoid; border: 1px solid #ccc !important; box-shadow: none !important; padding: 10px !important; margin-bottom: 5px !important; }
+    .atd-cenarios-wrapper:not(.stacked) .atd-cenario-card { flex: 1; min-width: 45% !important; }
+    .c-input, .c-textarea { border: none !important; }
     
     body { height: auto !important; }
     html { height: auto !important; }
+    
+    h3, h4 { margin-bottom: 5px !important; }
+    .atd-kpi-grid { gap: 10px !important; margin-bottom: 5px !important; }
+    .atd-kpi-box { padding: 10px !important; }
   }
 
   /* ====== PRINT STYLES ====== */
@@ -3170,7 +3185,16 @@ const ATDLivre = {
     ATD.loadHistory(); 
   },
 
-  imprimir: () => { window.print(); },
+  imprimir: () => { 
+      const landscapeStyle = document.createElement('style');
+      landscapeStyle.innerHTML = '@media print { @page { size: A4 landscape !important; margin: 10mm; } }';
+      document.head.appendChild(landscapeStyle);
+      
+      setTimeout(() => {
+          window.print(); 
+          document.head.removeChild(landscapeStyle);
+      }, 150);
+  },
 
   setupHistoryListener: () => {
       if(!historyListenerAttached) {
@@ -3277,11 +3301,11 @@ const ATDLivre = {
       const tbody = btn.previousElementSibling.querySelector('tbody');
       const tr = document.createElement('tr');
       tr.innerHTML = `
-          <td style="padding:4px; border-bottom:1px solid var(--line);"><input type="text" class="c-input" placeholder="Cód..." oninput="this.setAttribute('value', this.value);"></td>
-          <td style="padding:4px; border-bottom:1px solid var(--line);"><input type="text" class="c-input" placeholder="Descrição do serviço..." oninput="this.setAttribute('value', this.value);"></td>
+          <td style="padding:4px; border-bottom:1px solid var(--line);"><textarea class="c-textarea" placeholder="Cód..." rows="1" oninput="this.style.height='auto'; this.style.height=(this.scrollHeight)+'px'; this.textContent=this.value;" style="min-height:18px;"></textarea></td>
+          <td style="padding:4px; border-bottom:1px solid var(--line);"><textarea class="c-textarea" placeholder="Descrição do serviço..." rows="1" oninput="this.style.height='auto'; this.style.height=(this.scrollHeight)+'px'; this.textContent=this.value;" style="min-height:18px;"></textarea></td>
           <td style="padding:4px; border-bottom:1px solid var(--line);"><input type="text" class="c-input c-unit" placeholder="R$ 0,00" oninput="Util.maskCur(this); this.setAttribute('value', this.value); ATDLivre.calcCenarios(this)" style="text-align:right;"></td>
           <td style="padding:4px; border-bottom:1px solid var(--line); text-align:right; font-weight:bold; font-size:11px; color:var(--navy);" class="c-row-tot">R$ 0,00</td>
-          <td style="padding:4px; border-bottom:1px solid var(--line); text-align:center;"><button class="btn-remove-kpi btn-remove-row" onclick="const p = this.closest('.atd-cenarios-wrapper'); this.closest('tr').remove(); ATDLivre.calcCenarios(p);" style="position:static; opacity:1;">×</button></td>
+          <td style="padding:4px; border-bottom:1px solid var(--line); text-align:center; vertical-align:top;"><button class="btn-remove-kpi btn-remove-row" onclick="const p = this.closest('.atd-cenarios-wrapper'); this.closest('tr').remove(); ATDLivre.calcCenarios(p);" style="position:static; opacity:1;">×</button></td>
       `;
       tbody.appendChild(tr);
       ATDLivre.saveHistory(true);
@@ -3296,8 +3320,14 @@ const ATDLivre = {
       card.innerHTML = `
           <button class="btn-remove-kpi btn-remover-cenario" onclick="const p = this.closest('.atd-cenarios-wrapper'); this.closest('.atd-cenario-card').remove(); ATDLivre.calcCenarios(p);" title="Remover cenário" style="position:absolute; top:5px; right:5px; opacity:1;">×</button>
           <h4 contenteditable="true" style="margin:0 0 10px 0; color:var(--navy); text-align:center; text-transform:uppercase;">CENÁRIO ${count}: TÍTULO</h4>
-          <table class="items" style="width: 100%; margin-bottom: 10px; border-collapse:collapse;">
-              <thead><tr><th style="width:15%; padding:4px; font-size:9px;">Cód</th><th style="width:40%; padding:4px; font-size:9px;">Descrição</th><th style="width:25%; padding:4px; font-size:9px; text-align:right;">R$ Ref. Unit.</th><th style="width:20%; padding:4px; font-size:9px; text-align:right;">R$ Total</th><th style="width:5%; padding:4px;"></th></tr></thead>
+          <table class="items" style="width: 100%; margin-bottom: 10px; border-collapse:collapse; table-layout: auto;">
+              <thead><tr>
+                 <th style="width:15%; padding:4px; font-size:9px; resize:horizontal; overflow:hidden;">Cód</th>
+                 <th style="width:40%; padding:4px; font-size:9px; resize:horizontal; overflow:hidden;">Descrição</th>
+                 <th style="width:25%; padding:4px; font-size:9px; text-align:right; resize:horizontal; overflow:hidden;">R$ Ref. Unit.</th>
+                 <th style="width:20%; padding:4px; font-size:9px; text-align:right;">R$ Total</th>
+                 <th style="width:5%; padding:4px;"></th>
+              </tr></thead>
               <tbody></tbody>
           </table>
           <button class="btn btn-outline btn-add-row" style="width: 100%; font-size: 9px; padding: 6px; margin-bottom: 15px;" onclick="ATDLivre.addCenarioRow(this)">+ Adicionar Item</button>
@@ -3362,7 +3392,10 @@ const ATDLivre = {
     if (tipo === 'cenarios') {
         content = `
           <div style="width:100%;">
-            <h3 contenteditable="true" style="margin:0 0 10px 0; color:var(--navy); font-size:16px; text-transform:uppercase;">COMPARATIVO TÉCNICO DE CENÁRIOS</h3>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+               <h3 contenteditable="true" style="margin:0; color:var(--navy); font-size:16px; text-transform:uppercase;">COMPARATIVO TÉCNICO DE CENÁRIOS</h3>
+               <button class="btn btn-outline btn-toggle-layout" onclick="this.parentElement.nextElementSibling.classList.toggle('stacked'); ATDLivre.saveHistory(true)" style="font-size:10px; padding:4px 8px;"><i class="fa-solid fa-list"></i> Alterar Layout (Lado a Lado / Empilhado)</button>
+            </div>
             <div class="atd-cenarios-wrapper">
                <button class="btn-add-cenario" onclick="ATDLivre.addNovoCenario(this)" title="Adicionar mais uma coluna de cenário">+ ADD CENÁRIO</button>
             </div>
