@@ -3149,13 +3149,91 @@ window.salvarFornDoMapaNoBanco = () => {
   // Atualiza a tabela do mapa de preços imediatamente para mostrar o novo nome digitado
   MapaPrecos.load(p); 
 };
+window.enviarCotacaoAvulsa = async (propId) => {
+  const p = DB.getProcess(currentPID);
+  const prop = p.propostas.find(x => x.fornId === propId);
+  const f = DB.data.fornecedores.find(x => x.id === propId);
+  
+  if (currentCompFornId === propId) {
+      prop.nome = document.getElementById('cfNome').value || prop.nome;
+      prop.email = document.getElementById('cfEmail').value || prop.email;
+      if (f) { f.nome = prop.nome; f.email = prop.email; }
+      DB.save(); 
+  }
+  
+  const nomeDestino = prop.nome || (f ? f.nome : 'Fornecedor');
+  const emailDestino = prop.email || (f ? f.email : '') || (f ? f.contato : '');
+  
+  if (!emailDestino || !emailDestino.includes('@')) {
+      return alert('O e-mail digitado não é válido. Preencha o e-mail em "Dados Complementares" antes de enviar.');
+  }
+  
+  if(!confirm(`Deseja disparar o e-mail agora para ${nomeDestino} (${emailDestino})?`)) return;
+  
+  UI.toast("Disparando e-mail...");
+  document.getElementById('db-loader').style.display = 'flex';
+  document.getElementById('db-loader').style.opacity = '1';
+  document.getElementById('db-loader').children[1].textContent = 'ENVIANDO E-MAIL...';
+  
+  try {
+      const speInfo = p.spe && SPES[p.spe] ? `${SPES[p.spe].nome} (CNPJ: ${SPES[p.spe].cnpj})` : "A confirmar";
+      const respNome = p.req.resp || "Gestão de Suprimentos";
+      
+      await fetch('https://suprimentos-cgvga.vercel.app/api/enviar-email', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+              fornecedores: [{ nome: nomeDestino, email: emailDestino }],
+              rcData: { ...p.req, respNome: respNome, speInfo: speInfo }
+          })
+      });
+      
+      UI.toast("E-mail enviado com sucesso!");
+      App.logHistory(p.id, `Cotação disparada avulsa para: ${nomeDestino}.`);
+  } catch (err) {
+      alert("Erro ao enviar o e-mail. Verifique se há algum bloqueio na API.");
+  }
+  
+  document.getElementById('db-loader').style.opacity = '0';
+  setTimeout(()=> {
+      document.getElementById('db-loader').style.display = 'none';
+      document.getElementById('db-loader').children[1].textContent = 'Conectando ao Firebase...'; 
+  }, 500);
+};
 
 window.removeFornecedorComp = (propId) => { if(!confirm('Remover fornecedor do Mapa?')) return; const p = DB.getProcess(currentPID); p.propostas = p.propostas.filter(x => x.fornId !== propId); if(p.vencedorId === propId) p.vencedorId = null; DB.save(); MapaPrecos.load(p); document.getElementById('comp-form-forn').style.display = 'none'; };
 window.updatePropFornNome = (propId, val) => { const p = DB.getProcess(currentPID); const prop = p.propostas.find(x => x.fornId === propId); if(prop) prop.nome = val; DB.save(); if(currentCompFornId === propId) document.getElementById('comp-form-title').textContent = `- ${val}`; };
 window.updatePropPreco = (propId, itemId, valStr) => { const p = DB.getProcess(currentPID); const prop = p.propostas.find(x => x.fornId === propId); if(prop) { prop.itens[itemId] = Util.unmaskCur(valStr); prop.status = 'recebida'; } DB.save(); MapaPrecos.load(p); };
 window.updatePropFreco = (propId, valStr) => { const p = DB.getProcess(currentPID); const prop = p.propostas.find(x => x.fornId === propId); if(prop) prop.frete = Util.unmaskCur(valStr); DB.save(); MapaPrecos.load(p); };
 window.editFornDetails = (propId) => { currentCompFornId = propId; const p = DB.getProcess(currentPID); const prop = p.propostas.find(x => x.fornId === propId); const f = DB.data.fornecedores.find(x => x.id === propId) || prop; document.getElementById('comp-form-forn').style.display = 'block'; document.getElementById('comp-form-title').textContent = `- ${f.nome||'Novo'}`; document.getElementById('cfNome').value = f.nome || ''; document.getElementById('cfDoc').value = f.cnpj || f.doc || ''; document.getElementById('cfTel').value = f.tel || ''; document.getElementById('cfEmail').value = f.email || f.contato || ''; document.getElementById('cfCond').value = prop.cond || ''; document.getElementById('cfPrazo').value = prop.prazo || ''; };
-window.updateFornData = (field, val) => { if(!currentCompFornId) return; const p = DB.getProcess(currentPID); const prop = p.propostas.find(x => x.fornId === currentCompFornId); if(prop) prop[field] = val; DB.save(); if(field === 'nome') MapaPrecos.load(p); };
+window.updateFornData = (field, val) => { 
+    if(!currentCompFornId) return; 
+    const p = DB.getProcess(currentPID); 
+    const prop = p.propostas.find(x => x.fornId === currentCompFornId); 
+    if(prop) prop[field] = val; 
+    
+    const f = DB.data.fornecedores.find(x => x.id === currentCompFornId);
+    if (f) {
+        if (field === 'nome') f.nome = val;
+        if (field === 'email') f.email = val;
+        if (field === 'doc') f.cnpj = val;
+        if (field === 'tel') f.tel = val;
+        if (field === 'prazo') f.prazo = val;
+    }
+    
+    DB.save(); 
+    
+    if(field === 'nome') {
+        document.getElementById('comp-form-title').textContent = `- ${val}`;
+        const inputsHeader = document.querySelectorAll('.comp-forn-input');
+        inputsHeader.forEach(inp => {
+            if(inp.getAttribute('onchange').includes(currentCompFornId)) {
+                inp.value = val;
+            }
+        });
+    } 
+};
+
 window.salvarCompObs = () => { const p = DB.getProcess(currentPID); const obsEl = document.getElementById('compObs'); if(p && obsEl) { p.compObs = obsEl.value; DB.save(); } };
 
 window.selecionarVencedor = (propId) => { 
