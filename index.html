@@ -271,6 +271,14 @@
 
   .atd-title-input { font-size: 22px; font-weight: 800; color: var(--navy); text-transform: uppercase; border: none; width: 100%; border-bottom: 2px solid var(--navy); padding-bottom: 5px; }
 
+  /* ====== BLOCO: CENÁRIOS COMPARATIVOS ====== */
+  .atd-cenarios-wrapper { display: flex; gap: 15px; width: 100%; overflow-x: auto; padding-bottom: 10px; align-items: stretch; position: relative; }
+  .atd-cenario-card { flex: 1; min-width: 310px; border: 1px solid var(--navy); border-radius: 6px; padding: 15px; background: var(--paper); display: flex; flex-direction: column; position: relative; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+  .c-input { width: 100%; border: 1px solid transparent; background: transparent; font-family: 'Montserrat'; font-size: 11px; outline: none; transition: 0.2s; color: var(--ink); }
+  .c-input:hover, .c-input:focus { border-bottom: 1px dashed var(--navy); }
+  .btn-add-cenario { flex-shrink: 0; writing-mode: vertical-rl; text-orientation: mixed; padding: 10px 5px; font-weight: bold; cursor: pointer; color: var(--navy); border: 2px dashed var(--line); border-radius: 6px; background: transparent; transition: 0.2s; }
+  .btn-add-cenario:hover { background: var(--highlight); border-color: var(--navy); }
+
   @media print {
     #view-atd-livre .doc-head, 
     #view-atd-livre .atd-builder-toolbar, 
@@ -282,6 +290,11 @@
     #view-atd-livre .atd-canvas { border: none !important; box-shadow: none !important; padding: 0 !important; margin: 0 !important; }
     #view-atd-livre .atd-block { border: none !important; padding: 0 !important; background: transparent !important; margin-bottom: 15px; break-inside: avoid; }
     [contenteditable="true"] { border: none !important; background: transparent !important; }
+    
+    .btn-add-row, .btn-add-cenario, .btn-remove-row, .btn-remover-cenario { display: none !important; }
+    .atd-cenarios-wrapper { flex-wrap: wrap !important; display: flex !important; gap: 15px !important; overflow: visible !important; }
+    .atd-cenario-card { flex: 1; min-width: 45% !important; break-inside: avoid; border: 1px solid #ccc !important; box-shadow: none !important; }
+    .c-input { border: none !important; }
     
     body { height: auto !important; }
     html { height: auto !important; }
@@ -545,6 +558,7 @@
             </div>
         </div>
         <button class="btn btn-outline" onclick="ATDLivre.addBloco('kpi')"><i class="fa-solid fa-chart-simple"></i> Caixas de Destaque</button>
+        <button class="btn btn-outline" onclick="ATDLivre.addBloco('cenarios')"><i class="fa-solid fa-columns"></i> Comparativo de Cenários</button>
         <button class="btn btn-outline" onclick="ATDLivre.addBloco('contexto')"><i class="fa-solid fa-align-left"></i> Contexto (Escopo)</button>
         <button class="btn btn-outline" onclick="ATDLivre.addBloco('indicacao')"><i class="fa-solid fa-trophy"></i> Fornecedor Premiado</button>
         <button class="btn btn-outline" onclick="ATDLivre.addBloco('texto')"><i class="fa-solid fa-font"></i> Texto Livre</button>
@@ -3127,7 +3141,7 @@ const ATDLivre = {
     
     ATDLivre.setupHistoryListener();
     ATDLivre.resetHistory();
-    ATDLivre.saveHistory(true); // Salva o estado inicial carregado
+    ATDLivre.saveHistory(true); 
     
     App.nav('atd-livre', true);
   },
@@ -3158,7 +3172,6 @@ const ATDLivre = {
 
   imprimir: () => { window.print(); },
 
-  // ================= SISTEMA DE DESFAZER / REFAZER =================
   setupHistoryListener: () => {
       if(!historyListenerAttached) {
           document.getElementById('atd-drag-area').addEventListener('input', () => ATDLivre.saveHistory(false));
@@ -3188,7 +3201,7 @@ const ATDLivre = {
           doSave();
       } else {
           clearTimeout(historyTimeout);
-          historyTimeout = setTimeout(doSave, 400); // Aguarda o usuário parar de digitar
+          historyTimeout = setTimeout(doSave, 400); 
       }
   },
 
@@ -3213,7 +3226,6 @@ const ATDLivre = {
           UI.toast("Nada mais para refazer.");
       }
   },
-  // =================================================================
 
   calcDesvioLivre: () => {
       const orcEl = document.getElementById('atd-livre-orcamento');
@@ -3261,6 +3273,84 @@ const ATDLivre = {
       ATDLivre.saveHistory(true);
   },
 
+  addCenarioRow: (btn) => {
+      const tbody = btn.previousElementSibling.querySelector('tbody');
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+          <td style="padding:4px; border-bottom:1px solid var(--line);"><input type="text" class="c-input" placeholder="Cód..." oninput="this.setAttribute('value', this.value);"></td>
+          <td style="padding:4px; border-bottom:1px solid var(--line);"><input type="text" class="c-input" placeholder="Descrição do serviço..." oninput="this.setAttribute('value', this.value);"></td>
+          <td style="padding:4px; border-bottom:1px solid var(--line);"><input type="text" class="c-input c-unit" placeholder="R$ 0,00" oninput="Util.maskCur(this); this.setAttribute('value', this.value); ATDLivre.calcCenarios(this)" style="text-align:right;"></td>
+          <td style="padding:4px; border-bottom:1px solid var(--line); text-align:right; font-weight:bold; font-size:11px; color:var(--navy);" class="c-row-tot">R$ 0,00</td>
+          <td style="padding:4px; border-bottom:1px solid var(--line); text-align:center;"><button class="btn-remove-kpi btn-remove-row" onclick="const p = this.closest('.atd-cenarios-wrapper'); this.closest('tr').remove(); ATDLivre.calcCenarios(p);" style="position:static; opacity:1;">×</button></td>
+      `;
+      tbody.appendChild(tr);
+      ATDLivre.saveHistory(true);
+  },
+
+  addNovoCenario: (btn) => {
+      const wrapper = btn.closest('.atd-cenarios-wrapper');
+      const count = wrapper.querySelectorAll('.atd-cenario-card').length + 1;
+      const card = document.createElement('div');
+      card.className = 'atd-cenario-card';
+      card.dataset.tot = "0";
+      card.innerHTML = `
+          <button class="btn-remove-kpi btn-remover-cenario" onclick="const p = this.closest('.atd-cenarios-wrapper'); this.closest('.atd-cenario-card').remove(); ATDLivre.calcCenarios(p);" title="Remover cenário" style="position:absolute; top:5px; right:5px; opacity:1;">×</button>
+          <h4 contenteditable="true" style="margin:0 0 10px 0; color:var(--navy); text-align:center; text-transform:uppercase;">CENÁRIO ${count}: TÍTULO</h4>
+          <table class="items" style="width: 100%; margin-bottom: 10px; border-collapse:collapse;">
+              <thead><tr><th style="width:15%; padding:4px; font-size:9px;">Cód</th><th style="width:40%; padding:4px; font-size:9px;">Descrição</th><th style="width:25%; padding:4px; font-size:9px; text-align:right;">R$ Ref. Unit.</th><th style="width:20%; padding:4px; font-size:9px; text-align:right;">R$ Total</th><th style="width:5%; padding:4px;"></th></tr></thead>
+              <tbody></tbody>
+          </table>
+          <button class="btn btn-outline btn-add-row" style="width: 100%; font-size: 9px; padding: 6px; margin-bottom: 15px;" onclick="ATDLivre.addCenarioRow(this)">+ Adicionar Item</button>
+          <div style="background: var(--highlight); padding: 10px; border-radius: 4px; margin-bottom: 15px; text-align:center; border: 1px solid var(--navy-2);">
+              <div style="font-size: 10px; color: var(--navy-2); font-weight: bold; text-transform: uppercase;">Total Projetado</div>
+              <div class="cenario-total" style="font-size: 20px; font-weight: 800; color: var(--navy);">R$ 0,00</div>
+              <div class="cenario-economia" style="font-size: 11px; font-weight: bold; margin-top: 4px;">-</div>
+          </div>
+          <div style="border:2px dashed var(--line); padding: 15px; text-align: center; border-radius: 4px; cursor: pointer; font-size: 10px; color: var(--muted); margin-top: auto;" onclick="ATDLivre.inserirImagem(this)">
+              📷 Representação (Clique p/ Imagem)
+          </div>
+      `;
+      wrapper.insertBefore(card, btn);
+      ATDLivre.addCenarioRow(card.querySelector('.btn-add-row'));
+      ATDLivre.saveHistory(true);
+  },
+
+  calcCenarios: (el) => {
+      if(!el) return;
+      const wrapper = el.classList && el.classList.contains('atd-cenarios-wrapper') ? el : el.closest('.atd-cenarios-wrapper');
+      if(!wrapper) return;
+      
+      let maxTot = 0;
+      const cards = wrapper.querySelectorAll('.atd-cenario-card');
+      
+      cards.forEach(card => {
+          let tot = 0;
+          card.querySelectorAll('tbody tr').forEach(tr => {
+              const rowTot = Util.unmaskCur(tr.querySelector('.c-unit').value) || 0;
+              tr.querySelector('.c-row-tot').textContent = Util.formatBRL(rowTot);
+              tot += rowTot;
+          });
+          card.dataset.tot = tot;
+          card.querySelector('.cenario-total').textContent = Util.formatBRL(tot);
+          if(tot > maxTot) maxTot = tot;
+      });
+      
+      cards.forEach(card => {
+          const tot = parseFloat(card.dataset.tot) || 0;
+          const ecoEl = card.querySelector('.cenario-economia');
+          if(tot === 0) {
+              ecoEl.innerHTML = '-';
+          } else if(tot === maxTot) {
+              ecoEl.innerHTML = `<span style="color:var(--danger)">CENÁRIO MAIS CARO (BASE)</span>`;
+          } else {
+              const diff = maxTot - tot;
+              const perc = (diff / maxTot) * 100;
+              ecoEl.innerHTML = `<span style="color:var(--success)">ECONOMIA: ${Util.formatBRL(diff)} (${perc.toFixed(1)}%)</span>`;
+          }
+      });
+      ATDLivre.saveHistory(false);
+  },
+
   addBloco: (tipo) => {
     const area = document.getElementById('atd-drag-area');
     const block = document.createElement('div');
@@ -3268,10 +3358,22 @@ const ATDLivre = {
     block.draggable = true;
     
     let content = '';
-    if (tipo === 'texto') {
+    
+    if (tipo === 'cenarios') {
         content = `
-          <h3 contenteditable="true" style="margin:0 0 10px 0; color:var(--navy); font-size:14px; text-transform:uppercase;">TÍTULO DA SESSÃO</h3>
-          <div contenteditable="true" style="font-size:13px; line-height:1.6; color:var(--ink); text-align:justify;">Clique aqui para digitar o conteúdo. Pressione Enter para novos parágrafos.</div>
+          <div style="width:100%;">
+            <h3 contenteditable="true" style="margin:0 0 10px 0; color:var(--navy); font-size:16px; text-transform:uppercase;">COMPARATIVO TÉCNICO DE CENÁRIOS</h3>
+            <div class="atd-cenarios-wrapper">
+               <button class="btn-add-cenario" onclick="ATDLivre.addNovoCenario(this)" title="Adicionar mais uma coluna de cenário">+ ADD CENÁRIO</button>
+            </div>
+          </div>
+        `;
+    } else if (tipo === 'texto') {
+        content = `
+          <div style="width:100%;">
+            <h3 contenteditable="true" style="margin:0 0 10px 0; color:var(--navy); font-size:14px; text-transform:uppercase;">TÍTULO DA SESSÃO</h3>
+            <div contenteditable="true" style="font-size:13px; line-height:1.6; color:var(--ink); text-align:justify;">Clique aqui para digitar o conteúdo. Pressione Enter para novos parágrafos.</div>
+          </div>
         `;
     } else if (tipo === 'kpi') {
         content = `
@@ -3298,24 +3400,30 @@ const ATDLivre = {
         `;
     } else if (tipo === 'contexto') {
         content = `
-          <h3 contenteditable="true" style="margin:0 0 10px 0; color:var(--navy); font-size:14px; text-transform:uppercase;">CONTEXTO:</h3>
-          <div contenteditable="true" style="font-size:13px; line-height:1.6; color:var(--ink); text-align:justify;"><ul><li>&nbsp;</li></ul></div>
+          <div style="width:100%;">
+            <h3 contenteditable="true" style="margin:0 0 10px 0; color:var(--navy); font-size:14px; text-transform:uppercase;">CONTEXTO:</h3>
+            <div contenteditable="true" style="font-size:13px; line-height:1.6; color:var(--ink); text-align:justify;"><ul><li>&nbsp;</li></ul></div>
+          </div>
         `;
     } else if (tipo === 'indicacao') {
         content = `
-          <h3 contenteditable="true" style="margin:0 0 10px 0; color:var(--navy); font-size:14px; text-transform:uppercase;">INDICAÇÃO DE FORNECEDOR PREMIADO:</h3>
-          <div contenteditable="true" style="font-size:13px; line-height:1.6; color:var(--navy); background:var(--highlight); padding:12px; border:1px solid var(--navy-2); border-radius:6px; font-weight:bold; text-align:center;">Nome do Fornecedor Indicado...</div>
+          <div style="width:100%;">
+            <h3 contenteditable="true" style="margin:0 0 10px 0; color:var(--navy); font-size:14px; text-transform:uppercase;">INDICAÇÃO DE FORNECEDOR PREMIADO:</h3>
+            <div contenteditable="true" style="font-size:13px; line-height:1.6; color:var(--navy); background:var(--highlight); padding:12px; border:1px solid var(--navy-2); border-radius:6px; font-weight:bold; text-align:center;">Nome do Fornecedor Indicado...</div>
+          </div>
         `;
     } else if (tipo === 'imagem') {
         content = `
-          <h3 contenteditable="true" style="margin:0 0 10px 0; color:var(--navy); font-size:14px; text-transform:uppercase;">ANEXO / IMAGEM</h3>
-          <div style="border:2px dashed var(--line); border-radius:6px; padding:30px; text-align:center; color:var(--muted); font-size:12px; cursor:pointer;" onclick="ATDLivre.inserirImagem(this)">
-             Clique aqui para colar a URL de uma imagem. (Na impressão esta borda some).
+          <div style="width:100%;">
+            <h3 contenteditable="true" style="margin:0 0 10px 0; color:var(--navy); font-size:14px; text-transform:uppercase;">ANEXO / IMAGEM</h3>
+            <div style="border:2px dashed var(--line); border-radius:6px; padding:30px; text-align:center; color:var(--muted); font-size:12px; cursor:pointer;" onclick="ATDLivre.inserirImagem(this)">
+               Clique aqui para colar a URL de uma imagem. (Na impressão esta borda some).
+            </div>
           </div>
         `;
     } else if (tipo === 'icone-texto') {
         content = `
-          <div style="display:flex; gap:12px; align-items:center;">
+          <div style="display:flex; gap:12px; align-items:center; width:100%;">
              <i class="fa-solid fa-circle-check" style="color:var(--success); font-size:24px;"></i>
              <div contenteditable="true" style="font-size:13px; font-weight:600; color:var(--ink); width:100%;">Clique para digitar um ponto de destaque.</div>
           </div>
@@ -3330,6 +3438,15 @@ const ATDLivre = {
     
     area.appendChild(block);
     ATDLivre.attachDragEvents(block);
+    
+    if (tipo === 'cenarios') {
+        const wrapper = block.querySelector('.atd-cenarios-wrapper');
+        const btnAdd = wrapper.querySelector('.btn-add-cenario');
+        ATDLivre.addNovoCenario(btnAdd);
+        ATDLivre.addNovoCenario(btnAdd);
+        ATDLivre.addNovoCenario(btnAdd);
+    }
+    
     ATDLivre.saveHistory(true);
   },
 
@@ -3364,7 +3481,7 @@ const ATDLivre = {
       const p = DB.getProcess(pid);
       if(!p) return;
 
-      let html = `<h3 contenteditable="true" style="margin:0 0 10px 0; color:var(--navy); font-size:14px; text-transform:uppercase;">MAPA DE PREÇOS (IMPORTADO DO ${p.id})</h3>`;
+      let html = `<div style="width:100%;"><h3 contenteditable="true" style="margin:0 0 10px 0; color:var(--navy); font-size:14px; text-transform:uppercase;">MAPA DE PREÇOS (IMPORTADO DO ${p.id})</h3>`;
       html += `<table class="items table-comp" style="width:100%; border-collapse:collapse; margin-bottom:15px; background:var(--paper);">`;
 
       html += `<thead><tr><th style="border:1px solid var(--line); padding:8px; text-align:left; font-size:11px; background:var(--highlight); color:var(--navy);">Item</th><th style="border:1px solid var(--line); padding:8px; text-align:center; font-size:11px; background:var(--highlight); color:var(--navy);">Qtd</th><th style="border:1px solid var(--line); padding:8px; text-align:center; font-size:11px; background:var(--highlight); color:var(--navy);">Unid</th>`;
@@ -3434,7 +3551,7 @@ const ATDLivre = {
 
           html += `<td style="padding:15px 8px; text-align:center; font-size:13px; font-weight:bold; color:var(--navy); ${cellBg}">${t>0 ? Util.formatBRL(t) : '-'}${diffHtml}</td>`;
       });
-      html += `</tr></tfoot></table>`;
+      html += `</tr></tfoot></table></div>`;
 
       const area = document.getElementById('atd-drag-area');
       const block = document.createElement('div');
