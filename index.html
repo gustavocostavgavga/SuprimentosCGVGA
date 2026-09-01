@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -681,8 +682,8 @@
         <div class="doc-title">2. Mapa de Preços & Equalização<small id="map-subtitle">Processo</small></div>
         <div class="header-actions">
           <button class="btn btn-outline" onclick="editarRequisicao()">← Editar Requisição de Compra</button>
+          <button class="btn btn-solid" style="background-color: var(--navy-2);" onclick="salvarMapaManual()">💾 Salvar Mapa</button>
           <button class="btn btn-solid" onclick="abrirModalAddFornMapa()">➕ Adicionar Fornecedor Existente</button>
-          <!-- BOTÃO NOVO ATD INTEGRADO -->
           <button class="btn btn-ai" style="padding:10px 20px; font-size:13px;" onclick="ATD.openModal()">📊 Montar ATD (Apresentação)</button>
         </div>
       </div>
@@ -2604,7 +2605,19 @@ const Req = {
         setTimeout(()=> document.getElementById('db-loader').style.display = 'none', 500);
     }
 
-    p.status = 'cotando'; 
+    p.propostas = p.fornecedoresSelecionados.map(fid => {
+        const f = DB.data.fornecedores.find(x => x.id === fid);
+        return { 
+            fornId: fid, 
+            nome: f ? f.nome : 'Fornecedor', 
+            doc: f ? (f.cnpj || f.doc || '') : '', 
+            tel: f ? (f.tel || '') : '', 
+            email: f ? (f.email || f.contato || '') : '', 
+            status: 'pendente', 
+            itens: {}, frete: 0, imposto: 0, prazo: f ? (f.prazo || '') : '', cond: '' 
+        };
+    });
+
     App.logHistory(p.id, "Cotação ativada com " + p.fornecedoresSelecionados.length + " fornecedores.");
     p.propostas = p.fornecedoresSelecionados.map(fid => ({ fornId: fid, nome:'', doc:'', tel:'', email:'', status: 'pendente', itens: {}, frete: 0, imposto: 0, prazo: '', cond: '' }));
     DB.save(); 
@@ -3235,6 +3248,19 @@ window.updateFornData = (field, val) => {
 };
 
 window.salvarCompObs = () => { const p = DB.getProcess(currentPID); const obsEl = document.getElementById('compObs'); if(p && obsEl) { p.compObs = obsEl.value; DB.save(); } };
+
+window.salvarMapaManual = () => {
+    const p = DB.getProcess(currentPID);
+    if (!p) return;
+    
+    // Força o salvamento de qualquer observação que tenha sido digitada
+    const obsEl = document.getElementById('compObs');
+    if (obsEl) p.compObs = obsEl.value;
+
+    // Força o Firebase a engolir os dados e te dá um aviso visual de tranquilidade
+    DB.save();
+    UI.toast("✅ Mapa e Fornecedores salvos com sucesso!");
+};
 
 window.selecionarVencedor = (propId) => { 
   if(!confirm('Deseja aprovar esta proposta e gerar a Ordem de Compra?')) return; 
