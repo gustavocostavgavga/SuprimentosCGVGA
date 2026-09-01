@@ -1,3 +1,6 @@
+
+
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -1541,51 +1544,58 @@ const DB = {
   data: { processos: [], fornecedores: [] },
   init: async () => {
     try {
-      const docRef = doc(db, "sistema", "suprimentos_db");
-      const docSnap = await getDoc(docRef);
-      if (docSnap.exists()) {
-        DB.data = docSnap.data();
-        if(!DB.data.processos) DB.data.processos = [];
-        if(!DB.data.fornecedores) DB.data.fornecedores = [];
-      } else {
-        DB.seed();
-        await setDoc(docRef, DB.data);
+      // 1. Tenta recuperar da memória local primeiro (Garante a velocidade e salva os fornecedores)
+      const savedLocal = localStorage.getItem('grp_ai_db');
+      if (savedLocal) {
+        DB.data = JSON.parse(savedLocal);
       }
       
-      if (DB.data.fornecedores.some(f => ['f1','f2','f3','f4'].includes(f.id)) || !DB.data.fornecedores.some(f => f.nome === "VALLE METALÚRGICA")) {
-          DB.data.fornecedores = DB.data.fornecedores.filter(f => !['f1','f2','f3','f4'].includes(f.id));
-          if(!DB.data.fornecedores.some(f => f.nome === "VALLE METALÚRGICA")) {
-             fornecedoresReaisData.forEach(fReal => {
-                if(!DB.data.fornecedores.some(f => f.nome === fReal.nome)) {
-                   DB.data.fornecedores.push(fReal);
-                }
-             });
-          }
-          DB.save();
+      // 2. CORREÇÃO CRÍTICA: Garante que as listas existam para não quebrar a tela de carregamento
+      if (!DB.data.processos) DB.data.processos = [];
+      if (!DB.data.fornecedores) DB.data.fornecedores = [];
+
+      // 3. Tenta conectar com o Firebase silenciosamente
+      try {
+        const docRef = doc(db, "sistema", "suprimentos_db");
+        const docSnap = await getDoc(docRef);
+        // Se não tinha nada localmente, mas achou na nuvem, ele puxa da nuvem
+        if (!savedLocal && docSnap.exists()) {
+          DB.data = docSnap.data();
+          if (!DB.data.processos) DB.data.processos = [];
+          if (!DB.data.fornecedores) DB.data.fornecedores = [];
+        }
+      } catch (err) {
+        console.warn("Modo offline: Falha ao ler Firebase, operando via cache local.");
       }
 
-    } catch (e) {
-      console.error(e);
-      const saved = localStorage.getItem('grp_ai_db');
-      if (saved) { 
-          DB.data = JSON.parse(saved); 
-          if(!DB.data.fornecedores.some(f => f.nome === "VALLE METALÚRGICA")) {
-             DB.data.fornecedores = DB.data.fornecedores.filter(f => !['f1','f2','f3','f4'].includes(f.id));
-             fornecedoresReaisData.forEach(fReal => {
-                if(!DB.data.fornecedores.some(f => f.nome === fReal.nome)) {
-                   DB.data.fornecedores.push(fReal);
-                }
-             });
-             DB.save();
-          }
-      } else { 
-          DB.seed(); 
+      // 4. Verificação de integridade dos fornecedores (mantido do original)
+      if (DB.data.fornecedores.length === 0) {
+        DB.seed();
+      } else {
+        if (DB.data.fornecedores.some(f => ['f1','f2','f3','f4'].includes(f.id)) || !DB.data.fornecedores.some(f => f.nome === "VALLE METALÚRGICA")) {
+            DB.data.fornecedores = DB.data.fornecedores.filter(f => !['f1','f2','f3','f4'].includes(f.id));
+            if(!DB.data.fornecedores.some(f => f.nome === "VALLE METALÚRGICA")) {
+               fornecedoresReaisData.forEach(fReal => {
+                  if(!DB.data.fornecedores.some(f => f.nome === fReal.nome)) {
+                     DB.data.fornecedores.push(fReal);
+                  }
+               });
+            }
+            DB.save();
+        }
       }
+    } catch (e) {
+      console.error("Erro crítico no carregamento, recriando banco:", e);
+      DB.seed(); // Fallback de emergência absoluto para nunca travar a tela
     }
   },
   save: async () => {
+    // 1. Salva SEMPRE localmente primeiro (Isso evita perder fornecedores ao recarregar a tela)
+    try { localStorage.setItem('grp_ai_db', JSON.stringify(DB.data)); } catch(e){}
+    
+    // 2. Tenta salvar na nuvem
     try { await setDoc(doc(db, "sistema", "suprimentos_db"), DB.data); } 
-    catch(e) { localStorage.setItem('grp_ai_db', JSON.stringify(DB.data)); }
+    catch(e) { console.warn("Modo offline: Não foi possível sincronizar com a nuvem agora."); }
   },
   seed: () => {
     DB.data.fornecedores = JSON.parse(JSON.stringify(fornecedoresReaisData));
@@ -2651,10 +2661,17 @@ const AI = {
     });
     UI.openModal('modal-ia-forn');
   },
-  confirmSuppliers: () => {
-    const p = DB.getProcess(currentPID); p.fornecedoresSelecionados = [];
-    document.querySelectorAll('.ia-forn-chk:checked').forEach(c => p.fornecedoresSelecionados.push(c.value));
-    DB.save(); UI.closeModal('modal-ia-forn'); Req.load(p);
+confirmSuppliers: () => {
+    const p = DB.getProcess(currentPID); 
+    // Apenas adiciona sem apagar a lista que já existe
+    document.querySelectorAll('.ia-forn-chk:checked').forEach(c => {
+       if(!p.fornecedoresSelecionados.includes(c.value)) {
+           p.fornecedoresSelecionados.push(c.value);
+       }
+    });
+    DB.save(); 
+    UI.closeModal('modal-ia-forn'); 
+    Req.load(p);
   }
 };
 
