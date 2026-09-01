@@ -245,10 +245,10 @@
 
   /* ====== ATD LIVRE (BUILDER) ====== */
   .atd-builder-toolbar { display: flex; gap: 10px; background: var(--paper); padding: 12px; border: 1px solid var(--line); border-radius: 6px; margin-bottom: 20px; flex-wrap: wrap; }
-  .atd-canvas { background: #fff; border: 1px solid var(--line); border-radius: 6px; min-height: 600px; padding: 40px; display: flex; flex-direction: column; gap: 16px; position: relative; box-shadow: inset 0 0 10px rgba(0,0,0,0.02); }
+  .atd-canvas { background: #fff; border: 1px solid var(--line); border-radius: 6px; min-height: 600px; padding: 40px; display: flex; flex-direction: column; gap: 16px; position: relative; box-shadow: inset 0 0 10px rgba(0,0,0,0.02); height: auto; }
   .atd-block { display: flex; gap: 12px; align-items: flex-start; position: relative; padding: 10px; border: 1px dashed transparent; border-radius: 6px; transition: 0.2s; background: transparent; }
   .atd-block:hover { border-color: var(--line); background: var(--bg); }
-  .atd-block-content { flex: 1; width: 100%; }
+  .atd-block-content { flex: 1; width: 100%; overflow-x: auto; }
   
   .drag-handle { cursor: grab; color: var(--muted); padding: 5px; opacity: 0; transition: 0.2s; font-size: 16px; }
   .atd-block:hover .drag-handle { opacity: 1; }
@@ -260,15 +260,31 @@
   [contenteditable="true"] { outline: none; border-bottom: 1px dashed transparent; transition: 0.2s; min-height: 20px; display: inline-block; width: 100%; }
   [contenteditable="true"]:hover, [contenteditable="true"]:focus { border-bottom-color: var(--navy); background: rgba(255,255,255,0.5); }
   
-  .atd-kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 16px; width: 100%; }
-  .atd-kpi-box { border: 2px solid var(--line); border-radius: 6px; padding: 16px; text-align: center; background: #fafafa; }
-  .atd-title-input { font-size: 22px; font-weight: 800; color: var(--navy); text-transform: uppercase; border: none; width: 100%; border-bottom: 2px solid var(--navy); margin-bottom: 20px; padding-bottom: 10px; }
+  /* KPIs Dinâmicos */
+  .atd-kpi-container { display: flex; align-items: center; gap: 8px; width: 100%; }
+  .atd-kpi-grid { display: flex; gap: 16px; width: 100%; flex-wrap: wrap; }
+  .atd-kpi-box { flex: 1; min-width: 120px; border: 2px solid var(--line); border-radius: 6px; padding: 16px; text-align: center; background: #fafafa; position: relative; }
+  .btn-remove-kpi { position: absolute; top: 2px; right: 2px; color: var(--danger); background: none; border: none; font-size: 12px; cursor: pointer; opacity: 0; }
+  .atd-kpi-box:hover .btn-remove-kpi { opacity: 1; }
+  .btn-add-kpi { cursor: pointer; color: var(--success); font-size: 18px; padding: 5px; opacity: 0; transition: 0.2s; border: none; background: transparent; }
+  .atd-block:hover .btn-add-kpi { opacity: 1; }
+
+  .atd-title-input { font-size: 22px; font-weight: 800; color: var(--navy); text-transform: uppercase; border: none; width: 100%; border-bottom: 2px solid var(--navy); padding-bottom: 5px; }
 
   @media print {
-    #view-atd-livre .atd-builder-toolbar, #view-atd-livre .drag-handle, #view-atd-livre .btn-remove-block { display: none !important; }
-    #view-atd-livre .atd-canvas { border: none !important; box-shadow: none !important; padding: 0 !important; }
+    #view-atd-livre .doc-head, 
+    #view-atd-livre .atd-builder-toolbar, 
+    #view-atd-livre .drag-handle, 
+    #view-atd-livre .btn-remove-block, 
+    #view-atd-livre .btn-add-kpi, 
+    #view-atd-livre .btn-remove-kpi { display: none !important; }
+    
+    #view-atd-livre .atd-canvas { border: none !important; box-shadow: none !important; padding: 0 !important; margin: 0 !important; }
     #view-atd-livre .atd-block { border: none !important; padding: 0 !important; background: transparent !important; margin-bottom: 15px; break-inside: avoid; }
     [contenteditable="true"] { border: none !important; background: transparent !important; }
+    
+    body { height: auto !important; }
+    html { height: auto !important; }
   }
 
   /* ====== PRINT STYLES ====== */
@@ -487,14 +503,14 @@
       <div class="doc-head">
         <div class="doc-title">ATD's Salvas<small>Histórico de Análises para Tomada de Decisão</small></div>
         <div class="header-actions">
-           <button class="btn btn-ai" onclick="ATDLivre.abrirNova()">+ Criar ATD Livre (Avulsa)</button>
+           <button class="btn btn-ai" onclick="ATDLivre.abrirNova()">+ Criar ATD</button>
         </div>
       </div>
       <section class="block">
         <h2>ATD's de Processos (Sistema)</h2>
         <table class="items" style="margin-bottom: 30px;">
           <thead>
-            <tr><th>Processo Vinculado</th><th>Data da ATD</th><th>Indicação</th><th>Target</th><th>Desvio Obtido</th><th style="text-align:right">Ação</th></tr>
+            <tr><th>Processo Vinculado</th><th>Data da ATD</th><th>Indicação</th><th>Target</th><th>Desvio Obtid o</th><th style="text-align:right">Ação</th></tr>
           </thead>
           <tbody id="atd-list-body"></tbody>
         </table>
@@ -509,7 +525,7 @@
       </section>
     </div>
 
-    <!-- ==================== VIEW: ATD LIVRE (BUILDER) ==================== -->
+   <!-- ==================== VIEW: ATD LIVRE (BUILDER) ==================== -->
     <div id="view-atd-livre" class="view">
       <div class="doc-head">
         <div class="doc-title">Construtor de ATD Livre<small>Edite livremente clicando nos textos</small></div>
@@ -523,20 +539,38 @@
       <div class="atd-builder-toolbar">
         <strong style="color:var(--navy); font-size:12px; width:100%; margin-bottom:4px;">Adicionar Elementos:</strong>
         <button class="btn btn-outline" onclick="ATDLivre.addBloco('texto')"><i class="fa-solid fa-align-left"></i> Bloco de Texto</button>
-        <button class="btn btn-outline" onclick="ATDLivre.addBloco('kpi')"><i class="fa-solid fa-chart-simple"></i> Caixas de Destaque (Valores)</button>
-        <button class="btn btn-outline" onclick="ATDLivre.addBloco('imagem')"><i class="fa-solid fa-image"></i> Espaço para Imagem</button>
-        <button class="btn btn-outline" onclick="ATDLivre.addBloco('icone-texto')"><i class="fa-solid fa-star"></i> Tópico com Ícone</button>
+        <button class="btn btn-outline" onclick="ATDLivre.addBloco('kpi')"><i class="fa-solid fa-chart-simple"></i> Caixas de Destaque</button>
+        <button class="btn btn-outline" onclick="ATDLivre.addBloco('imagem')"><i class="fa-solid fa-image"></i> Imagem</button>
+        <button class="btn btn-outline" onclick="ATDLivre.addBloco('icone-texto')"><i class="fa-solid fa-star"></i> Tópico</button>
+        <button class="btn btn-success" style="margin-left:auto; font-weight:800;" onclick="ATDLivre.abrirModalImportarMapa()"><i class="fa-solid fa-table"></i> Importar Mapa de Preços</button>
       </div>
 
       <div class="atd-canvas" id="atd-livre-canvas">
-          <!-- Título Fixo -->
+          <!-- Títulos Fixos -->
           <input type="text" id="atd-livre-titulo" class="atd-title-input" placeholder="DIGITE O TÍTULO DESTA ATD AQUI..." value="ANÁLISE PARA TOMADA DE DECISÃO AVULSA">
-          <div style="font-size:12px; color:var(--muted); text-align:right; width:100%; margin-top:-15px; margin-bottom: 20px;">
+          <input type="text" id="atd-livre-subtitulo" class="atd-title-input" style="font-size: 14px; font-weight: 600; color: var(--muted); margin-top: -10px; border-bottom: 1px dashed var(--line);" placeholder="EMPREENDIMENTO / OBRA DESTINO" value="">
+          
+          <div style="font-size:12px; color:var(--muted); text-align:right; width:100%; margin-top:10px; margin-bottom: 20px;">
               Data: <span id="atd-livre-data"></span> | Autor: <span contenteditable="true" id="atd-livre-autor" style="width:auto; min-width:100px;">Nome do Responsável</span>
           </div>
           
           <!-- Área onde os blocos arrastáveis vão entrar -->
           <div id="atd-drag-area" style="display:flex; flex-direction:column; gap:10px;"></div>
+      </div>
+    </div>
+    
+    <!-- MODAL: IMPORTAR MAPA PARA ATD LIVRE -->
+    <div class="modal-overlay" id="modal-import-mapa-atd">
+      <div class="modal">
+        <div class="modal-header">
+          <span>Importar Mapa de Preços</span>
+          <button class="del-btn" onclick="UI.closeModal('modal-import-mapa-atd')" style="font-size:24px;">&times;</button>
+        </div>
+        <div class="field">
+          <label>Selecione um processo que possui cotações:</label>
+          <select id="atd-livre-mapa-select" style="width:100%; padding:10px; border:1px solid var(--line); border-radius:4px; font-family:'Montserrat';"></select>
+        </div>
+        <button class="btn btn-solid" style="width:100%; margin-top:20px;" onclick="ATDLivre.confirmarImportacaoMapa()">Gerar Tabela e Importar para a ATD</button>
       </div>
     </div>
 
@@ -1625,6 +1659,7 @@ const DB = {
           DB.data = docSnap.data();
           if (!DB.data.processos) DB.data.processos = [];
           if (!DB.data.fornecedores) DB.data.fornecedores = [];
+          if (!DB.data.atds_avulsas) DB.data.atds_avulsas = [];
         }
       } catch (err) {
         console.warn("Modo offline: Falha ao ler Firebase, operando via cache local.");
@@ -2281,25 +2316,55 @@ const App = {
 
 // ==================== MODULO: ATD ====================
 const ATD = {
-  currentImages: [],
+  currentImages: [], // (Mantenha essa linha que já existe aí)
+  
+  // NOVA FUNÇÃO: Permite excluir ATDs fantasmas do sistema
+  excluirSistema: (pid) => {
+      if(!confirm("Deseja excluir a ATD deste processo? (Apenas a ATD será apagada, o processo continuará intacto)")) return;
+      const p = DB.getProcess(pid);
+      if (p) {
+          p.atd = null; // Apaga a ATD fantasma do banco
+          DB.save();
+          ATD.loadHistory(); // Atualiza a tela na hora
+          UI.toast("ATD excluída com sucesso!");
+      }
+  },
+
+  // FUNÇÃO ATUALIZADA: Com filtro anti-duplicidade e botão de excluir
   loadHistory: () => {
-    const tb = document.getElementById('atd-list-body'); tb.innerHTML = '';
-    const atdList = DB.data.processos.filter(p => p.atd && p.atd.geradaEm);
-    if(atdList.length === 0) {
-       tb.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:20px; color:var(--muted)">Nenhuma ATD gerada até o momento.</td></tr>`;
-       return;
-    }
-    atdList.reverse().forEach(p => {
-       tb.innerHTML += `<tr>
-         <td><strong style="color:var(--navy)">${p.id}</strong></td>
-         <td>${p.atd.geradaEm}</td>
-         <td>${p.req.cat || 'Geral'}</td>
-         <td>${Util.formatBRL(p.atd.target)}</td>
-         <td><span style="font-weight:800; color:${p.atd.desvio <= 0 ? 'var(--success)' : 'var(--danger)'}">${p.atd.desvio.toFixed(1)}%</span></td>
-         <td style="text-align:right"><button class="btn btn-outline" onclick="ATD.reprint('${p.id}')">Ver PDF</button></td>
-       </tr>`;
+    const tb = document.getElementById('atd-list-body'); 
+    tb.innerHTML = '';
+    
+    // Puxa as ATDs, mas aplica um filtro Set para garantir que processos corrompidos no cache não dupliquem na tela
+    const rawList = DB.data.processos.filter(p => p.atd && p.atd.geradaEm);
+    const atdList = [];
+    const ids = new Set();
+    rawList.forEach(p => {
+        if(!ids.has(p.id)) {
+            ids.add(p.id);
+            atdList.push(p);
+        }
     });
 
+    if(atdList.length === 0) {
+       tb.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:20px; color:var(--muted)">Nenhuma ATD gerada até o momento.</td></tr>`;
+    } else {
+       atdList.reverse().forEach(p => {
+           tb.innerHTML += `<tr>
+             <td><strong style="color:var(--navy)">${p.id}</strong></td>
+             <td>${p.atd.geradaEm}</td>
+             <td>${p.req.cat || 'Geral'}</td>
+             <td>${Util.formatBRL(p.atd.target)}</td>
+             <td><span style="font-weight:800; color:${p.atd.desvio <= 0 ? 'var(--success)' : 'var(--danger)'}">${p.atd.desvio.toFixed(1)}%</span></td>
+             <td style="text-align:right">
+                <button class="btn btn-outline" onclick="ATD.reprint('${p.id}')">Ver PDF</button>
+                <button class="del-btn" style="font-size:18px; margin-left:8px;" onclick="ATD.excluirSistema('${p.id}')" title="Excluir ATD">×</button>
+             </td>
+           </tr>`;
+       });
+    }
+
+    // Carrega a tabela de ATDs Livres (Avulsas)
     const tbLivre = document.getElementById('atd-livre-list-body');
     if (tbLivre) {
         tbLivre.innerHTML = '';
@@ -2320,6 +2385,7 @@ const ATD = {
         }
     }
   },
+  
   openModal: () => {
     const p = DB.getProcess(currentPID);
     if(!p || p.propostas.length === 0) return alert("Não há propostas no mapa para gerar uma ATD.");
@@ -3019,11 +3085,12 @@ const ATDLivre = {
   abrirNova: () => {
     currentAtdLivreId = Util.genId();
     document.getElementById('atd-livre-titulo').value = "NOVA ANÁLISE PARA TOMADA DE DECISÃO";
+    document.getElementById('atd-livre-subtitulo').value = "";
     document.getElementById('atd-livre-data').textContent = Util.today();
     document.getElementById('atd-livre-autor').textContent = "Nome do Responsável";
     document.getElementById('atd-drag-area').innerHTML = '';
     
-    // Inicia com um bloco de texto por padrão
+    ATDLivre.addBloco('kpi');
     ATDLivre.addBloco('texto');
     
     App.nav('atd-livre', true);
@@ -3034,11 +3101,11 @@ const ATDLivre = {
     if(!atd) return;
     currentAtdLivreId = atd.id;
     document.getElementById('atd-livre-titulo').value = atd.titulo;
+    document.getElementById('atd-livre-subtitulo').value = atd.subtitulo || "";
     document.getElementById('atd-livre-data').textContent = atd.data;
     document.getElementById('atd-livre-autor').textContent = atd.autor;
     document.getElementById('atd-drag-area').innerHTML = atd.htmlContent;
     
-    // Reativa as funções de arrastar os blocos
     document.querySelectorAll('.atd-block').forEach(block => ATDLivre.attachDragEvents(block));
     
     App.nav('atd-livre', true);
@@ -3046,6 +3113,7 @@ const ATDLivre = {
 
   salvar: () => {
     const titulo = document.getElementById('atd-livre-titulo').value;
+    const subtitulo = document.getElementById('atd-livre-subtitulo').value;
     const autor = document.getElementById('atd-livre-autor').textContent;
     const htmlContent = document.getElementById('atd-drag-area').innerHTML;
     
@@ -3053,6 +3121,7 @@ const ATDLivre = {
     const obj = {
         id: currentAtdLivreId,
         titulo: titulo,
+        subtitulo: subtitulo,
         autor: autor,
         data: document.getElementById('atd-livre-data').textContent,
         htmlContent: htmlContent
@@ -3063,11 +3132,21 @@ const ATDLivre = {
     
     DB.save();
     UI.toast("ATD Livre salva com sucesso!");
-    ATD.loadHistory(); // Atualiza a lista na tela principal de ATDs
+    ATD.loadHistory(); 
   },
 
-  imprimir: () => {
-    window.print();
+  imprimir: () => { window.print(); },
+
+  addKpiBox: (btn) => {
+      const grid = btn.previousElementSibling;
+      const box = document.createElement('div');
+      box.className = 'atd-kpi-box';
+      box.innerHTML = `
+          <button class="btn-remove-kpi" onclick="this.parentElement.remove()" title="Remover caixa">×</button>
+          <div contenteditable="true" style="font-size:11px; color:var(--muted); font-weight:700; text-transform:uppercase;">INFORMAÇÃO EXTRA</div>
+          <div contenteditable="true" style="font-size:20px; font-weight:800; color:var(--navy); margin-top:8px;">Dado</div>
+      `;
+      grid.appendChild(box);
   },
 
   addBloco: (tipo) => {
@@ -3084,15 +3163,25 @@ const ATDLivre = {
         `;
     } else if (tipo === 'kpi') {
         content = `
-          <div class="atd-kpi-grid">
-             <div class="atd-kpi-box">
-                <div contenteditable="true" style="font-size:11px; color:var(--muted); font-weight:700; text-transform:uppercase;">INFORMAÇÃO 1</div>
-                <div contenteditable="true" style="font-size:20px; font-weight:800; color:var(--navy); margin-top:8px;">R$ 0,00</div>
-             </div>
-             <div class="atd-kpi-box">
-                <div contenteditable="true" style="font-size:11px; color:var(--muted); font-weight:700; text-transform:uppercase;">INFORMAÇÃO 2</div>
-                <div contenteditable="true" style="font-size:20px; font-weight:800; color:var(--navy); margin-top:8px;">Dado Aqui</div>
-             </div>
+          <div class="atd-kpi-container">
+              <div class="atd-kpi-grid">
+                 <div class="atd-kpi-box">
+                    <button class="btn-remove-kpi" onclick="this.parentElement.remove()">×</button>
+                    <div contenteditable="true" style="font-size:11px; color:var(--muted); font-weight:700; text-transform:uppercase;">ORÇAMENTO OBRA</div>
+                    <div contenteditable="true" style="font-size:20px; font-weight:800; color:var(--navy); margin-top:8px;">R$ 0,00</div>
+                 </div>
+                 <div class="atd-kpi-box">
+                    <button class="btn-remove-kpi" onclick="this.parentElement.remove()">×</button>
+                    <div contenteditable="true" style="font-size:11px; color:var(--muted); font-weight:700; text-transform:uppercase;">MELHOR PREÇO</div>
+                    <div contenteditable="true" style="font-size:20px; font-weight:800; color:var(--navy); margin-top:8px;">R$ 0,00</div>
+                 </div>
+                 <div class="atd-kpi-box">
+                    <button class="btn-remove-kpi" onclick="this.parentElement.remove()">×</button>
+                    <div contenteditable="true" style="font-size:11px; color:var(--muted); font-weight:700; text-transform:uppercase;">DESVIO TOTAL</div>
+                    <div contenteditable="true" style="font-size:20px; font-weight:800; color:var(--danger); margin-top:8px;">+0%</div>
+                 </div>
+              </div>
+              <button class="btn-add-kpi" onclick="ATDLivre.addKpiBox(this)" title="Adicionar caixa lateral"><i class="fa-solid fa-circle-plus"></i></button>
           </div>
         `;
     } else if (tipo === 'imagem') {
@@ -3130,26 +3219,134 @@ const ATDLivre = {
      }
   },
 
+  abrirModalImportarMapa: () => {
+      const sel = document.getElementById('atd-livre-mapa-select');
+      sel.innerHTML = '<option value="">Selecione o processo...</option>';
+      
+      const procsValidos = DB.data.processos.filter(p => p.propostas && p.propostas.length > 0);
+      if(procsValidos.length === 0) return alert("Nenhum processo com cotações/mapa foi encontrado no sistema.");
+      
+      procsValidos.forEach(p => {
+          const nomeFornVencedor = p.vencedorId ? " (Fechado)" : " (Em cotação)";
+          const desc = p.req.cat || "Sem Categoria";
+          sel.innerHTML += `<option value="${p.id}">${p.id} - ${desc}${nomeFornVencedor}</option>`;
+      });
+      UI.openModal('modal-import-mapa-atd');
+  },
+
+  confirmarImportacaoMapa: () => {
+      const pid = document.getElementById('atd-livre-mapa-select').value;
+      if(!pid) return alert("Por favor, selecione um processo.");
+      const p = DB.getProcess(pid);
+      if(!p) return;
+
+      let html = `<h3 contenteditable="true" style="margin:0 0 10px 0; color:var(--navy); font-size:14px; text-transform:uppercase;">MAPA DE PREÇOS (IMPORTADO DO ${p.id})</h3>`;
+      html += `<table class="items table-comp" style="width:100%; border-collapse:collapse; margin-bottom:15px; background:var(--paper);">`;
+
+      // CABEÇALHO DA TABELA
+      html += `<thead><tr><th style="border:1px solid var(--line); padding:8px; text-align:left; font-size:11px; background:var(--highlight); color:var(--navy);">Item</th><th style="border:1px solid var(--line); padding:8px; text-align:center; font-size:11px; background:var(--highlight); color:var(--navy);">Qtd</th><th style="border:1px solid var(--line); padding:8px; text-align:center; font-size:11px; background:var(--highlight); color:var(--navy);">Unid</th>`;
+      p.propostas.forEach(prop => {
+          const isW = p.vencedorId === prop.fornId;
+          const f = DB.data.fornecedores.find(x=>x.id===prop.fornId) || prop;
+          const bg = isW ? 'background:var(--highlight); border: 2px solid var(--success); color:var(--navy);' : 'border:1px solid var(--line); background:var(--highlight); color:var(--navy);';
+          html += `<th style="padding:8px; text-align:center; font-size:11px; ${bg}"><span style="font-weight:bold">${f.nome || ''}</span></th>`;
+      });
+      html += `</tr></thead><tbody>`;
+
+      // CORPO DA TABELA (ITENS)
+      p.req.itens.forEach(i => {
+          html += `<tr><td style="border:1px solid var(--line); padding:8px; text-align:left; font-size:11px; color:var(--ink);">${i.desc}</td><td style="border:1px solid var(--line); padding:8px; text-align:center; font-size:11px; color:var(--ink);">${i.qtd}</td><td style="border:1px solid var(--line); padding:8px; text-align:center; font-size:11px; color:var(--ink);">${i.unid}</td>`;
+
+          let min = Infinity;
+          p.propostas.forEach(prop => { const val = prop.itens[i.id] || 0; if (val > 0 && val < min) min = val; });
+
+          p.propostas.forEach(prop => {
+              const isW = p.vencedorId === prop.fornId;
+              const val = prop.itens[i.id] || 0;
+              const isBest = (val > 0 && val === min);
+              const vs = val > 0 ? Util.formatBRL(val) : '-';
+
+              let cellBg = isW ? 'background:var(--highlight); border: 2px solid var(--success);' : 'border:1px solid var(--line);';
+              let bestStyle = isBest ? 'background:var(--highlight); font-weight:800; color:var(--success);' : 'color:var(--ink);';
+
+              let diffHtml = '';
+              if (val > 0 && !isBest && min !== Infinity) {
+                  const perc = ((val - min) / min) * 100;
+                  diffHtml = `<br><span style="color:var(--danger); font-size:10px; font-weight:800;">▲ +${perc.toFixed(1)}%</span>`;
+              }
+
+              html += `<td style="padding:8px; text-align:center; font-size:11px; ${cellBg} ${bestStyle}">${vs}${diffHtml}</td>`;
+          });
+          html += `</tr>`;
+      });
+
+      // LINHA DE FRETE
+      html += `<tr><td colspan="3" style="border:1px solid var(--line); padding:8px; text-align:right; font-size:11px; color:var(--ink);">Frete R$</td>`;
+      p.propostas.forEach(prop => {
+          const isW = p.vencedorId === prop.fornId;
+          const cellBg = isW ? 'background:var(--highlight); border: 2px solid var(--success);' : 'border:1px solid var(--line);';
+          html += `<td style="padding:8px; text-align:center; font-size:11px; color:var(--ink); ${cellBg}">${prop.frete>0?Util.formatBRL(prop.frete):'-'}</td>`;
+      });
+      html += `</tr></tbody>`;
+
+      // RODAPÉ (TOTAIS)
+      html += `<tfoot><tr><td colspan="3" style="border:1px solid var(--line); padding:8px; text-align:right; font-size:12px; font-weight:bold; color:var(--navy);">CUSTO TOTAL POSTO NA OBRA</td>`;
+
+      let minTot = Infinity;
+      p.propostas.forEach(prop => {
+          let t = prop.frete + prop.imposto;
+          p.req.itens.forEach(i => t += (prop.itens[i.id]||0) * i.qtd);
+          if(t > 0 && t < minTot) minTot = t;
+      });
+
+      p.propostas.forEach(prop => {
+          let t = prop.frete + prop.imposto;
+          p.req.itens.forEach(i => t += (prop.itens[i.id]||0) * i.qtd);
+
+          const isW = p.vencedorId === prop.fornId;
+          const cellBg = isW ? 'background:var(--highlight); border: 2px solid var(--success);' : 'border:1px solid var(--line);';
+
+          let diffHtml = '';
+          if (t > 0 && minTot > 0 && t > minTot) {
+              const perc = ((t - minTot) / minTot) * 100;
+              diffHtml = `<br><span style="color:var(--danger); font-size:10px; font-weight:800;">▲ +${perc.toFixed(1)}%</span>`;
+          }
+
+          html += `<td style="padding:15px 8px; text-align:center; font-size:13px; font-weight:bold; color:var(--navy); ${cellBg}">${t>0 ? Util.formatBRL(t) : '-'}${diffHtml}</td>`;
+      });
+      html += `</tr></tfoot></table>`;
+
+      // INJETA O BLOCO NA ATD LIVRE
+      const area = document.getElementById('atd-drag-area');
+      const block = document.createElement('div');
+      block.className = 'atd-block';
+      block.draggable = true;
+      block.innerHTML = `
+        <div class="drag-handle" title="Arraste para reordenar">☰</div>
+        <div class="atd-block-content">${html}</div>
+        <button class="btn-remove-block" onclick="this.closest('.atd-block').remove()" title="Excluir bloco">×</button>
+      `;
+      
+      area.appendChild(block);
+      ATDLivre.attachDragEvents(block);
+      UI.closeModal('modal-import-mapa-atd');
+  },
+
   attachDragEvents: (block) => {
     block.addEventListener('dragstart', function() {
         draggedBlock = block;
         setTimeout(() => block.classList.add('dragging'), 0);
     });
-    
     block.addEventListener('dragend', function() {
         draggedBlock.classList.remove('dragging');
         draggedBlock = null;
     });
-    
     block.addEventListener('dragover', function(e) {
         e.preventDefault();
         const afterElement = ATDLivre.getDragAfterElement(document.getElementById('atd-drag-area'), e.clientY);
         const area = document.getElementById('atd-drag-area');
-        if (afterElement == null) {
-            area.appendChild(draggedBlock);
-        } else {
-            area.insertBefore(draggedBlock, afterElement);
-        }
+        if (afterElement == null) { area.appendChild(draggedBlock); } 
+        else { area.insertBefore(draggedBlock, afterElement); }
     });
   },
 
@@ -3160,9 +3357,7 @@ const ATDLivre = {
       const offset = y - box.top - box.height / 2;
       if (offset < 0 && offset > closest.offset) {
         return { offset: offset, element: child };
-      } else {
-        return closest;
-      }
+      } else { return closest; }
     }, { offset: Number.NEGATIVE_INFINITY }).element;
   },
   
@@ -3173,7 +3368,6 @@ const ATDLivre = {
       ATD.loadHistory();
   }
 };
-
 
 window.App = App; window.Req = Req; window.MapaPrecos = MapaPrecos; window.OC = OC; window.AI = AI; window.Email = Email; window.UI = UI; window.Util = Util; window.DB = DB; window.ATD = ATD; window.ATDLivre = ATDLivre;
 
