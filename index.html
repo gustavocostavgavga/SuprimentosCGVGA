@@ -1,3 +1,5 @@
+
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -2817,7 +2819,7 @@ const Req = {
       if(valLocal) loc.value = valLocal;
     }
   },
- addItem: (d=null) => {
+  addItem: (d=null) => {
     const id = d ? d.id : Util.genId();
     const tb = document.getElementById('rcItemsBody');
     const tr = document.createElement('tr'); tr.id='rit_'+id; tr.dataset.id=id;
@@ -2850,44 +2852,6 @@ const Req = {
       const tr = btn.closest('tr');
       const rawDesc = tr.querySelector('.desc').value;
       window.verHistoricoItem(rawDesc);
-  },
-
-      let precosCotados = [];
-
-      DB.data.processos.forEach(p => {
-          p.req.itens.forEach(item => {
-              const itemDescLimpa = Insumos.extractDesc(item.desc).toLowerCase().trim();
-              if(itemDescLimpa === descLimpa) {
-                  p.propostas.forEach(prop => {
-                      const precoFornecedor = prop.itens[item.id];
-                      if(precoFornecedor && precoFornecedor > 0) {
-                          precosCotados.push(precoFornecedor);
-                      }
-                  });
-              }
-          });
-      });
-
-      if(precosCotados.length === 0) {
-          return UI.toast("Ainda não há histórico de preços cotados para este insumo.");
-      }
-
-      const menor = Math.min(...precosCotados);
-      const maior = Math.max(...precosCotados);
-      const soma = precosCotados.reduce((a, b) => a + b, 0);
-      const media = soma / precosCotados.length;
-      const qtd = precosCotados.length;
-
-      document.getElementById('hist-insumo-nome').textContent = rawDesc;
-      document.getElementById('hist-menor').textContent = Util.formatBRL(menor);
-      document.getElementById('hist-maior').textContent = Util.formatBRL(maior);
-      document.getElementById('hist-media').textContent = Util.formatBRL(media);
-      document.getElementById('hist-qtd').textContent = qtd;
-
-      const panel = document.getElementById('modal-historico-precos');
-      panel.style.transform = 'translateY(0)';
-      panel.style.opacity = '1';
-      panel.style.pointerEvents = 'all';
   },
   calcTotal: () => {
     let tot=0;
@@ -2938,7 +2902,7 @@ const Req = {
       if(f) tb.innerHTML += `<tr><td><strong>${f.nome}</strong></td><td style="color:var(--success); font-weight:800">${f.score}</td><td>${f.precoHist}</td></tr>`;
     });
   },
-  enviarCotacao: async () => { /* Mantido igual */
+  enviarCotacao: async () => {
     Req.save(); 
     const p = DB.getProcess(currentPID);
     if (p.fornecedoresSelecionados.length === 0) { if(!confirm("Nenhum fornecedor selecionado. Deseja iniciar a cotação assim mesmo?")) return; }
@@ -2965,6 +2929,7 @@ const Req = {
     DB.save(); UI.toast("Cotações iniciadas!"); App.nav('processos'); 
   }
 };
+
 // ==================== MODULO: AI ====================
 const AI = {
   openSupplierSuggestion: () => {
