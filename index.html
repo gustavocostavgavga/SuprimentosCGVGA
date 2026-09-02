@@ -760,14 +760,15 @@
               <input type="text" id="insumo-search" placeholder="Digite para filtrar..." oninput="Insumos.render()">
            </div>
         </div>
-        <div class="table-wrapper">
-          <table class="items">
+        <div class="table-wrapper" style="overflow-x: hidden;">
+          <table class="items" style="min-width: 100%; table-layout: fixed;">
             <thead>
               <tr>
-                <th style="width:15%">Código</th>
-                <th style="width:60%">Descrição do Insumo (Alfabética)</th>
-                <th style="width:15%; text-align:center;">Unid. de Medida</th>
-                <th style="width:10%; text-align:right">Ação</th>
+                <th style="width:12%">Código</th>
+                <th style="width:58%">Descrição do Insumo (Alfabética)</th>
+                <th class="sortable" style="width:12%; text-align:center;" onclick="Insumos.toggleSort('data')" title="Ordenar por data">Cadastro ↕</th>
+                <th style="width:10%; text-align:center;">Unidade</th>
+                <th style="width:8%; text-align:right">Ação</th>
               </tr>
             </thead>
             <tbody id="lista-insumos-body"></tbody>
@@ -2853,7 +2854,7 @@ const Req = {
           // CRIA O INSUMO NOVO NO BANCO DE DADOS
           if (!DB.data.insumos.find(x => x.desc.toLowerCase() === cleanDesc.toLowerCase())) {
               const newCode = "INS-" + String(DB.data.insumos.length + 1).padStart(4, '0');
-              DB.data.insumos.push({ id: Util.genId(), codigo: newCode, desc: cleanDesc, unid: unid });
+             DB.data.insumos.push({ id: Util.genId(), codigo: newCode, desc: cleanDesc, unid: unid, criadoEm: Util.today() });
           }
       }
     });
@@ -3774,7 +3775,15 @@ const ATDLivre = {
   }
 };
 // ==================== MODULO: INSUMOS ====================
+let insumoSortCol = 'desc'; // Padrão: Alfabética
+let insumoSortAsc = true;
+
 const Insumos = {
+    toggleSort: (col) => {
+        if(insumoSortCol === col) insumoSortAsc = !insumoSortAsc;
+        else { insumoSortCol = col; insumoSortAsc = true; }
+        Insumos.render();
+    },
     render: () => {
         const tb = document.getElementById('lista-insumos-body');
         if(!tb) return;
@@ -3787,18 +3796,28 @@ const Insumos = {
             (i.codigo && i.codigo.toLowerCase().includes(query))
         );
         
-        const sorted = filtered.sort((a,b) => a.desc.localeCompare(b.desc));
+        const sorted = filtered.sort((a,b) => {
+            if(insumoSortCol === 'data') {
+                // Converte DD/MM/YYYY para comparar
+                const dA = a.criadoEm ? new Date(a.criadoEm.split('/').reverse().join('-')) : new Date(0);
+                const dB = b.criadoEm ? new Date(b.criadoEm.split('/').reverse().join('-')) : new Date(0);
+                return insumoSortAsc ? dA - dB : dB - dA;
+            } else {
+                return insumoSortAsc ? (a.desc||'').localeCompare(b.desc||'') : (b.desc||'').localeCompare(a.desc||'');
+            }
+        });
         
         if(sorted.length === 0) {
-            tb.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:20px; color:var(--muted);">Nenhum insumo encontrado.</td></tr>';
+            tb.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:20px; color:var(--muted);">Nenhum insumo encontrado.</td></tr>';
             return;
         }
 
         sorted.forEach(ins => {
             tb.innerHTML += `<tr>
-                <td><input type="text" value="${ins.codigo || ''}" onchange="Insumos.update('${ins.id}', 'codigo', this.value)" style="width:100%; border:1px solid transparent; background:transparent; color:var(--ink); font-family:'Montserrat'; font-weight:600;"></td>
-                <td style="font-weight:600; color:var(--navy);">${ins.desc}</td>
-                <td><input type="text" value="${ins.unid || ''}" onchange="Insumos.update('${ins.id}', 'unid', this.value)" style="width:100%; border:1px solid transparent; background:transparent; color:var(--ink); font-family:'Montserrat'; text-align:center;"></td>
+                <td style="padding-right:0;"><input type="text" value="${ins.codigo || ''}" onchange="Insumos.update('${ins.id}', 'codigo', this.value)" style="width:100%; border:1px solid transparent; background:transparent; color:var(--ink); font-family:'Montserrat'; font-weight:600; padding-left:0;"></td>
+                <td style="font-weight:600; color:var(--navy); word-wrap:break-word; white-space:normal; overflow-wrap:break-word;">${ins.desc}</td>
+                <td style="text-align:center; font-size:11px; color:var(--muted); font-weight:600;">${ins.criadoEm || '-'}</td>
+                <td style="padding-right:0;"><input type="text" value="${ins.unid || ''}" onchange="Insumos.update('${ins.id}', 'unid', this.value)" placeholder="Unid." style="width:100%; max-width:60px; border:1px solid var(--line); border-radius:4px; background:var(--bg); color:var(--ink); font-family:'Montserrat'; text-align:center; padding:4px;"></td>
                 <td style="text-align:right"><button class="del-btn" onclick="Insumos.delete('${ins.id}')" title="Excluir Insumo">×</button></td>
             </tr>`;
         });
