@@ -903,6 +903,32 @@
         <h2>Histórico do Processo (Timeline)</h2>
         <div class="timeline" id="proc-timeline"></div>
       </section>
+<section class="block" id="map-ocs-section" style="display:none; border-color:var(--success);">
+        <h2 style="color:var(--success)">Ordens de Compra Emitidas neste Processo</h2>
+        <table class="items" style="margin-bottom:0;">
+           <thead><tr><th>Número da OC</th><th>Fornecedor</th><th>Qtd. Itens</th><th>Total (R$)</th><th style="text-align:right">Ações</th></tr></thead>
+           <tbody id="map-ocs-body"></tbody>
+        </table>
+      </section>
+    </div>
+
+    <!-- MODAL: GERAR OC PARCIAL/TOTAL -->
+    <div class="modal-overlay" id="modal-gerar-oc">
+      <div class="modal" style="max-width:700px;">
+        <div class="modal-header">
+          <span>🛒 Emitir Ordem de Compra</span>
+          <button class="del-btn" onclick="UI.closeModal('modal-gerar-oc')" style="font-size:24px;">&times;</button>
+        </div>
+        <div style="font-size:13px; font-weight:800; color:var(--navy); margin-bottom:15px;" id="gerar-oc-forn-nome">Fornecedor</div>
+        <div style="font-size:12px; color:var(--muted); margin-bottom:15px;">Selecione os itens que deseja comprar com este fornecedor:</div>
+        <div class="table-wrapper" style="max-height:300px; margin-bottom:20px;">
+           <table class="items" style="width:100%;">
+              <thead><tr><th style="width:5%">✔</th><th>Item</th><th style="width:10%; text-align:center;">Qtd</th><th style="width:20%; text-align:right;">R$ Unit</th><th style="width:20%; text-align:right;">R$ Total</th></tr></thead>
+              <tbody id="gerar-oc-itens"></tbody>
+           </table>
+        </div>
+        <button class="btn btn-success" style="width:100%; padding:15px;" onclick="confirmarGerarOC()">Gerar Ordem de Compra</button>
+      </div>
     </div>
 
     <!-- ==================== VIEW: ORDEM DE COMPRA ==================== -->
@@ -910,7 +936,7 @@
       <div class="doc-head">
         <div class="doc-title">3. Ordem de Compra<small>Aprovado e Fechado</small></div>
         <div class="header-actions">
-          <button class="btn btn-outline" onclick="voltarParaMapa()">← Cancelar OC e Voltar ao Mapa</button>
+          <button class="btn btn-outline" onclick="App.abrir(currentPID, 'mapa')">← Voltar ao Mapa de Preços</button>
           <button class="btn btn-outline" onclick="imprimirTela()">🖨️ Imprimir OC</button>
           <button class="btn btn-success" onclick="OC.save()">Salvar OC</button>
         </div>
@@ -1643,7 +1669,38 @@
     </div>
   </div>
 </div>
-
+<!-- PAINEL FLUTUANTE: HISTÓRICO DE PREÇOS (INSUMOS) -->
+<div id="modal-historico-precos" style="position:fixed; bottom:24px; right:24px; width:500px; background:var(--paper); border:2px solid var(--navy); border-radius:12px; box-shadow:0 15px 35px rgba(0,0,0,0.25); z-index:99999; transform:translateY(150%); opacity:0; pointer-events:none; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); padding:20px;">
+  <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid var(--highlight); padding-bottom:12px; margin-bottom:16px;">
+    <span style="font-size:14px; font-weight:800; color:var(--navy); text-transform:uppercase;"><i class="fa-solid fa-clock-rotate-left" style="color:var(--navy); margin-right:8px;"></i> Histórico de Cotações</span>
+    <button class="del-btn" onclick="document.getElementById('modal-historico-precos').style.transform='translateY(150%)'; document.getElementById('modal-historico-precos').style.opacity='0'; document.getElementById('modal-historico-precos').style.pointerEvents='none';" style="font-size:24px; line-height:1;" title="Fechar Painel">&times;</button>
+  </div>
+  
+  <div style="font-size:13px; font-weight:800; color:var(--navy); margin-bottom:15px; text-transform:uppercase;" id="hist-insumo-nome">NOME DO INSUMO</div>
+  
+  <div class="grid cols-2" style="gap:10px;">
+     <div style="border:1px solid var(--line); border-radius:8px; padding:15px; background:var(--highlight); text-align:center;">
+        <i class="fa-solid fa-arrow-down" style="font-size:20px; color:var(--success); margin-bottom:8px;"></i>
+        <div style="font-size:10px; font-weight:700; color:var(--muted); text-transform:uppercase;">Menor Preço</div>
+        <div style="font-size:18px; font-weight:800; color:var(--success); margin-top:4px;" id="hist-menor">R$ 0,00</div>
+     </div>
+     <div style="border:1px solid var(--line); border-radius:8px; padding:15px; background:#FEF3C7; text-align:center;">
+        <i class="fa-solid fa-arrow-up" style="font-size:20px; color:#92400E; margin-bottom:8px;"></i>
+        <div style="font-size:10px; font-weight:700; color:var(--muted); text-transform:uppercase;">Maior Preço</div>
+        <div style="font-size:18px; font-weight:800; color:#92400E; margin-top:4px;" id="hist-maior">R$ 0,00</div>
+     </div>
+     <div style="border:1px solid var(--line); border-radius:8px; padding:15px; background:var(--paper); text-align:center;">
+        <i class="fa-solid fa-scale-balanced" style="font-size:20px; color:var(--navy); margin-bottom:8px;"></i>
+        <div style="font-size:10px; font-weight:700; color:var(--muted); text-transform:uppercase;">Média</div>
+        <div style="font-size:18px; font-weight:800; color:var(--navy); margin-top:4px;" id="hist-media">R$ 0,00</div>
+     </div>
+     <div style="border:1px solid var(--line); border-radius:8px; padding:15px; background:var(--bg); text-align:center;">
+        <i class="fa-solid fa-hashtag" style="font-size:20px; color:var(--muted); margin-bottom:8px;"></i>
+        <div style="font-size:10px; font-weight:700; color:var(--muted); text-transform:uppercase;">Qtd. Cotações</div>
+        <div style="font-size:18px; font-weight:800; color:var(--ink); margin-top:4px;" id="hist-qtd">0</div>
+     </div>
+  </div>
+</div>
 <div class="toast" id="toast"></div>
 
 <!-- ==========================================
@@ -1755,7 +1812,30 @@ const DB = {
     try { await setDoc(doc(db, "sistema", "suprimentos_db"), DB.data); } catch(e) {}
   },
   seed: () => { DB.data.fornecedores = JSON.parse(JSON.stringify(fornecedoresReaisData)); DB.data.processos = []; },
-  getProcess: (id) => DB.data.processos.find(p => p.id === id)
+  getProcess: (id) => {
+      const p = DB.data.processos.find(x => x.id === id);
+      if(p && !p.ocs) {
+          p.ocs = [];
+          if(p.vencedorId) {
+              p.ocs.push({
+                  numero: p.oc?.numero || `OC-${p.id}-1`,
+                  fornId: p.vencedorId,
+                  emissao: p.oc?.emissao || p.criadoEm,
+                  entrega: p.oc?.entrega || '',
+                  resp: p.oc?.resp || p.req?.resp || '',
+                  cond: p.oc?.cond || '',
+                  local: p.oc?.local || p.req?.local || '',
+                  obs: p.oc?.obs || '',
+                  frete: 0, imposto: 0,
+                  itens: p.req.itens.map(i => {
+                      const val = p.propostas.find(x=>x.fornId===p.vencedorId)?.itens[i.id] || 0;
+                      return { id: i.id, desc: i.desc, qtd: i.qtd, unid: i.unid, preco: val };
+                  })
+              });
+          }
+      }
+      return p;
+  }
 };
 
 // ==================== CONTROLLER ====================
@@ -1964,7 +2044,7 @@ const App = {
       }
       else if(p.status==='aprovado') { 
         stHtml = '<span class="status-badge s-aprov">OC Emitida</span>'; 
-        acHtml=`<button class="btn btn-success" onclick="App.abrir('${p.id}', 'oc')">Ver OC</button>`; 
+        acHtml=`<button class="btn btn-success" onclick="App.abrir('${p.id}', 'mapa')">Gerenciar OCs</button>`;
       }
       tbody.innerHTML += `<tr><td><strong style="color:var(--navy)">${p.id}</strong></td><td>${p.criadoEm}</td><td>${p.spe ? SPES[p.spe].prefixo : '-'}</td><td>${stHtml}</td><td style="text-align:right">${acHtml} <button class="del-btn" style="font-size:14px; margin-left:4px;" onclick="App.del('${p.id}')">×</button></td></tr>`;
     });
@@ -2723,7 +2803,7 @@ const Req = {
       if(valLocal) loc.value = valLocal;
     }
   },
-  addItem: (d=null) => {
+ addItem: (d=null) => {
     const id = d ? d.id : Util.genId();
     const tb = document.getElementById('rcItemsBody');
     const tr = document.createElement('tr'); tr.id='rit_'+id; tr.dataset.id=id;
@@ -2732,7 +2812,12 @@ const Req = {
       <td class="col-desc"><input type="text" class="desc" placeholder="Busque insumo ou digite livremente..." value="${d?.desc || ''}" list="dl-insumos" onchange="Req.onDescChange(this)"></td>
       <td class="col-qty"><input type="number" class="qty num" min="0" step="1" value="${d?.qtd || 1}" onchange="Req.calcTotal()"></td>
       <td class="col-unit"><input type="text" class="unit" placeholder="un." value="${d?.unid || 'un.'}"></td>
-      <td class="col-price"><input type="text" class="price num" value="${priceVal}" placeholder="R$ 0,00" oninput="Util.maskCur(this)" onchange="Req.calcTotal()"></td>
+      <td class="col-price">
+         <div style="display:flex; gap:6px;">
+            <input type="text" class="price num" value="${priceVal}" placeholder="R$ 0,00" oninput="Util.maskCur(this)" onchange="Req.calcTotal()">
+            <button class="btn btn-outline" style="padding:0 10px; border-color:var(--line); color:var(--navy);" onclick="Req.verHistorico(this)" title="Consultar histórico deste insumo"><i class="fa-solid fa-clock-rotate-left"></i></button>
+         </div>
+      </td>
       <td class="row-total" id="rctot_${id}" style="text-align:right; font-weight:700;">R$ 0,00</td>
       <td class="col-del"><button class="del-btn" onclick="this.closest('tr').remove(); Req.calcTotal()">×</button></td>
     `;
@@ -2746,6 +2831,52 @@ const Req = {
           const tr = input.closest('tr');
           tr.querySelector('.unit').value = ins.unid;
       }
+  },
+  verHistorico: (btn) => {
+      const tr = btn.closest('tr');
+      const rawDesc = tr.querySelector('.desc').value;
+      const descLimpa = Insumos.extractDesc(rawDesc).toLowerCase().trim();
+      
+      if(!descLimpa) {
+          return UI.toast("Digite o nome do insumo antes de consultar o histórico.");
+      }
+
+      let precosCotados = [];
+
+      DB.data.processos.forEach(p => {
+          p.req.itens.forEach(item => {
+              const itemDescLimpa = Insumos.extractDesc(item.desc).toLowerCase().trim();
+              if(itemDescLimpa === descLimpa) {
+                  p.propostas.forEach(prop => {
+                      const precoFornecedor = prop.itens[item.id];
+                      if(precoFornecedor && precoFornecedor > 0) {
+                          precosCotados.push(precoFornecedor);
+                      }
+                  });
+              }
+          });
+      });
+
+      if(precosCotados.length === 0) {
+          return UI.toast("Ainda não há histórico de preços cotados para este insumo.");
+      }
+
+      const menor = Math.min(...precosCotados);
+      const maior = Math.max(...precosCotados);
+      const soma = precosCotados.reduce((a, b) => a + b, 0);
+      const media = soma / precosCotados.length;
+      const qtd = precosCotados.length;
+
+      document.getElementById('hist-insumo-nome').textContent = rawDesc;
+      document.getElementById('hist-menor').textContent = Util.formatBRL(menor);
+      document.getElementById('hist-maior').textContent = Util.formatBRL(maior);
+      document.getElementById('hist-media').textContent = Util.formatBRL(media);
+      document.getElementById('hist-qtd').textContent = qtd;
+
+      const panel = document.getElementById('modal-historico-precos');
+      panel.style.transform = 'translateY(0)';
+      panel.style.opacity = '1';
+      panel.style.pointerEvents = 'all';
   },
   calcTotal: () => {
     let tot=0;
@@ -2948,6 +3079,8 @@ const Email = {
 };
 
 // ==================== MODULO: MAPA DE PREÇOS ====================
+// ==================== MODULO: MAPA DE PREÇOS ====================
+// ==================== MODULO: MAPA DE PREÇOS ====================
 const MapaPrecos = {
   load: (p) => {
     document.getElementById('map-subtitle').textContent = `PROCESSO ${p.id}`;
@@ -2963,8 +3096,8 @@ const MapaPrecos = {
     let thHtml = `<tr><th>Item</th><th>Qtd</th><th>Unid</th>`;
     p.propostas.forEach(prop => {
       const f = DB.data.fornecedores.find(x=>x.id===prop.fornId) || prop;
-      const isW = p.vencedorId === prop.fornId;
-      thHtml += `<th class="${isW?'winner-col':''}">
+      const hasOC = p.ocs && p.ocs.some(oc => oc.fornId === prop.fornId);
+      thHtml += `<th class="${hasOC?'winner-col':''}">
         <input type="text" class="comp-forn-input" value="${f.nome || ''}" placeholder="Fornecedor" onchange="updatePropFornNome('${prop.fornId}', this.value)" onclick="editFornDetails('${prop.fornId}')">
         <div style="display:flex; justify-content:center; align-items:center; gap:6px; margin-top:6px;">
           <small style="font-weight:500; cursor:pointer;" onclick="editFornDetails('${prop.fornId}')">(Editar)</small>
@@ -2978,12 +3111,22 @@ const MapaPrecos = {
 
     let tbHtml = '';
     p.req.itens.forEach(i => {
-      tbHtml += `<tr><td style="font-size:11px">${i.desc}</td><td style="font-size:11px; font-weight:700">${i.qtd}</td><td style="font-size:11px; font-weight:700">${i.unid}</td>`;
+      // Aqui inserimos o botão do reloginho ao lado da descrição do item
+      tbHtml += `<tr>
+        <td style="font-size:11px">
+           <div style="display:flex; justify-content:space-between; align-items:center;">
+              <span style="flex:1;">${i.desc}</span>
+              <button class="btn btn-outline" style="padding:2px 6px; font-size:10px; border-color:var(--line); color:var(--navy); margin-left:8px;" onclick="verHistoricoItem('${i.desc}')" title="Consultar Histórico de Preços"><i class="fa-solid fa-clock-rotate-left"></i></button>
+           </div>
+        </td>
+        <td style="font-size:11px; font-weight:700; text-align:center;">${i.qtd}</td>
+        <td style="font-size:11px; font-weight:700; text-align:center;">${i.unid}</td>`;
+        
       p.propostas.forEach(prop => {
-        const isW = p.vencedorId === prop.fornId;
+        const isItemWon = p.ocs && p.ocs.some(oc => oc.fornId === prop.fornId && oc.itens.some(oci => oci.id === i.id));
         const val = prop.itens[i.id] || 0;
         const vs = val>0 ? Util.formatBRL(val) : '';
-        tbHtml += `<td class="${isW?'winner-col':''}">
+        tbHtml += `<td class="${isItemWon?'winner-col':''}">
           <input type="text" id="in_${prop.fornId}_${i.id}" class="num item-val-input" style="width:110px" value="${vs}" placeholder="R$ 0,00" data-val="${val}" oninput="Util.maskCur(this)" onchange="updatePropPreco('${prop.fornId}', '${i.id}', this.value)">
           <span id="dev_${prop.fornId}_${i.id}"></span>
         </td>`;
@@ -2993,7 +3136,8 @@ const MapaPrecos = {
 
     tbHtml += `<tr><td colspan="3" style="text-align:right; font-size:11px;">Frete R$</td>`;
     p.propostas.forEach(prop => { 
-      tbHtml += `<td class="${p.vencedorId===prop.fornId?'winner-col':''}"><input type="text" class="num" style="width:110px" value="${prop.frete>0?Util.formatBRL(prop.frete):''}" placeholder="R$ 0,00" oninput="Util.maskCur(this)" onchange="updatePropFreco('${prop.fornId}', this.value)"></td>`; 
+      const hasOC = p.ocs && p.ocs.some(oc => oc.fornId === prop.fornId);
+      tbHtml += `<td class="${hasOC?'winner-col':''}"><input type="text" class="num" style="width:110px" value="${prop.frete>0?Util.formatBRL(prop.frete):''}" placeholder="R$ 0,00" oninput="Util.maskCur(this)" onchange="updatePropFreco('${prop.fornId}', this.value)"></td>`; 
     });
     tbHtml += `</tr>`;
 
@@ -3016,27 +3160,48 @@ const MapaPrecos = {
          t += val * i.qtd;
       });
       
-      const isW = p.vencedorId === prop.fornId;
+      const hasOC = p.ocs && p.ocs.some(oc => oc.fornId === prop.fornId);
       let diffHtml = '';
       if (t > 0 && minTot > 0 && t > minTot) {
         const perc = ((t - minTot) / minTot) * 100;
         diffHtml = `<div style="color:var(--danger); font-size:10px; font-weight:800; margin-top:4px;">▲ +${perc.toFixed(1)}%</div>`;
       }
 
-      let btn = '';
-      if(p.status !== 'aprovado') {
-        const warnHtml = isIncomplete ? `<div style="color:var(--danger); font-size:9px; font-weight:700; margin-bottom:4px; text-transform:uppercase;">⚠️ Incompleta</div>` : '';
-        btn = `<div style="margin-top:10px">${warnHtml}<button class="btn btn-outline" style="font-size:9px; padding:6px 10px" onclick="selecionarVencedor('${prop.fornId}')">Escolher</button></div>`;
-      } else if (isW) { 
-        btn = `<div style="margin-top:10px; color:var(--success); font-size:11px; font-weight:800">★ VENCEDOR</div>`; 
-      }
+      const warnHtml = isIncomplete ? `<div style="color:var(--danger); font-size:9px; font-weight:700; margin-bottom:4px; text-transform:uppercase;">⚠️ Incompleta</div>` : '';
+      let btn = `<div style="margin-top:10px">${warnHtml}<button class="btn btn-outline" style="font-size:9px; padding:6px 10px" onclick="selecionarVencedor('${prop.fornId}')">Gerar OC (Itens)</button></div>`;
       
-      tfHtml += `<td class="${isW?'winner-col':''}" style="font-weight:800; color:var(--navy); font-size:14px; padding:15px; text-align:center;">
+      if (hasOC) { btn += `<div style="margin-top:10px; color:var(--success); font-size:11px; font-weight:800">★ OC EMITIDA</div>`; }
+      
+      tfHtml += `<td class="${hasOC?'winner-col':''}" style="font-weight:800; color:var(--navy); font-size:14px; padding:15px; text-align:center;">
         ${t>0 ? Util.formatBRL(t) : '-'}${diffHtml}${btn}
       </td>`;
     });
     tfHtml += `</tr>`;
     tfoot.innerHTML = tfHtml;
+
+    const ocSec = document.getElementById('map-ocs-section');
+    if(p.ocs && p.ocs.length > 0) {
+        ocSec.style.display = 'block';
+        let ocHtml = '';
+        p.ocs.forEach((oc, idx) => {
+            const f = DB.data.fornecedores.find(x=>x.id===oc.fornId) || {nome: 'Desconhecido'};
+            let tot = 0;
+            oc.itens.forEach(i => tot += (i.qtd * i.preco));
+            ocHtml += `<tr>
+                <td><strong>${oc.numero}</strong></td>
+                <td>${f.nome}</td>
+                <td>${oc.itens.length}</td>
+                <td>${Util.formatBRL(tot)}</td>
+                <td style="text-align:right;">
+                   <button class="btn btn-success" style="font-size:10px; padding:6px 10px;" onclick="abrirOC(${idx})">Ver / Imprimir OC</button>
+                   <button class="btn btn-outline" style="font-size:10px; padding:6px 10px; color:var(--danger); border-color:var(--danger); margin-left:4px;" onclick="excluirOC(${idx})">Cancelar OC</button>
+                </td>
+            </tr>`;
+        });
+        document.getElementById('map-ocs-body').innerHTML = ocHtml;
+    } else {
+        ocSec.style.display = 'none';
+    }
 
     const tl = document.getElementById('proc-timeline'); tl.innerHTML = '';
     [...p.historico].reverse().forEach(h => { tl.innerHTML += `<div class="tl-item"><div class="tl-date">${h.data}</div><div class="tl-content">${h.txt}</div></div>`; });
@@ -3064,12 +3229,16 @@ const MapaPrecos = {
 };
 
 // ==================== MODULO: ORDEM DE COMPRA ====================
+window.currentOCIndex = 0;
 const OC = {
   load: (p) => {
-    document.getElementById('ocNum').textContent = p.oc.numero || `OC-${p.id}`;
-    document.getElementById('ocEmissao').value = p.oc.emissao || Util.today();
-    document.getElementById('ocEntrega').value = p.oc.entrega || '';
-    document.getElementById('ocResp').value = p.oc.resp || p.req.resp;
+    if(!p.ocs || p.ocs.length === 0) return;
+    const oc = p.ocs[window.currentOCIndex];
+
+    document.getElementById('ocNum').textContent = oc.numero;
+    document.getElementById('ocEmissao').value = oc.emissao || Util.today();
+    document.getElementById('ocEntrega').value = oc.entrega || '';
+    document.getElementById('ocResp').value = oc.resp || p.req.resp || '';
     
     if(p.spe) {
       document.getElementById('ocSpeNome').value = SPES[p.spe].nome;
@@ -3077,8 +3246,7 @@ const OC = {
       document.getElementById('ocSpeEnd').value = SPES[p.spe].endereco;
     }
 
-    const prop = p.propostas.find(x=>x.fornId===p.vencedorId);
-    const f = DB.data.fornecedores.find(x=>x.id===p.vencedorId) || prop;
+    const f = DB.data.fornecedores.find(x=>x.id===oc.fornId);
     if(f) {
       document.getElementById('ocFornNome').value = f.nome || '';
       document.getElementById('ocFornCnpj').value = f.cnpj || f.doc || '';
@@ -3086,40 +3254,41 @@ const OC = {
     }
 
     const condEl = document.getElementById('ocCond');
-    if(condEl) condEl.value = p.oc.cond || prop?.cond || p.req.cond || '';
+    if(condEl) condEl.value = oc.cond || '';
     
     const localEl = document.getElementById('ocLocal');
-    if(localEl) localEl.value = p.oc.local || p.req.local || '';
+    if(localEl) localEl.value = oc.local || p.req.local || '';
     
     const obsEl = document.getElementById('ocObs');
-    if(obsEl) obsEl.value = p.oc.obs || '';
+    if(obsEl) obsEl.value = oc.obs || '';
     
     const tb = document.getElementById('ocItemsBody'); tb.innerHTML = '';
     let tot = 0;
-    if(prop) {
-      p.req.itens.forEach(i => {
-        const v = prop.itens[i.id]||0; tot += (i.qtd * v);
-        tb.innerHTML += `<tr><td style="font-size:11px">${i.desc}</td><td>${i.qtd}</td><td>${i.unid}</td><td>${Util.formatBRL(v)}</td><td style="font-weight:700">${Util.formatBRL(i.qtd*v)}</td></tr>`;
+    if(oc.itens) {
+      oc.itens.forEach(i => {
+        tot += (i.qtd * i.preco);
+        tb.innerHTML += `<tr><td style="font-size:11px">${i.desc}</td><td>${i.qtd}</td><td>${i.unid}</td><td>${Util.formatBRL(i.preco)}</td><td style="font-weight:700">${Util.formatBRL(i.qtd*i.preco)}</td></tr>`;
       });
-      tot += prop.frete + prop.imposto;
     }
     document.getElementById('ocTotal').textContent = Util.formatBRL(tot);
   },
 
   save: () => {
     const p = DB.getProcess(currentPID);
-    p.oc.numero = `OC-${p.id}`;
-    p.oc.emissao = document.getElementById('ocEmissao').value;
-    p.oc.entrega = document.getElementById('ocEntrega').value;
+    if(!p.ocs || p.ocs.length === 0) return;
+    const oc = p.ocs[window.currentOCIndex];
+
+    oc.emissao = document.getElementById('ocEmissao').value;
+    oc.entrega = document.getElementById('ocEntrega').value;
     
     const condEl = document.getElementById('ocCond');
-    if(condEl) p.oc.cond = condEl.value;
+    if(condEl) oc.cond = condEl.value;
     
     const localEl = document.getElementById('ocLocal');
-    if(localEl) p.oc.local = localEl.value;
+    if(localEl) oc.local = localEl.value;
     
     const obsEl = document.getElementById('ocObs');
-    if(obsEl) p.oc.obs = obsEl.value;
+    if(obsEl) oc.obs = obsEl.value;
     
     DB.save(); UI.toast("Ordem de Compra Salva!");
   }
@@ -3856,17 +4025,7 @@ window.salvarNovoFornecedor = () => {
   }
 };
 
-window.voltarParaMapa = () => { 
-  if(!confirm('Isso irá cancelar a Ordem de Compra atual para você refazer o mapa. Continuar?')) return;
-  const p = DB.getProcess(currentPID); 
-  if(p) { 
-    p.status = 'analise'; 
-    p.vencedorId = null;
-    p.economia = 0; 
-    DB.save(); 
-    App.abrir(p.id, 'mapa'); 
-  } 
-};
+window.voltarParaMapa = () => { App.abrir(currentPID, 'mapa'); };
 
 window.editarRequisicao = () => {
   if(!confirm('Atenção: Voltar para a Requisição mudará o status para Rascunho, permitindo alterar itens e disparar nova cotação. Continuar?')) return;
@@ -4067,26 +4226,127 @@ window.salvarMapaManual = () => {
 };
 
 window.selecionarVencedor = (propId) => { 
-  if(!confirm('Deseja aprovar esta proposta e gerar a Ordem de Compra?')) return; 
-  const p = DB.getProcess(currentPID); 
-  
-  let minTot = Infinity, maxTot = 0;
-  p.propostas.forEach(prop => {
-    let t = prop.frete + prop.imposto;
-    p.req.itens.forEach(i => t += (prop.itens[i.id]||0) * i.qtd);
-    if (t > 0) {
-       if (t < minTot) minTot = t;
-       if (t > maxTot) maxTot = t;
+    currentCompFornId = propId;
+    const p = DB.getProcess(currentPID);
+    const prop = p.propostas.find(x => x.fornId === propId);
+    document.getElementById('gerar-oc-forn-nome').textContent = "Comprar de: " + (prop.nome || 'Fornecedor');
+
+    let html = '';
+    p.req.itens.forEach(it => {
+        let alreadyInOc = false;
+        if(p.ocs) {
+           p.ocs.forEach(oc => { if(oc.itens.find(oci => oci.id === it.id)) alreadyInOc = true; });
+        }
+        const preco = prop.itens[it.id] || 0;
+        const disabled = alreadyInOc ? 'disabled' : '';
+        const checked = (!alreadyInOc && preco > 0) ? 'checked' : '';
+        const warn = alreadyInOc ? '<span style="color:var(--danger); font-size:10px; font-weight:800; margin-left:8px;">(Já comprado)</span>' : '';
+
+        html += `<tr>
+            <td style="text-align:center;"><input type="checkbox" class="oc-item-chk" value="${it.id}" ${checked} ${disabled} style="width:16px;height:16px;accent-color:var(--success);"></td>
+            <td>${it.desc} ${warn}</td>
+            <td style="text-align:center;">${it.qtd}</td>
+            <td style="text-align:right;">${Util.formatBRL(preco)}</td>
+            <td style="text-align:right; font-weight:800; color:var(--navy);">${Util.formatBRL(preco * it.qtd)}</td>
+        </tr>`;
+    });
+    document.getElementById('gerar-oc-itens').innerHTML = html;
+    UI.openModal('modal-gerar-oc');
+};
+
+window.confirmarGerarOC = () => {
+    const p = DB.getProcess(currentPID);
+    const prop = p.propostas.find(x => x.fornId === currentCompFornId);
+    if(!p.ocs) p.ocs = [];
+
+    const selected = Array.from(document.querySelectorAll('.oc-item-chk:checked')).map(cb => cb.value);
+    if(selected.length === 0) return alert("Selecione ao menos um item para gerar a OC.");
+
+    const ocItens = [];
+    selected.forEach(id => {
+        const reqIt = p.req.itens.find(x=>x.id===id);
+        ocItens.push({ id: reqIt.id, desc: reqIt.desc, qtd: reqIt.qtd, unid: reqIt.unid, preco: prop.itens[id] || 0 });
+    });
+
+    const ocNum = `OC-${p.id}-${p.ocs.length + 1}`;
+    const novaOc = {
+        numero: ocNum, fornId: prop.fornId, emissao: Util.today(), entrega: prop.prazo || '',
+        resp: p.req.resp || '', cond: prop.cond || '', local: p.req.local || '', obs: '',
+        itens: ocItens, frete: prop.frete || 0, imposto: prop.imposto || 0
+    };
+
+    p.ocs.push(novaOc);
+    p.status = 'aprovado';
+    App.logHistory(p.id, `OC ${ocNum} gerada para ${prop.nome} (${ocItens.length} itens).`);
+
+    let minTot = Infinity, maxTot = 0;
+    p.propostas.forEach(prop => {
+        let t = prop.frete + prop.imposto;
+        p.req.itens.forEach(i => t += (prop.itens[i.id]||0) * i.qtd);
+        if (t > 0) { if (t < minTot) minTot = t; if (t > maxTot) maxTot = t; }
+    });
+    p.economia = (maxTot > 0 && minTot !== Infinity) ? (maxTot - minTot) : 0;
+
+    DB.save();
+    UI.closeModal('modal-gerar-oc');
+    UI.toast('Ordem de Compra gerada com sucesso!');
+    MapaPrecos.load(p);
+};
+
+window.abrirOC = (idx) => { window.currentOCIndex = idx; App.abrir(currentPID, 'oc'); };
+
+window.excluirOC = (idx) => {
+    if(!confirm("Deseja realmente cancelar e excluir esta Ordem de Compra?")) return;
+    const p = DB.getProcess(currentPID);
+    p.ocs.splice(idx, 1);
+    if(p.ocs.length === 0) p.status = 'analise'; 
+    DB.save();
+    MapaPrecos.load(p);
+};
+
+window.verHistoricoItem = (rawDesc) => {
+    const descLimpa = Insumos.extractDesc(rawDesc).toLowerCase().trim();
+    if(!descLimpa) return UI.toast("Nome de insumo inválido.");
+
+    let precosCotados = [];
+
+    // Varre todo o banco procurando por preços deste item
+    DB.data.processos.forEach(p => {
+        p.req.itens.forEach(item => {
+            const itemDescLimpa = Insumos.extractDesc(item.desc).toLowerCase().trim();
+            if(itemDescLimpa === descLimpa) {
+                p.propostas.forEach(prop => {
+                    const precoFornecedor = prop.itens[item.id];
+                    if(precoFornecedor && precoFornecedor > 0) {
+                        precosCotados.push(precoFornecedor);
+                    }
+                });
+            }
+        });
+    });
+
+    if(precosCotados.length === 0) {
+        return UI.toast("Ainda não há histórico de preços cotados para este insumo.");
     }
-  });
-  p.economia = (maxTot > 0 && minTot !== Infinity) ? (maxTot - minTot) : 0;
-  
-  p.vencedorId = propId; 
-  p.status = 'aprovado'; 
-  App.logHistory(p.id, `Fornecedor Vencedor Aprovado. Gerando OC.`); 
-  DB.save(); 
-  UI.toast('Fornecedor vencedor selecionado!'); 
-  App.abrir(p.id, 'oc'); 
+
+    const menor = Math.min(...precosCotados);
+    const maior = Math.max(...precosCotados);
+    const soma = precosCotados.reduce((a, b) => a + b, 0);
+    const media = soma / precosCotados.length;
+    const qtd = precosCotados.length;
+
+    // Atualiza o painel flutuante
+    document.getElementById('hist-insumo-nome').textContent = rawDesc;
+    document.getElementById('hist-menor').textContent = Util.formatBRL(menor);
+    document.getElementById('hist-maior').textContent = Util.formatBRL(maior);
+    document.getElementById('hist-media').textContent = Util.formatBRL(media);
+    document.getElementById('hist-qtd').textContent = qtd;
+
+    // Traz o painel flutuante pra tela
+    const panel = document.getElementById('modal-historico-precos');
+    panel.style.transform = 'translateY(0)';
+    panel.style.opacity = '1';
+    panel.style.pointerEvents = 'all';
 };
 
 // Fecha os filtros flutuantes ao clicar fora deles
