@@ -1,5 +1,3 @@
-
-
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -706,7 +704,8 @@
       <div id="forn-tab-analises" style="display:none;">
           <div class="grid cols-2">
              <section class="block" style="grid-column: span 2;">
-                <h2>Evolução da Base de Fornecedores (OCs Emitidas)</h2>
+                <section class="block" style="grid-column: span 2;">
+                <h2>Evolução da Base de Fornecedores (Fornecedores Cadastrados)</h2>
                 <div style="height:250px; position:relative; width:100%;"><canvas id="chartEvolucao"></canvas></div>
              </section>
              <section class="block">
@@ -714,7 +713,7 @@
                 <div style="height:250px; position:relative; width:100%;"><canvas id="chartCidades"></canvas></div>
              </section>
              <section class="block">
-                <h2>Obras com Mais Fornecedores (Raio de 100km)</h2>
+                <h2>Distribuição de Fornecedores por Obra</h2>
                 <div style="height:250px; position:relative; width:100%; display:flex; justify-content:center;"><canvas id="chartObras"></canvas></div>
              </section>
              <section class="block" style="grid-column: span 2;">
@@ -722,7 +721,7 @@
                 <div style="height:300px; position:relative; width:100%;"><canvas id="chartAvaliacoes"></canvas></div>
              </section>
              <section class="block">
-                <h2>Áreas com MAIS Fornecedores</h2>
+                <h2>Maior Quantidade de Fornecedores por Categoria</h2>
                 <div style="display:flex; justify-content:center; gap:8px; margin-bottom:12px; flex-wrap: wrap;">
                     <button class="btn btn-outline" style="font-size:9px; padding:4px 8px; border-radius:12px;" onclick="App.setAreaFilter('todas', true)">Todas as obras</button>
                     <button class="btn btn-outline" style="font-size:9px; padding:4px 8px; border-radius:12px;" onclick="App.setAreaFilter('bocaiuva', true)">Mirante</button>
@@ -733,7 +732,7 @@
                 <div style="height:280px; position:relative; width:100%;"><canvas id="chartAreasMais"></canvas></div>
              </section>
              <section class="block">
-                <h2>Áreas com MENOS Fornecedores</h2>
+                <h2>Menor Quantidade de Fornecedores por Categoria</h2>
                 <div style="display:flex; justify-content:center; gap:8px; margin-bottom:12px; flex-wrap: wrap;">
                     <button class="btn btn-outline" style="font-size:9px; padding:4px 8px; border-radius:12px;" onclick="App.setAreaFilter('todas', false)">Todas as obras</button>
                     <button class="btn btn-outline" style="font-size:9px; padding:4px 8px; border-radius:12px;" onclick="App.setAreaFilter('bocaiuva', false)">Mirante</button>
@@ -2162,35 +2161,31 @@ const App = {
       };
 
       const chartMonths = [
-         { key: '09/2026', label: 'Set/26' }, { key: '10/2026', label: 'Out/26' },
-         { key: '11/2026', label: 'Nov/26' }, { key: '12/2026', label: 'Dez/26' },
-         { key: '01/2027', label: 'Jan/27' }, { key: '02/2027', label: 'Fev/27' },
-         { key: '03/2027', label: 'Mar/27' }, { key: '04/2027', label: 'Abr/27' },
-         { key: '05/2027', label: 'Mai/27' }, { key: '06/2027', label: 'Jun/27' },
-         { key: '07/2027', label: 'Jul/27' }, { key: '08/2027', label: 'Ago/27' }
+         { key: '08/2026', label: 'Ago/26' }, { key: '09/2026', label: 'Set/26' },
+         { key: '10/2026', label: 'Out/26' }, { key: '11/2026', label: 'Nov/26' },
+         { key: '12/2026', label: 'Dez/26' }, { key: '01/2027', label: 'Jan/27' },
+         { key: '02/2027', label: 'Fev/27' }, { key: '03/2027', label: 'Mar/27' },
+         { key: '04/2027', label: 'Abr/27' }, { key: '05/2027', label: 'Mai/27' },
+         { key: '06/2027', label: 'Jun/27' }, { key: '07/2027', label: 'Jul/27' }
       ];
 
-      const procsAprov = DB.data.processos.filter(p => p.status === 'aprovado');
-      let cumOCs = 0;
       const evolData = chartMonths.map(m => {
-          const inMonth = procsAprov.filter(p => {
-              const dt = p.oc.emissao || p.criadoEm;
-              return dt && dt.substring(3) === m.key;
+          return DB.data.fornecedores.filter(f => {
+              // Os fornecedores antigos herdarão "Agosto" como data de criação fictícia. Novos terão a data real.
+              const dt = f.criadoEm || '24/08/2026'; 
+              return dt.substring(3) === m.key;
           }).length;
-          cumOCs += inMonth;
-          return cumOCs;
       });
 
       cChart('chartEvolucao', {
-          type: 'line',
+          type: 'bar',
           data: {
               labels: chartMonths.map(m=>m.label),
               datasets: [{
-                  label: 'OCs Emitidas (Acumulado)',
+                  label: 'Fornecedores Cadastrados',
                   data: evolData,
-                  borderColor: '#24783d',
-                  backgroundColor: isDark ? 'rgba(36, 120, 61, 0.5)' : 'rgba(36, 120, 61, 0.2)',
-                  borderWidth: 3, fill: true, tension: 0.3, pointBackgroundColor: isDark ? '#b0c90a' : '#0d3b1f'
+                  backgroundColor: '#24783d',
+                  borderRadius: 4
               }]
           },
           options: { responsive: true, maintainAspectRatio: false, plugins: { legend: {display: false} }, scales: defScales }
@@ -2212,23 +2207,13 @@ const App = {
           options: { responsive: true, maintainAspectRatio: false, plugins: { legend: {display: false} }, scales: defScales }
       });
 
-      const obraC = { 'Mirante da Lagoa': 0, 'Joaquim Leme': 0, 'Parque das Nações': 0, 'Cidade Nova': 0 };
-      DB.data.fornecedores.forEach(f => {
-          if(f.lat && f.lng) {
-              if(Util.haversine(f.lat, f.lng, SPES.bocaiuva.lat, SPES.bocaiuva.lng) <= 100) obraC['Mirante da Lagoa']++;
-              if(Util.haversine(f.lat, f.lng, SPES.jleme.lat, SPES.jleme.lng) <= 100) obraC['Joaquim Leme']++;
-              if(Util.haversine(f.lat, f.lng, SPES.mife.lat, SPES.mife.lng) <= 100) obraC['Parque das Nações']++;
-              if(Util.haversine(f.lat, f.lng, SPES.nazareno.lat, SPES.nazareno.lng) <= 100) obraC['Cidade Nova']++;
-          }
-      });
-      const topObras = Object.entries(obraC).filter(i=>i[1]>0).sort((a,b)=>b[1]-a[1]);
-
+      // ZERANDO GRÁFICO DE OBRAS
       cChart('chartObras', {
           type: 'doughnut',
           data: {
-              labels: topObras.map(i => i[0]),
+              labels: ['Mirante da Lagoa', 'Joaquim Leme', 'Parque das Nações', 'Cidade Nova'],
               datasets: [{
-                  data: topObras.map(i => i[1]),
+                  data: [0, 0, 0, 0], // Zerado aguardando nova lógica
                   backgroundColor: isDark ? ['#b0c90a', '#8da608', '#24783d', '#7da885'] : ['#0d3b1f', '#24783d', '#4a9c63', '#b0c90a'],
                   borderWidth: 0 
               }]
@@ -2256,27 +2241,12 @@ const App = {
           options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: {display: false} }, scales: { x: { min: 0, max: 100, ticks: {color:textColor}, grid:{display:false}, border:{display:false} }, y: { ticks: {color:textColor}, grid:{display:false}, border:{display:false} } } }
       });
 
-      const filterBySPE = (f, speKey) => {
-          if(!f.lat || !f.lng) return false;
-          const spe = SPES[speKey];
-          return Util.haversine(f.lat, f.lng, spe.lat, spe.lng) <= 100;
-      };
-
-      const areaFornMais = DB.data.fornecedores.filter(f => App.areaFilterMais === 'todas' || filterBySPE(f, App.areaFilterMais));
-      const cAreasMais = {};
-      areaFornMais.forEach(f => { if(f.cats) cAreasMais[f.cats] = (cAreasMais[f.cats]||0)+1; });
-      const topA = Object.entries(cAreasMais).sort((a,b)=>b[1]-a[1]).slice(0,5);
-
-      const areaFornMenos = DB.data.fornecedores.filter(f => App.areaFilterMenos === 'todas' || filterBySPE(f, App.areaFilterMenos));
-      const cAreasMenos = {};
-      areaFornMenos.forEach(f => { if(f.cats) cAreasMenos[f.cats] = (cAreasMenos[f.cats]||0)+1; });
-      const botA = Object.entries(cAreasMenos).sort((a,b)=>a[1]-b[1]).slice(0,5);
-
+      // ZERANDO GRÁFICOS DE ÁREAS (MAIS E MENOS)
       cChart('chartAreasMais', {
           type: 'bar',
           data: {
-              labels: topA.map(i => i[0].length > 15 ? i[0].substring(0,15)+'...' : i[0]),
-              datasets: [{ data: topA.map(i => i[1]), backgroundColor: isDark ? '#b0c90a' : '#24783d', borderRadius: 4 }]
+              labels: ['Aguardando Lógica...'],
+              datasets: [{ data: [0], backgroundColor: isDark ? '#b0c90a' : '#24783d', borderRadius: 4 }]
           },
           options: { responsive: true, maintainAspectRatio: false, plugins: { legend: {display: false} }, scales: defScales }
       });
@@ -2284,8 +2254,8 @@ const App = {
       cChart('chartAreasMenos', {
           type: 'bar',
           data: {
-              labels: botA.map(i => i[0].length > 15 ? i[0].substring(0,15)+'...' : i[0]),
-              datasets: [{ data: botA.map(i => i[1]), backgroundColor: isDark ? '#b0c90a' : '#0d3b1f', borderRadius: 4 }]
+              labels: ['Aguardando Lógica...'],
+              datasets: [{ data: [0], backgroundColor: isDark ? '#b0c90a' : '#0d3b1f', borderRadius: 4 }]
           },
           options: { responsive: true, maintainAspectRatio: false, plugins: { legend: {display: false} }, scales: defScales }
       });
@@ -3981,7 +3951,8 @@ window.salvarNovoFornecedor = () => {
     cidade: document.getElementById('af_cidade').value || '',
     lat: parseFloat(document.getElementById('af_lat').value) || 0,
     lng: parseFloat(document.getElementById('af_lng').value) || 0,
-    precoHist: isEdit ? (DB.data.fornecedores.find(x => x.id === id)?.precoHist || 'Sem histórico') : 'Sem histórico'
+    precoHist: isEdit ? (DB.data.fornecedores.find(x => x.id === id)?.precoHist || 'Sem histórico') : 'Sem histórico',
+    criadoEm: isEdit ? (DB.data.fornecedores.find(x => x.id === id)?.criadoEm || Util.today()) : Util.today()
   };
 
   if (isEdit) {
@@ -4049,8 +4020,8 @@ window.addFornecedorNovoNoMapa = () => {
   const p = DB.getProcess(currentPID);
   const newId = Util.genId();
   
-  // 1. Cria o fornecedor no banco de dados global instantaneamente
-  const novoFornGlobal = { id: newId, nome: 'NOVO FORNECEDOR', cnpj: '', email: '', tel: '', cats: p.req.cat || '', score: 50, precoHist: 'Novo', cidade: '', lat: 0, lng: 0 };
+  // 1. Cria o fornecedor no banco de dados global instantaneamente (AGORA COM A DATA DE CRIAÇÃO)
+  const novoFornGlobal = { id: newId, nome: 'NOVO FORNECEDOR', cnpj: '', email: '', tel: '', cats: p.req.cat || '', score: 50, precoHist: 'Novo', cidade: '', lat: 0, lng: 0, criadoEm: Util.today() };
   DB.data.fornecedores.push(novoFornGlobal);
 
   // 2. Vincula o fornecedor ao processo atual
