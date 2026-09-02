@@ -3043,7 +3043,7 @@ const MapaPrecos = {
     p.propostas.forEach(prop => {
       const f = DB.data.fornecedores.find(x=>x.id===prop.fornId) || prop;
       const hasOC = p.ocs && p.ocs.some(oc => oc.fornId === prop.fornId);
-      thHtml += `<th class="${hasOC?'winner-col':''}">
+      thHtml += `<th>
         <input type="text" class="comp-forn-input" value="${f.nome || ''}" placeholder="Fornecedor" onchange="updatePropFornNome('${prop.fornId}', this.value)" onclick="editFornDetails('${prop.fornId}')">
         <div style="display:flex; justify-content:center; align-items:center; gap:6px; margin-top:6px;">
           <small style="font-weight:500; cursor:pointer;" onclick="editFornDetails('${prop.fornId}')">(Editar)</small>
@@ -3083,7 +3083,8 @@ const MapaPrecos = {
     tbHtml += `<tr><td colspan="3" style="text-align:right; font-size:11px;">Frete R$</td>`;
     p.propostas.forEach(prop => { 
       const hasOC = p.ocs && p.ocs.some(oc => oc.fornId === prop.fornId);
-      tbHtml += `<td class="${hasOC?'winner-col':''}"><input type="text" class="num" style="width:110px" value="${prop.frete>0?Util.formatBRL(prop.frete):''}" placeholder="R$ 0,00" oninput="Util.maskCur(this)" onchange="updatePropFreco('${prop.fornId}', this.value)"></td>`; 
+      const markFrete = (hasOC && prop.frete > 0) ? 'winner-col' : '';
+      tbHtml += `<td class="${markFrete}"><input type="text" class="num" style="width:110px" value="${prop.frete>0?Util.formatBRL(prop.frete):''}" placeholder="R$ 0,00" oninput="Util.maskCur(this)" onchange="updatePropFreco('${prop.fornId}', this.value)"></td>`; 
     });
     tbHtml += `</tr>`;
 
