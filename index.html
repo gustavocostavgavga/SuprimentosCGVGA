@@ -2051,46 +2051,57 @@ const App = {
     // --- INÍCIO DO NOVO GRÁFICO DE SAVING ---
     const isDark = document.body.classList.contains('dark-mode');
     const textColor = isDark ? '#efefef' : '#777777';
-    
-    let savingDataReal = new Array(chartMonths.length).fill(0);
-    let savingDataMax = new Array(chartMonths.length).fill(0);
 
+    // Extrair e calcular todas as OCs individualmente
+    let allOcs = [];
     procs.forEach(p => {
-       if (p.status === 'aprovado' && p.ocs && p.ocs.length > 0) {
-           p.ocs.forEach(oc => {
-               const dt = oc.emissao || p.criadoEm;
-               if(dt) {
-                  const monthKey = dt.substring(3);
-                  const mIndex = chartMonths.findIndex(m => m.key === monthKey);
-                  if(mIndex > -1) {
-                      let ocReal = 0, ocMax = 0;
-                      oc.itens.forEach(oci => {
-                          ocReal += oci.qtd * oci.preco;
-                          let maxP = oci.preco;
-                          p.propostas.forEach(prop => {
-                              let val = prop.itens[oci.id] || 0;
-                              if(val > maxP) maxP = val;
-                          });
-                          ocMax += oci.qtd * maxP;
-                      });
-                      let mxFrete = oc.frete || 0;
-                      p.propostas.forEach(prop => { if((prop.frete||0) > mxFrete) mxFrete = prop.frete; });
-                      
-                      savingDataReal[mIndex] += ocReal + (oc.frete||0) + (oc.imposto||0);
-                      savingDataMax[mIndex] += ocMax + mxFrete + (oc.imposto||0);
-                  }
-               }
-           });
-       }
+        if (p.status === 'aprovado' && p.ocs && p.ocs.length > 0) {
+            p.ocs.forEach(oc => {
+                let ocReal = 0, ocMax = 0;
+                
+                // Calcula o custo real vs pior custo (potencial) para os itens da OC
+                oc.itens.forEach(oci => {
+                    ocReal += oci.qtd * oci.preco;
+                    let maxP = oci.preco;
+                    p.propostas.forEach(prop => {
+                        let val = prop.itens[oci.id] || 0;
+                        if(val > maxP) maxP = val;
+                    });
+                    ocMax += oci.qtd * maxP;
+                });
+                
+                // Pega o pior frete possível no mapa para somar ao pior cenário
+                let mxFrete = oc.frete || 0;
+                p.propostas.forEach(prop => { if((prop.frete||0) > mxFrete) mxFrete = prop.frete; });
+                
+                ocReal += (oc.frete||0) + (oc.imposto||0);
+                ocMax += mxFrete + (oc.imposto||0);
+
+                // Converter data para ordenar cronologicamente
+                const dt = oc.emissao || p.criadoEm || Util.today();
+                const parts = dt.split('/');
+                const sortDate = parts.length === 3 ? new Date(parts[2], parts[1]-1, parts[0]).getTime() : 0;
+
+                allOcs.push({ label: oc.numero, sortTimestamp: sortDate, real: ocReal, max: ocMax });
+            });
+        }
     });
 
-    let accReal = 0, accMax = 0;
-    for(let i=0; i<chartMonths.length; i++) {
-        accReal += savingDataReal[i];
-        accMax += savingDataMax[i];
-        savingDataReal[i] = accReal;
-        savingDataMax[i] = accMax;
-    }
+    // Ordenar OCs da mais antiga para a mais nova
+    allOcs.sort((a, b) => a.sortTimestamp - b.sortTimestamp);
+
+    // Montar os dados do gráfico partindo da Origem (Zero)
+    const labels = ['Início'];
+    const dataReal = [0];
+    const dataMax = [0];
+
+    allOcs.forEach(item => {
+        // Pega só o finalzinho do nome da OC para não poluir o eixo X
+        const shortLabel = item.label.split('-').slice(1).join('-'); 
+        labels.push('OC-' + shortLabel);
+        dataReal.push(item.real);
+        dataMax.push(item.max);
+    });
 
     const ctxSaving = document.getElementById('dash-saving-chart');
     if(ctxSaving) {
@@ -2098,26 +2109,30 @@ const App = {
         window.dashSavingChart = new Chart(ctxSaving.getContext('2d'), {
             type: 'line',
             data: {
-                labels: chartMonths.map(m => m.label),
+                labels: labels,
                 datasets: [
                     {
-                        label: 'Custo Realizado',
-                        data: savingDataReal,
+                        label: 'Custo Negociado (Real)',
+                        data: dataReal,
                         borderColor: '#24783d',
                         backgroundColor: isDark ? 'rgba(36, 120, 61, 0.2)' : 'rgba(36, 120, 61, 0.1)',
                         borderWidth: 3,
                         fill: true,
-                        tension: 0.4
+                        tension: 0.3,
+                        pointRadius: 4,
+                        pointBackgroundColor: '#24783d'
                     },
                     {
-                        label: 'Custo Potencial Máximo',
-                        data: savingDataMax,
+                        label: 'Custo Potencial (Pior Preço)',
+                        data: dataMax,
                         borderColor: '#8A2E2E',
                         backgroundColor: 'transparent',
                         borderWidth: 2,
                         borderDash: [5, 5],
                         fill: false,
-                        tension: 0.4
+                        tension: 0.3,
+                        pointRadius: 4,
+                        pointBackgroundColor: '#8A2E2E'
                     }
                 ]
             },
@@ -2125,7 +2140,7 @@ const App = {
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: {
-                    legend: { position: 'top', labels: { color: textColor, usePointStyle: true, boxWidth: 8 } },
+                    legend: { position: 'top', labels: { color: textColor, usePointStyle: true, boxWidth: 4 } },
                     tooltip: { callbacks: { label: function(c) { return c.dataset.label + ': ' + Util.formatBRL(c.parsed.y); } } }
                 },
                 scales: {
@@ -2146,6 +2161,7 @@ const App = {
         });
     }
   },
+
   renderProcessos: () => {
     const tbody = document.getElementById('lista-processos-body'); tbody.innerHTML = '';
     [...DB.data.processos].reverse().forEach(p => {
