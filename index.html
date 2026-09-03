@@ -1,3 +1,5 @@
+
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -2090,17 +2092,25 @@ const App = {
     // Ordenar OCs da mais antiga para a mais nova
     allOcs.sort((a, b) => a.sortTimestamp - b.sortTimestamp);
 
-    // Montar os dados do gráfico partindo da Origem (Zero)
+   // Montar os dados do gráfico partindo da Origem (Zero) de forma ACUMULATIVA
     const labels = ['Início'];
     const dataReal = [0];
     const dataMax = [0];
+
+    let accReal = 0;
+    let accMax = 0;
 
     allOcs.forEach(item => {
         // Pega só o finalzinho do nome da OC para não poluir o eixo X
         const shortLabel = item.label.split('-').slice(1).join('-'); 
         labels.push('OC-' + shortLabel);
-        dataReal.push(item.real);
-        dataMax.push(item.max);
+        
+        // Soma o valor atual ao acumulado
+        accReal += item.real;
+        accMax += item.max;
+        
+        dataReal.push(accReal);
+        dataMax.push(accMax);
     });
 
     const ctxSaving = document.getElementById('dash-saving-chart');
@@ -2140,7 +2150,7 @@ const App = {
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: {
-                    legend: { position: 'top', labels: { color: textColor, usePointStyle: true, boxWidth: 4 } },
+                    legend: { position: 'top', labels: { color: textColor, usePointStyle: true, boxWidth: 8 } },
                     tooltip: { callbacks: { label: function(c) { return c.dataset.label + ': ' + Util.formatBRL(c.parsed.y); } } }
                 },
                 scales: {
