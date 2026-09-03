@@ -1,6 +1,3 @@
-
-
-
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -765,9 +762,15 @@
       </div>
       <section class="block">
         <div style="display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:16px;">
-           <div class="field" style="width: 300px;">
-              <label>🔍 Buscar Insumo (Código ou Descrição)</label>
-              <input type="text" id="insumo-search" placeholder="Digite para filtrar..." oninput="Insumos.render()">
+           <div style="display:flex; gap:16px;">
+              <div class="field" style="width: 300px;">
+                 <label>🔍 Buscar Insumo</label>
+                 <input type="text" id="insumo-search" placeholder="Digite para filtrar..." oninput="Insumos.render()">
+              </div>
+              <div class="field" style="width: 200px;">
+                 <label>📂 Filtrar Família (Código)</label>
+                 <select id="insumo-code-filter" onchange="Insumos.render()"><option value="">Todas as Famílias</option></select>
+              </div>
            </div>
         </div>
         <div class="table-wrapper" style="overflow-x: hidden;">
@@ -863,10 +866,10 @@
     <div id="view-mapa" class="view">
       <div class="doc-head">
         <div class="doc-title">2. Mapa de Preços & Equalização<small id="map-subtitle">Processo</small></div>
-        <div class="header-actions">
+       <div class="header-actions">
           <button class="btn btn-outline" onclick="editarRequisicao()">← Editar Requisição de Compra</button>
           <button class="btn btn-solid" style="background-color: var(--navy-2);" onclick="salvarMapaManual()">💾 Salvar Mapa</button>
-          <button class="btn btn-solid" onclick="abrirModalAddFornMapa()">➕ Adicionar Fornecedor Existente</button>
+          <button class="btn btn-solid" id="btn-ver-oc-header" style="display:none;" onclick="App.abrir(currentPID, 'oc')">📄 Ver Ordem de Compra</button>
           <button class="btn btn-ai" style="padding:10px 20px; font-size:13px;" onclick="ATD.openModal()">📊 Montar ATD</button>
         </div>
       </div>
@@ -876,6 +879,7 @@
           <span>Mapa Comparativo</span>
           <div>
              <button class="btn btn-outline" style="font-size:10px; padding:4px 10px; border-color:var(--success); color:var(--success);" onclick="MapaPrecos.markBest()">Marcar melhores</button>
+             <button class="btn btn-outline" style="font-size:10px; padding:4px 10px; margin-left:8px;" onclick="abrirModalAddFornMapa()">+ Add Fornecedor Existente</button>
              <button class="btn btn-success" style="font-size:10px; padding:4px 10px; margin-left:8px;" onclick="addFornecedorNovoNoMapa()">+ Add Fornecedor Novo</button>
           </div>
         </h2>
@@ -2159,9 +2163,31 @@ const App = {
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                plugins: {
-                    legend: { position: 'top', labels: { color: textColor, usePointStyle: true, boxWidth: 6 } },
-                    tooltip: { callbacks: { label: function(c) { return c.dataset.label + ': ' + Util.formatBRL(c.parsed.y); } } }
+               plugins: {
+                    legend: { position: 'top', labels: { color: textColor, usePointStyle: true, boxWidth: 2 } },
+                    tooltip: { 
+                        callbacks: { 
+                            label: function(c) { 
+                                if (c.dataIndex === 0) return c.dataset.label + ': ' + Util.formatBRL(c.parsed.y);
+                                const ocData = allOcs[c.dataIndex - 1];
+                                const isReal = c.datasetIndex === 0;
+                                
+                                if (isReal) {
+                                    const perc = ocData.real > 0 ? ((ocData.max - ocData.real) / ocData.real) * 100 : 0;
+                                    return [
+                                        `💰 ACUMULADO GERAL: ${Util.formatBRL(c.parsed.y)}`,
+                                        `-------------------------`,
+                                        `📌 NESTA ORDEM DE COMPRA:`,
+                                        `🟢 Valor Fechado: ${Util.formatBRL(ocData.real)}`,
+                                        `🔴 Pior Preço: ${Util.formatBRL(ocData.max)}`,
+                                        `🚀 Desvio (Saving): +${perc.toFixed(1)}%`
+                                    ];
+                                } else {
+                                    return `🔴 ACUMULADO (PIOR): ${Util.formatBRL(c.parsed.y)}`;
+                                }
+                            } 
+                        } 
+                    }
                 },
                 scales: {
                     x: { ticks: { color: textColor }, grid: { display: false } },
@@ -3017,16 +3043,18 @@ const Req = {
     p.req.itens = [];
     document.querySelectorAll('#rcItemsBody tr').forEach(tr=>{
       const rawDesc = tr.querySelector('.desc').value;
-      const cleanDesc = Insumos.extractDesc(rawDesc);
+      const match = rawDesc.match(/^\[(.*?)\]\s*(.*)$/);
+      const codigoDigitado = match ? match[1] : null;
+      const cleanDesc = match ? match[2] : rawDesc;
       const unid = tr.querySelector('.unit').value;
       
       if(rawDesc.trim() !== '') { 
           p.req.itens.push({ id: tr.dataset.id, desc: rawDesc, qtd: parseFloat(tr.querySelector('.qty').value)||0, unid: unid, preco: Util.unmaskCur(tr.querySelector('.price').value) });
           
-          // CRIA O INSUMO NOVO NO BANCO DE DADOS
+          // CRIA O INSUMO NOVO MANTENDO O CÓDIGO DO USUÁRIO SE EXISTIR
           if (!DB.data.insumos.find(x => x.desc.toLowerCase() === cleanDesc.toLowerCase())) {
-              const newCode = "INS-" + String(DB.data.insumos.length + 1).padStart(4, '0');
-             DB.data.insumos.push({ id: Util.genId(), codigo: newCode, desc: cleanDesc, unid: unid, criadoEm: Util.today() });
+              const newCode = codigoDigitado ? codigoDigitado : ("INS-" + String(DB.data.insumos.length + 1).padStart(4, '0'));
+              DB.data.insumos.push({ id: Util.genId(), codigo: newCode, desc: cleanDesc, unid: unid, criadoEm: Util.today() });
           }
       }
     });
@@ -3203,13 +3231,16 @@ const MapaPrecos = {
   load: (p) => {
     document.getElementById('map-subtitle').textContent = `PROCESSO ${p.id}`;
     document.getElementById('comp-form-forn').style.display = 'none';
-    const obsEl = document.getElementById('compObs');
-    if(obsEl) obsEl.value = p.compObs || '';
-    currentCompFornId = null;
+   const obsEl = document.getElementById('compObs');
+        if(obsEl) obsEl.value = p.compObs || '';
+        currentCompFornId = null;
 
-    const thead = document.getElementById('map-head');
-    const tbody = document.getElementById('map-body');
-    const tfoot = document.getElementById('map-foot');
+        const btnVerOC = document.getElementById('btn-ver-oc-header');
+        if (btnVerOC) btnVerOC.style.display = (p.ocs && p.ocs.length > 0) ? 'inline-flex' : 'none';
+
+        const thead = document.getElementById('map-head');
+        const tbody = document.getElementById('map-body');
+        const tfoot = document.getElementById('map-foot');
     
     let thHtml = `<tr><th>Item</th><th>Qtd</th><th>Unid</th>`;
     p.propostas.forEach(prop => {
@@ -3963,11 +3994,13 @@ const Insumos = {
         tb.innerHTML = '';
         
         let query = (document.getElementById('insumo-search')?.value || '').toLowerCase();
+        let codeFilter = document.getElementById('insumo-code-filter')?.value || '';
         
-        let filtered = DB.data.insumos.filter(i => 
-            (i.desc && i.desc.toLowerCase().includes(query)) || 
-            (i.codigo && i.codigo.toLowerCase().includes(query))
-        );
+        let filtered = DB.data.insumos.filter(i => {
+            const matchQuery = (i.desc && i.desc.toLowerCase().includes(query)) || (i.codigo && i.codigo.toLowerCase().includes(query));
+            const matchCode = codeFilter === '' || (i.codigo && i.codigo.startsWith(codeFilter));
+            return matchQuery && matchCode;
+        });
         
         const sorted = filtered.sort((a,b) => {
             if(insumoSortCol === 'data') {
@@ -4012,7 +4045,7 @@ const Insumos = {
             Insumos.updateDatalist();
         }
     },
-    updateDatalist: () => {
+   updateDatalist: () => {
         let dl = document.getElementById('dl-insumos');
         if(!dl) {
             dl = document.createElement('datalist');
@@ -4020,18 +4053,37 @@ const Insumos = {
             document.body.appendChild(dl);
         }
         dl.innerHTML = '';
+        
+        const sel = document.getElementById('insumo-code-filter');
+        const prefixes = new Set();
+
         DB.data.insumos.forEach(ins => {
             const code = ins.codigo ? `[${ins.codigo}] ` : '';
             dl.innerHTML += `<option value="${code}${ins.desc}">`;
+            
+            if(ins.codigo) {
+                // Captura a família do código, ex: extrai "MO-ELE" de "MO-ELE-0001"
+                const match = ins.codigo.match(/^([A-Za-z\-]+)/);
+                if(match) prefixes.add(match[1].replace(/-$/, '')); 
+            }
         });
-    },
-    extractDesc: (val) => {
-        const match = val.match(/^\[.*?\]\s*(.*)$/);
-        return match ? match[1] : val;
-    }
+
+        if(sel) {
+            const currentVal = sel.value;
+            sel.innerHTML = '<option value="">Todas as Famílias</option>';
+            [...prefixes].sort().forEach(p => {
+                    sel.innerHTML += `<option value="${p}" ${p === currentVal ? 'selected' : ''}>Família: ${p}</option>`;
+                });
+            }
+        },
+        extractDesc: (val) => {
+            const match = val.match(/^\[.*?\]\s*(.*)$/);
+            return match ? match[1] : val;
+        }
 };
 
-window.App = App; window.Req = Req; window.MapaPrecos = MapaPrecos; window.OC = OC; window.AI = AI; window.Email = Email; window.UI = UI; window.Util = Util; window.DB = DB; window.ATD = ATD; window.ATDLivre = ATDLivre; window.Insumos = Insumos;
+window.App = App; window.Req = Req; 
+window.MapaPrecos = MapaPrecos; window.OC = OC; window.AI = AI; window.Email = Email; window.UI = UI; window.Util = Util; window.DB = DB; window.ATD = ATD; window.ATDLivre = ATDLivre; window.Insumos = Insumos;
 
 // ==================== FUNÇÕES DE INTERFACE GLOBAIS ====================
 window.efetuarLogin = () => {
@@ -4320,11 +4372,7 @@ window.removeFornecedorComp = (propId) => { if(!confirm('Remover fornecedor do M
 window.updatePropFornNome = (propId, val) => { const p = DB.getProcess(currentPID); const prop = p.propostas.find(x => x.fornId === propId); if(prop) prop.nome = val; DB.save(); if(currentCompFornId === propId) document.getElementById('comp-form-title').textContent = `- ${val}`; };
 window.updatePropPreco = (propId, itemId, valStr) => { const p = DB.getProcess(currentPID); const prop = p.propostas.find(x => x.fornId === propId); if(prop) { prop.itens[itemId] = Util.unmaskCur(valStr); prop.status = 'recebida'; } DB.save(); MapaPrecos.load(p); };
 window.updatePropFreco = (propId, valStr) => { const p = DB.getProcess(currentPID); const prop = p.propostas.find(x => x.fornId === propId); if(prop) prop.frete = Util.unmaskCur(valStr); DB.save(); MapaPrecos.load(p); };
-window.editFornDetails = (propId) => { currentCompFornId = propId; const p = DB.getProcess(currentPID); const prop = p.propostas.find(x => x.fornId === propId); const f = DB.data.fornecedores.find(x => x.id === propId) || prop; document.getElementById('cfEmail').value = f.email || f.contato || ''; 
-      document.getElementById('cfCond').value = prop.cond || ''; 
-      document.getElementById('cfPrazo').value = prop.prazo || '';
-      document.getElementById('cfObra').value = f.obra || '';
-    };
+window.editFornDetails = (propId) => { currentCompFornId = propId; const p = DB.getProcess(currentPID); const prop = p.propostas.find(x => x.fornId === propId); const f = DB.data.fornecedores.find(x => x.id === propId) || prop; document.getElementById('comp-form-forn').style.display = 'block'; document.getElementById('comp-form-title').textContent = `- ${f.nome||'Novo'}`; document.getElementById('cfNome').value = f.nome || ''; document.getElementById('cfDoc').value = f.cnpj || f.doc || ''; document.getElementById('cfTel').value = f.tel || ''; document.getElementById('cfEmail').value = f.email || f.contato || ''; document.getElementById('cfCond').value = prop.cond || ''; document.getElementById('cfPrazo').value = prop.prazo || ''; document.getElementById('cfObra').value = f.obra || ''; };
 window.updateFornData = (field, val) => { 
     if(!currentCompFornId) return; 
     const p = DB.getProcess(currentPID); 
