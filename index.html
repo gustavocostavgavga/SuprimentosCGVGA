@@ -1,3 +1,6 @@
+
+
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -1642,7 +1645,7 @@
       <div class="field"><label>Contato</label><input type="text" id="af_contato" placeholder="Nome do contato"></div>
       <div class="field full"><label>Cidade/UF</label><input type="text" id="af_cidade" placeholder="Ex: Bocaiúva/MG"></div>
       <div class="field full"><label>Obra Atendida</label><input type="text" id="af_obra" placeholder="Ex: Mirante da Lagoa, Joaquim Leme"></div>
-      <div class="field"><label>Latitude (Lat)</label><input type="text" id="af_lat" placeholder="Ex: -17.107"></div> placeholder="Ex: -17.107"></div>
+      <div class="field"><label>Latitude (Lat)</label><input type="text" id="af_lat" placeholder="Ex: -17.107"></div>
       <div class="field"><label>Longitude (Lng)</label><input type="text" id="af_lng" placeholder="Ex: -43.814"></div>
     </div>
     <button class="btn btn-solid" style="width:100%; padding:15px;" onclick="salvarNovoFornecedor()">Salvar Fornecedor no Banco</button>
@@ -2533,6 +2536,9 @@ const App = {
         document.getElementById('af_tel').value = f.tel || '';
         document.getElementById('af_contato').value = f.contato || '';
         document.getElementById('af_cidade').value = f.cidade || '';
+	document.getElementById('af_obra').value = f.obra || '';
+        document.getElementById('af_lat').value = f.lat || '';
+        document.getElementById('af_lng').value = f.lng || '';
         document.getElementById('af_lat').value = f.lat || '';
         document.getElementById('af_lng').value = f.lng || '';
         UI.openModal('modal-add-forn');
