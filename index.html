@@ -496,6 +496,13 @@
       </div>
 
       <section class="block">
+        <h2>Evolução de Custos Consolidados vs. Potencial sem Negociação - Saving Acumulado</h2>
+        <div style="height:280px; position:relative; width:100%; margin-bottom:10px;">
+            <canvas id="dash-saving-chart"></canvas>
+        </div>
+      </section>
+
+      <section class="block">
         <h2>Volume de Compras e Contratações Realizadas por Mês</h2>
         <div style="display:flex; justify-content:center; gap:15px; margin-bottom:15px; flex-wrap:wrap;" id="dash-chart-legend">
            <div style="display:flex; align-items:center; gap:5px; font-size:10px;"><div style="width:12px; height:12px; background:var(--navy);"></div> Mirante da Lagoa</div>
@@ -2038,6 +2045,104 @@ const App = {
                <div class="chart-label">${m.label}</div>
              </div>
            `;
+        });
+    }
+
+    // --- INÍCIO DO NOVO GRÁFICO DE SAVING ---
+    const isDark = document.body.classList.contains('dark-mode');
+    const textColor = isDark ? '#efefef' : '#777777';
+    
+    let savingDataReal = new Array(chartMonths.length).fill(0);
+    let savingDataMax = new Array(chartMonths.length).fill(0);
+
+    procs.forEach(p => {
+       if (p.status === 'aprovado' && p.ocs && p.ocs.length > 0) {
+           p.ocs.forEach(oc => {
+               const dt = oc.emissao || p.criadoEm;
+               if(dt) {
+                  const monthKey = dt.substring(3);
+                  const mIndex = chartMonths.findIndex(m => m.key === monthKey);
+                  if(mIndex > -1) {
+                      let ocReal = 0, ocMax = 0;
+                      oc.itens.forEach(oci => {
+                          ocReal += oci.qtd * oci.preco;
+                          let maxP = oci.preco;
+                          p.propostas.forEach(prop => {
+                              let val = prop.itens[oci.id] || 0;
+                              if(val > maxP) maxP = val;
+                          });
+                          ocMax += oci.qtd * maxP;
+                      });
+                      let mxFrete = oc.frete || 0;
+                      p.propostas.forEach(prop => { if((prop.frete||0) > mxFrete) mxFrete = prop.frete; });
+                      
+                      savingDataReal[mIndex] += ocReal + (oc.frete||0) + (oc.imposto||0);
+                      savingDataMax[mIndex] += ocMax + mxFrete + (oc.imposto||0);
+                  }
+               }
+           });
+       }
+    });
+
+    let accReal = 0, accMax = 0;
+    for(let i=0; i<chartMonths.length; i++) {
+        accReal += savingDataReal[i];
+        accMax += savingDataMax[i];
+        savingDataReal[i] = accReal;
+        savingDataMax[i] = accMax;
+    }
+
+    const ctxSaving = document.getElementById('dash-saving-chart');
+    if(ctxSaving) {
+        if(window.dashSavingChart) window.dashSavingChart.destroy();
+        window.dashSavingChart = new Chart(ctxSaving.getContext('2d'), {
+            type: 'line',
+            data: {
+                labels: chartMonths.map(m => m.label),
+                datasets: [
+                    {
+                        label: 'Custo Realizado',
+                        data: savingDataReal,
+                        borderColor: '#24783d',
+                        backgroundColor: isDark ? 'rgba(36, 120, 61, 0.2)' : 'rgba(36, 120, 61, 0.1)',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4
+                    },
+                    {
+                        label: 'Custo Potencial Máximo',
+                        data: savingDataMax,
+                        borderColor: '#8A2E2E',
+                        backgroundColor: 'transparent',
+                        borderWidth: 2,
+                        borderDash: [5, 5],
+                        fill: false,
+                        tension: 0.4
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'top', labels: { color: textColor, usePointStyle: true, boxWidth: 8 } },
+                    tooltip: { callbacks: { label: function(c) { return c.dataset.label + ': ' + Util.formatBRL(c.parsed.y); } } }
+                },
+                scales: {
+                    x: { ticks: { color: textColor }, grid: { display: false } },
+                    y: { 
+                        ticks: { 
+                            color: textColor,
+                            callback: function(val) {
+                                if(val >= 1000000) return 'R$ ' + (val/1000000).toFixed(1) + 'M';
+                                if(val >= 1000) return 'R$ ' + (val/1000).toFixed(1) + 'k';
+                                return 'R$ ' + val;
+                            }
+                        }, 
+                        grid: { color: isDark ? '#18522b' : '#e5e5e5' }, border: { display: false } 
+                    }
+                }
+            }
         });
     }
   },
