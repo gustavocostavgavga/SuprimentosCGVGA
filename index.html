@@ -485,7 +485,7 @@
         </div>
         <div class="kpi-card">
           <div class="kpi-title">Economia Obtida</div>
-          <div class="kpi-value" style="color:var(--success)" id="dash-econ">R$ 0,00</div>
+          <div class="kpi-value" style="color:var(--success); font-size:19px; white-space:nowrap; letter-spacing:-0.5px;" id="dash-econ">R$ 0,00</div>
           <div class="kpi-sub">vs. Maior Valor</div>
         </div>
         <div class="kpi-card">
@@ -869,7 +869,7 @@
        <div class="header-actions">
           <button class="btn btn-outline" onclick="editarRequisicao()">← Editar Requisição de Compra</button>
           <button class="btn btn-solid" style="background-color: var(--navy-2);" onclick="salvarMapaManual()">💾 Salvar Mapa</button>
-          <button class="btn btn-solid" id="btn-ver-oc-header" style="display:none;" onclick="App.abrir(currentPID, 'oc')">📄 Ver Ordem de Compra</button>
+          <button class="btn btn-solid" id="btn-ver-oc-header" style="display:none;" onclick="abrirOC(0)">📄 Ver Ordem de Compra</button>
           <button class="btn btn-ai" style="padding:10px 20px; font-size:13px;" onclick="ATD.openModal()">📊 Montar ATD</button>
         </div>
       </div>
@@ -879,7 +879,7 @@
           <span>Mapa Comparativo</span>
           <div>
              <button class="btn btn-outline" style="font-size:10px; padding:4px 10px; border-color:var(--success); color:var(--success);" onclick="MapaPrecos.markBest()">Marcar melhores</button>
-             <button class="btn btn-outline" style="font-size:10px; padding:4px 10px; margin-left:8px;" onclick="abrirModalAddFornMapa()">+ Add Fornecedor Existente</button>
+             <button class="btn btn-success" style="font-size:10px; padding:4px 10px; margin-left:8px;" onclick="abrirModalAddFornMapa()">+ Add Fornecedor Existente</button>
              <button class="btn btn-success" style="font-size:10px; padding:4px 10px; margin-left:8px;" onclick="addFornecedorNovoNoMapa()">+ Add Fornecedor Novo</button>
           </div>
         </h2>
@@ -2164,7 +2164,7 @@ const App = {
                 responsive: true,
                 maintainAspectRatio: false,
                plugins: {
-                    legend: { position: 'top', labels: { color: textColor, usePointStyle: true, boxWidth: 2 } },
+                    legend: { position: 'top', labels: { color: textColor, usePointStyle: true, boxWidth: 6, boxHeight: 6 } },
                     tooltip: { 
                         callbacks: { 
                             label: function(c) { 
