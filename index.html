@@ -1811,7 +1811,7 @@ const DB = {
         console.warn("Modo offline: Falha ao ler Firebase.");
       }
 
-      if (DB.data.fornecedores.length === 0) { DB.seed(); } 
+     if (DB.data.fornecedores.length === 0) { DB.seed(); } 
       else {
         if (DB.data.fornecedores.some(f => ['f1','f2','f3','f4'].includes(f.id)) || !DB.data.fornecedores.some(f => f.nome === "VALLE METALÚRGICA")) {
             DB.data.fornecedores = DB.data.fornecedores.filter(f => !['f1','f2','f3','f4'].includes(f.id));
@@ -1820,8 +1820,15 @@ const DB = {
                   if(!DB.data.fornecedores.some(f => f.nome === fReal.nome)) DB.data.fornecedores.push(fReal);
                });
             }
-            DB.save();
         }
+        // AUTO-PATCH: Atualiza os fornecedores da sua memória cache com o campo "obra"
+        DB.data.fornecedores.forEach(f => {
+            if (f.obra === undefined || f.obra === '') {
+                const fReal = fornecedoresReaisData.find(x => x.nome === f.nome);
+                if (fReal) f.obra = fReal.obra || '';
+            }
+        });
+        DB.save();
       }
     } catch (e) { DB.seed(); }
   },
@@ -2341,11 +2348,11 @@ const App = {
     // Lógica Gráfico de Obras (Agora usando a nova coluna)
       const obraC = { 'Mirante da Lagoa': 0, 'Joaquim Leme': 0, 'Parque das Nações': 0, 'Cidade Nova': 0 };
       DB.data.fornecedores.forEach(f => {
-          const o = f.obra || '';
-          if(o.includes('Mirante da Lagoa')) obraC['Mirante da Lagoa']++;
-          if(o.includes('Joaquim Leme')) obraC['Joaquim Leme']++;
-          if(o.includes('Parque das Nações')) obraC['Parque das Nações']++;
-          if(o.includes('Cidade Nova')) obraC['Cidade Nova']++;
+          const o = (f.obra || '').toLowerCase();
+          if(o.includes('mirante da lagoa')) obraC['Mirante da Lagoa']++;
+          if(o.includes('joaquim leme')) obraC['Joaquim Leme']++;
+          if(o.includes('parque das nações')) obraC['Parque das Nações']++;
+          if(o.includes('cidade nova')) obraC['Cidade Nova']++;
       });
       const topObras = Object.entries(obraC).filter(i=>i[1]>0).sort((a,b)=>b[1]-a[1]);
 
@@ -2386,7 +2393,8 @@ const App = {
       const filterBySPE = (f, speKey) => {
           const nameMap = { 'bocaiuva': 'Mirante da Lagoa', 'jleme': 'Joaquim Leme', 'mife': 'Parque das Nações', 'nazareno': 'Cidade Nova' };
           const targetName = nameMap[speKey];
-          return (f.obra || '').includes(targetName);
+          if(!targetName) return false;
+          return (f.obra || '').toLowerCase().includes(targetName.toLowerCase());
       };
 
       const areaFornMais = DB.data.fornecedores.filter(f => App.areaFilterMais === 'todas' || filterBySPE(f, App.areaFilterMais));
