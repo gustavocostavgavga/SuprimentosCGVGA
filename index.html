@@ -1,5 +1,3 @@
-
-
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -1849,10 +1847,16 @@ const DB = {
         });
         // AUTO-PATCH: Corrige insumos antigos que ficaram com o código preso na descrição
         DB.data.insumos.forEach(ins => {
-            const match = (ins.desc || '').match(/^\[(.*?)\]\s*(.*)$/);
-            if (match) {
-                ins.codigo = match[1];
-                ins.desc = match[2];
+            if (ins.desc && ins.desc.includes('[')) {
+                const match = ins.desc.match(/^\[(.*?)\]\s*(.*)$/);
+                if (match) {
+                    ins.codigo = match[1];
+                    ins.desc = match[2].trim();
+                }
+            }
+            // Correção forçada para o MO-ELE-0001 caso o sistema tenha engolido como INS-000X
+            if (ins.codigo && ins.codigo.startsWith('INS-') && ins.desc.toLowerCase().includes('infraestrutura elétrica')) {
+                ins.codigo = 'MO-ELE-0001';
             }
         });
         DB.save();
@@ -3078,30 +3082,42 @@ const Req = {
     p.req.itens = [];
     let hasError = false;
     document.querySelectorAll('#rcItemsBody tr').forEach(tr=>{
-      const codEl = tr.querySelector('.item-cod').value.trim();
-      const descEl = tr.querySelector('.desc').value.trim();
-      if (descEl === '') return; // Ignora se o cara deixou em branco sem querer
-      if (!codEl || !descEl) { hasError = true; return; }
+      const inputCod = tr.querySelector('.item-cod');
+      const inputDesc = tr.querySelector('.desc');
+      const codEl = inputCod.value.trim();
+      const descEl = inputDesc.value.trim();
+      
+      inputCod.style.borderColor = 'var(--line)';
+      inputDesc.style.borderColor = 'var(--line)';
+
+      if (descEl === '' && codEl === '') return; 
+
+      if (!codEl || !descEl) { 
+          hasError = true; 
+          if(!codEl) inputCod.style.borderColor = 'var(--danger)';
+          if(!descEl) inputDesc.style.borderColor = 'var(--danger)';
+          return; 
+      }
 
       const rawDesc = `[${codEl}] ${descEl}`;
       const unid = tr.querySelector('.unit').value;
       
       p.req.itens.push({ id: tr.dataset.id, desc: rawDesc, qtd: parseFloat(tr.querySelector('.qty').value)||0, unid: unid, preco: Util.unmaskCur(tr.querySelector('.price').value) });
       
-      // CRIA O INSUMO NOVO MANTENDO EXATAMENTE O CÓDIGO/FAMÍLIA DIGITADO
       if (!DB.data.insumos.find(x => x.desc.toLowerCase() === descEl.toLowerCase())) {
           DB.data.insumos.push({ id: Util.genId(), codigo: codEl, desc: descEl, unid: unid, criadoEm: Util.today() });
       }
     });
 
     if(hasError) {
-        alert("Atenção: É obrigatório preencher a 'Família/Cód' e o 'Nome' em todos os itens da requisição para salvar.");
-        return;
+        alert("Atenção: É obrigatório preencher a 'Família/Cód' e o 'Nome' em todos os itens da requisição.");
+        return false;
     }
 
     DB.save(); 
-    Insumos.updateDatalist(); // Atualiza a lista na hora!
+    Insumos.updateDatalist(); 
     UI.toast("Requisição Salva!"); Req.load(p); 
+    return true;
   },
   renderFornList: (p) => {
     const blk = document.getElementById('req-forn-block');
@@ -3114,7 +3130,9 @@ const Req = {
     });
   },
   enviarCotacao: async () => {
-    Req.save(); 
+    const savedOk = Req.save(); 
+    if(savedOk === false) return;
+
     const p = DB.getProcess(currentPID);
     if (p.fornecedoresSelecionados.length === 0) { if(!confirm("Nenhum fornecedor selecionado. Deseja iniciar a cotação assim mesmo?")) return; }
     const fornecedoresData = p.fornecedoresSelecionados.map(fid => DB.data.fornecedores.find(x => x.id === fid)).filter(Boolean);
@@ -4061,7 +4079,10 @@ const Insumos = {
 
         sorted.forEach(ins => {
             tb.innerHTML += `<tr>
-               <td style="padding-right:0;"><input type="text" value="${ins.unid || ''}" onchange="Insumos.update('${ins.id}', 'unid', this.value)" placeholder="Unid." style="width:100%; max-width:60px; border:1px solid var(--line); border-radius:4px; background:var(--bg); color:var(--ink); font-family:'Montserrat'; text-align:center; padding:4px;"></td>
+                <td style="padding-right:0;"><input type="text" value="${ins.codigo || ''}" onchange="Insumos.update('${ins.id}', 'codigo', this.value)" style="width:100%; border:1px solid transparent; background:transparent; color:var(--ink); font-family:'Montserrat'; font-weight:600; padding-left:0;"></td>
+                <td style="font-weight:600; color:var(--navy); word-wrap:break-word; white-space:normal; overflow-wrap:break-word;">${ins.desc}</td>
+                <td style="text-align:center; font-size:11px; color:var(--muted); font-weight:600;">${ins.criadoEm || '-'}</td>
+                <td style="padding-right:0;"><input type="text" value="${ins.unid || ''}" onchange="Insumos.update('${ins.id}', 'unid', this.value)" placeholder="Unid." style="width:100%; max-width:60px; border:1px solid var(--line); border-radius:4px; background:var(--bg); color:var(--ink); font-family:'Montserrat'; text-align:center; padding:4px;"></td>
                 <td style="text-align:right; white-space:nowrap;">
                     <button class="del-btn" style="color:var(--navy); font-size:14px; margin-right:2px;" onclick="Insumos.editData('${ins.id}')" title="Editar Data do Cadastro">✏️</button>
                     <button class="del-btn" onclick="Insumos.delete('${ins.id}')" title="Excluir Insumo">×</button>
