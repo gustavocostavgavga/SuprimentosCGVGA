@@ -386,11 +386,15 @@
      #view-escopo { background: #fff !important; display: block !important; }
      #view-escopo .escopo-print-area { padding: 0 !important; border: none !important; box-shadow: none !important; }
      
-     /* REMOVE AS BARRAS DE ROLAGEM E EXPANDE O TEXTO NA IMPRESSÃO */
+     /* Alinha o título no topo e força a cor preta */
+     #view-escopo h1 { margin-top: 0 !important; padding-top: 0 !important; color: #000 !important; }
+     #view-escopo h1 input { color: #000 !important; border: none !important; }
+     
+     /* Força a expansão do texto sem barra de rolagem */
      .escopo-input, .escopo-textarea { 
          border: none !important; 
          resize: none !important; 
-         overflow: visible !important; 
+         overflow: hidden !important; 
          color: #000 !important; 
          height: auto !important;
          max-height: none !important;
@@ -398,7 +402,7 @@
          word-wrap: break-word !important;
      }
      .escopo-input::placeholder, .escopo-textarea::placeholder { color: transparent !important; }
-     .esc-img-block { border: none !important; padding: 0 !important; margin-bottom: 15px !important; break-inside: avoid; }
+     .esc-img-block { border: none !important; padding: 0 !important; margin-bottom: 15px !important; page-break-inside: avoid; }
   }
 
 </style>
@@ -1660,11 +1664,9 @@
 
       <div id="escopo-content-area" class="escopo-print-area" style="background: var(--paper); padding: 40px; border: 1px solid var(--line); border-radius: 6px; box-shadow: 0 4px 10px rgba(0,0,0,0.05);">
          
-         <!-- NOVO TÍTULO DINÂMICO -->
-         <h1 style="text-align: center; color: var(--navy); font-size: 18px; text-decoration: underline; margin-bottom: 25px; font-weight: 800; display: flex; justify-content: center; align-items: center; gap: 8px;">
-            ESCOPO DE OBRAS E SERVIÇOS N° (
-            <input type="text" id="esc-registro" placeholder="XXXX" class="escopo-input" style="font-weight: 800; width: 60px; text-align: center; font-size: 18px; color: var(--navy); border-bottom: 2px dashed var(--line);">
-            )
+         <!-- NOVO TÍTULO DINÂMICO E LIMPO -->
+         <h1 style="text-align: center; color: var(--navy); font-size: 18px; text-decoration: underline; margin-bottom: 25px; font-weight: 800; display: flex; justify-content: center; align-items: center; gap: 4px;">
+            ESCOPO DE OBRAS E SERVIÇOS N° <span class="no-print" style="margin-left: 4px;">(</span><input type="text" id="esc-registro" placeholder="XXXX" class="escopo-input" style="font-weight: 800; width: 65px; text-align: center; font-size: 18px; color: var(--navy); border-bottom: 2px dashed var(--line); padding: 0;"><span class="no-print">)</span>
          </h1>
 
          <div style="font-size: 11px; color: var(--muted); text-align: right; margin-bottom: 15px;">
@@ -4993,7 +4995,6 @@ const Escopo = {
       Escopo.currentId = e.id;
       document.getElementById('escopo-content-area').innerHTML = e.htmlContent;
       
-      // Restaura o valor das caixas de texto com base no atributo "value" e "textContent" salvos
       document.querySelectorAll('#escopo-content-area .escopo-input').forEach(i => i.value = i.getAttribute('value') || '');
       document.querySelectorAll('#escopo-content-area .escopo-textarea').forEach(t => t.value = t.textContent || '');
       
@@ -5003,7 +5004,6 @@ const Escopo = {
    salvar: () => {
       if(!Escopo.currentId) return;
       
-      // Fixa os valores digitados no HTML antes de salvar
       document.querySelectorAll('#escopo-content-area .escopo-input').forEach(i => i.setAttribute('value', i.value));
       document.querySelectorAll('#escopo-content-area .escopo-textarea').forEach(t => t.textContent = t.value);
       
@@ -5031,20 +5031,21 @@ const Escopo = {
    },
 
    imprimir: () => {
-      // Truque Mestre: Expande todos os textareas para caber 100% do texto sem quebrar ou dar scroll
+      // 1. Força os Textareas a assumirem o tamanho exato do texto, removendo a barra de rolagem
       document.querySelectorAll('.escopo-textarea').forEach(ta => {
-         ta.style.height = '1px'; // Reseta a altura momentaneamente
-         ta.style.height = (ta.scrollHeight + 5) + 'px'; // Aplica a altura real do texto digitado
+         ta.style.height = 'auto'; // Reseta
+         ta.style.height = (ta.scrollHeight) + 'px'; // Expande para caber todo o texto digitado
+         ta.style.overflow = 'hidden';
       });
 
       const landscapeStyle = document.createElement('style');
-      landscapeStyle.innerHTML = '@media print { @page { size: A4 portrait !important; margin: 15mm; } }';
+      landscapeStyle.innerHTML = '@media print { @page { size: A4 portrait !important; margin: 10mm; } }';
       document.head.appendChild(landscapeStyle);
       
       setTimeout(() => {
          window.print();
          document.head.removeChild(landscapeStyle);
-      }, 150);
+      }, 300); // Um leve delay para garantir que o navegador redesenhe a tela expandida
    },
 
    addImagem: () => {
@@ -5054,13 +5055,23 @@ const Escopo = {
       const html = `
          <div class="esc-img-block" id="esc_img_wrap_${id}">
             <button class="del-btn no-print" onclick="this.parentElement.remove()" style="position: absolute; top: 5px; right: 5px; font-size: 20px;" title="Remover Bloco">×</button>
-            <div class="no-print" style="margin-bottom: 15px; text-align: left; background: var(--bg); padding: 10px; border-radius: 4px;">
-               <label style="font-size: 10px; font-weight: bold; color: var(--navy);">TAMANHO DA IMAGEM: <span id="val_${id}">100%</span></label>
+            
+            <!-- CONTROLES DA IMAGEM -->
+            <div class="no-print" id="ctrl_${id}" style="margin-bottom: 15px; text-align: left; background: var(--bg); padding: 10px; border-radius: 4px;">
+               <label style="font-size: 10px; font-weight: bold; color: var(--navy);">TAMANHO DA IMAGEM NA IMPRESSÃO: <span id="val_${id}">100%</span></label>
                <input type="range" min="20" max="100" value="100" style="width: 100%; margin-bottom: 10px;" oninput="document.getElementById('img_${id}').style.width = this.value + '%'; document.getElementById('val_${id}').textContent = this.value + '%';">
+               
                <label style="font-size: 10px; font-weight: bold; color: var(--navy); display:block; margin-bottom:4px;">CARREGAR ARQUIVO:</label>
-               <input type="file" accept="image/*" onchange="Escopo.loadImage(event, 'img_${id}')" style="margin-bottom: 5px; font-size:11px;">
+               <input type="file" accept="image/*" onchange="Escopo.loadImage(event, 'img_${id}')" style="margin-bottom: 5px; font-size:11px; width: 100%;">
+               
+               <button class="btn btn-outline" style="width: 100%; font-size: 10px; padding: 6px; margin-top: 10px; border-color: var(--line);" onclick="document.getElementById('ctrl_${id}').style.display='none'; document.getElementById('btn_show_${id}').style.display='inline-flex';">⬆️ Ocultar Ferramentas desta Imagem</button>
             </div>
+            
+            <!-- BOTÃO PARA REEXIBIR CONTROLES -->
+            <button class="btn btn-outline no-print" id="btn_show_${id}" style="display: none; font-size: 10px; padding: 4px 8px; margin-bottom: 10px; border-style: dashed;" onclick="document.getElementById('ctrl_${id}').style.display='block'; this.style.display='none';">⚙️ Editar Imagem</button>
+
             <img id="img_${id}" src="" style="width: 100%; max-width: 100%; object-fit: contain; margin-bottom: 10px; min-height: 80px;">
+            
             <input type="text" class="escopo-input" style="font-weight: 800; text-align: center; font-size: 12px;" placeholder="Foto 0${escopoImgCount}: Título ou Descrição da Imagem..." oninput="this.setAttribute('value', this.value)">
             <input type="text" class="escopo-input" style="text-align: center; font-size: 11.5px; margin-top: 4px;" placeholder="Obs: ..." oninput="this.setAttribute('value', this.value)">
          </div>`;
@@ -5074,7 +5085,7 @@ const Escopo = {
          reader.onload = (e) => { 
             const img = document.getElementById(imgId);
             img.src = e.target.result; 
-            img.setAttribute('src', e.target.result); // Fixa na memória para salvar
+            img.setAttribute('src', e.target.result);
          };
          reader.readAsDataURL(file);
       }
@@ -5093,10 +5104,9 @@ const Escopo = {
    },
 
    templateOriginal: () => {
-      // Guarda o HTML virgem do formulário para poder recriar um "Novo Escopo" limpo
       return `
-         <h1 style="text-align: center; color: var(--navy); font-size: 18px; text-decoration: underline; margin-bottom: 25px; font-weight: 800; display: flex; justify-content: center; align-items: center; gap: 8px;">
-            ESCOPO DE OBRAS E SERVIÇOS N° (<input type="text" id="esc-registro" placeholder="XXXX" class="escopo-input" style="font-weight: 800; width: 60px; text-align: center; font-size: 18px; color: var(--navy); border-bottom: 2px dashed var(--line);">)
+         <h1 style="text-align: center; color: var(--navy); font-size: 18px; text-decoration: underline; margin-bottom: 25px; font-weight: 800; display: flex; justify-content: center; align-items: center; gap: 4px;">
+            ESCOPO DE OBRAS E SERVIÇOS N° <span class="no-print" style="margin-left: 4px;">(</span><input type="text" id="esc-registro" placeholder="XXXX" class="escopo-input" style="font-weight: 800; width: 65px; text-align: center; font-size: 18px; color: var(--navy); border-bottom: 2px dashed var(--line); padding: 0;"><span class="no-print">)</span>
          </h1>
          <div style="font-size: 11px; color: var(--muted); text-align: right; margin-bottom: 15px;">Data de Registro: <span id="esc-data-registro" style="font-weight: bold; color: var(--navy);"></span></div>
          <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 10px;"><strong style="white-space: nowrap; font-size: 13px;">OBRA:</strong><input type="text" id="esc-obra" placeholder="Ex: Mirante da Lagoa" class="escopo-input" style="font-weight: 700;"></div>
