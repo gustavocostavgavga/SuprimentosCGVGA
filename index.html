@@ -383,23 +383,24 @@
   
   @media print {
      #view-escopo .doc-head, #view-escopo .no-print, #view-escopos-lista { display: none !important; }
-     #view-escopo { background: #fff !important; display: block !important; }
-     #view-escopo .escopo-print-area { padding: 0 !important; border: none !important; box-shadow: none !important; }
+     #view-escopo { background: #fff !important; display: block !important; padding: 0 !important; margin: 0 !important; }
+     #view-escopo .escopo-print-area { padding: 0 !important; margin: 0 !important; border: none !important; box-shadow: none !important; }
      
-     /* Alinha o título no topo e força a cor preta */
+     /* Alinha o título no topo reduzindo margens ao redor */
      #view-escopo h1 { margin-top: 0 !important; padding-top: 0 !important; color: #000 !important; }
-     #view-escopo h1 input { color: #000 !important; border: none !important; }
+     #view-escopo h1 input { color: #000 !important; border: none !important; padding: 0 !important; margin: 0 !important; }
      
-     /* Força a expansão do texto sem barra de rolagem */
+     /* A MÁGICA: Remove a altura fixa e permite ao texto expandir na folha */
      .escopo-input, .escopo-textarea { 
          border: none !important; 
          resize: none !important; 
-         overflow: hidden !important; 
+         overflow: visible !important; 
          color: #000 !important; 
-         height: auto !important;
+         /* A regra que causava o erro (height: auto) foi removida daqui! */
          max-height: none !important;
          white-space: pre-wrap !important;
          word-wrap: break-word !important;
+         background: transparent !important;
      }
      .escopo-input::placeholder, .escopo-textarea::placeholder { color: transparent !important; }
      .esc-img-block { border: none !important; padding: 0 !important; margin-bottom: 15px !important; page-break-inside: avoid; }
@@ -5031,21 +5032,22 @@ const Escopo = {
    },
 
    imprimir: () => {
-      // 1. Força os Textareas a assumirem o tamanho exato do texto, removendo a barra de rolagem
+      // 1. Expande os textos perfeitamente sem rolagens (usando a altura real + uma folga de segurança)
       document.querySelectorAll('.escopo-textarea').forEach(ta => {
-         ta.style.height = 'auto'; // Reseta
-         ta.style.height = (ta.scrollHeight) + 'px'; // Expande para caber todo o texto digitado
-         ta.style.overflow = 'hidden';
+         ta.style.height = '1px'; // Reseta momentaneamente
+         ta.style.height = (ta.scrollHeight + 10) + 'px'; // Expande totalmente
+         ta.style.overflow = 'visible'; 
       });
 
-      const landscapeStyle = document.createElement('style');
-      landscapeStyle.innerHTML = '@media print { @page { size: A4 portrait !important; margin: 10mm; } }';
-      document.head.appendChild(landscapeStyle);
+      // 2. Reduz a margem apenas no topo (5mm) para o título fixar bem alto, mantendo as laterais
+      const printStyle = document.createElement('style');
+      printStyle.innerHTML = '@media print { @page { size: A4 portrait !important; margin: 5mm 15mm 15mm 15mm !important; } }';
+      document.head.appendChild(printStyle);
       
       setTimeout(() => {
          window.print();
-         document.head.removeChild(landscapeStyle);
-      }, 300); // Um leve delay para garantir que o navegador redesenhe a tela expandida
+         document.head.removeChild(printStyle);
+      }, 300); // Esse pequeno delay dá tempo pro navegador desenhar a tela expandida antes de abrir o PDF
    },
 
    addImagem: () => {
