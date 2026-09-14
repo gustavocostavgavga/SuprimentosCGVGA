@@ -5037,17 +5037,17 @@ const Escopo = {
       // 1. Seleciona o container que vai virar PDF
       const elemento = document.getElementById('escopo-content-area');
       
-      // 2. Prepara o Layout para máxima ocupação da tela (zera margens e esconde controles)
+      // 2. Prepara o Layout para máxima ocupação da tela
       const originalPadding = elemento.style.padding;
       const originalBorder = elemento.style.border;
       const originalShadow = elemento.style.boxShadow;
-      elemento.style.padding = '10px 15px'; // Padding mínimo para grudar no topo
+      elemento.style.padding = '10px 15px'; // Padding enxuto para grudar no topo
       elemento.style.border = 'none';
       elemento.style.boxShadow = 'none';
       
       document.querySelectorAll('#escopo-content-area .no-print').forEach(el => el.style.display = 'none');
 
-      // 3. CONVERTE TEXTAREAS EM TEXTO JUSTIFICADO LIVRE (Acaba com a barra de rolagem!)
+      // 3. CONVERTE TEXTAREAS E JUSTIFICA O TEXTO
       const textareas = elemento.querySelectorAll('.escopo-textarea');
       textareas.forEach(ta => {
          const div = document.createElement('div');
@@ -5057,7 +5057,8 @@ const Escopo = {
          div.style.textAlign = 'justify'; // Texto 100% justificado
          div.style.fontSize = '12px';
          div.style.color = '#000';
-         div.style.lineHeight = '1.6';
+         div.style.lineHeight = '1.4';
+         div.style.marginTop = '4px';
          div.textContent = ta.value || ' ';
          ta.style.display = 'none';
          ta.parentNode.insertBefore(div, ta.nextSibling);
@@ -5088,20 +5089,28 @@ const Escopo = {
          inp.parentNode.insertBefore(span, inp.nextSibling);
       });
 
+      // ENXUGA AS MARGENS GIGANTES DA TELA PARA O PDF FICAR COMPACTO
+      const espacos = elemento.querySelectorAll('div[style*="margin-bottom: 25px"], div[style*="margin-bottom: 20px"]');
+      espacos.forEach(d => { 
+         d.dataset.origMb = d.style.marginBottom; 
+         d.style.marginBottom = '8px'; 
+      });
+
       // Mostra tela de carregamento
       document.getElementById('db-loader').style.display = 'flex';
       document.getElementById('db-loader').style.opacity = '1';
-      document.getElementById('db-loader').children[1].textContent = 'GERANDO ARQUIVO PDF...';
+      document.getElementById('db-loader').children[1].textContent = 'GERANDO ARQUIVO PDF COMPACTO...';
 
-      // 5. GERA O PDF DIRETAMENTE E FAZ DOWNLOAD
+      // 5. GERA O PDF DIRETAMENTE - O SEGREDO DO ESPAÇO ESTÁ AQUI (Removido o avoid-all)
       const numeroEscopo = document.getElementById('esc-registro').value || 'Sem_Numero';
       const opt = {
-         margin:       [10, 15, 15, 15], // [Topo, Direita, Baixo, Esquerda] - Topo cravado na margem!
+         margin:       [10, 12, 10, 12], // Margens do PDF bem finas
          filename:     `Escopo_Obras_${numeroEscopo}.pdf`,
          image:        { type: 'jpeg', quality: 0.98 },
          html2canvas:  { scale: 2, useCORS: true },
          jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' },
-         pagebreak:    { mode: ['avoid-all', 'css', 'legacy'] } // Evita quebra irregular de tabelas e fotos
+         // Aqui tiramos a trava. Agora ele preenche a página e evita cortar APENAS imagens e tabelas!
+         pagebreak:    { mode: ['css', 'legacy'], avoid: ['.esc-img-block', 'tr'] } 
       };
 
       html2pdf().set(opt).from(elemento).save().then(() => {
@@ -5111,6 +5120,9 @@ const Escopo = {
          inputs.forEach(inp => inp.style.display = '');
          document.querySelectorAll('#escopo-content-area .no-print').forEach(el => el.style.display = '');
          
+         // Devolve os espaços grandes pra tela de edição
+         espacos.forEach(d => { d.style.marginBottom = d.dataset.origMb; });
+
          elemento.style.padding = originalPadding;
          elemento.style.border = originalBorder;
          elemento.style.boxShadow = originalShadow;
