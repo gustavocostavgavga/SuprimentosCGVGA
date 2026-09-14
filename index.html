@@ -1,3 +1,5 @@
+
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -3154,33 +3156,78 @@ const Req = {
     });
   },
   enviarCotacao: async () => {
-    // Agora o sistema PARA imediatamente se tiver erro no Req.save()
     const savedOk = Req.save(); 
     if(savedOk === false) return;
 
     const p = DB.getProcess(currentPID);
-    if (p.fornecedoresSelecionados.length === 0) { if(!confirm("Nenhum fornecedor selecionado. Deseja iniciar a cotação assim mesmo?")) return; }
+    if (p.fornecedoresSelecionados.length === 0) { 
+        if(!confirm("Nenhum fornecedor selecionado. Deseja iniciar a cotação assim mesmo?")) return; 
+    }
+    
     const fornecedoresData = p.fornecedoresSelecionados.map(fid => DB.data.fornecedores.find(x => x.id === fid)).filter(Boolean);
+    
     if (fornecedoresData.length > 0) {
         UI.toast("Disparando e-mails...");
         document.getElementById('db-loader').style.display = 'flex';
         document.getElementById('db-loader').style.opacity = '1';
+        
         try {
-          const selectResp = document.getElementById('rcResp');
-          const respNome = selectResp.options[selectResp.selectedIndex].text;
-          const speInfo = p.spe && SPES[p.spe] ? `${SPES[p.spe].nome} (CNPJ: ${SPES[p.spe].cnpj})` : "A confirmar";
-          await fetch('/api/enviar-email', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ fornecedores: fornecedoresData.map(f => ({ nome: f.nome, email: f.email || f.contato })), rcData: { ...p.req, respNome: respNome, speInfo: speInfo } }) });
-        } catch (err) { console.error("Aviso: Falha ao acionar API.", err); }
+            const selectResp = document.getElementById('rcResp');
+            const respNome = selectResp.options[selectResp.selectedIndex].text;
+            const speInfo = p.spe && SPES[p.spe] ? `${SPES[p.spe].nome} (CNPJ: ${SPES[p.spe].cnpj})` : "A confirmar";
+            
+            // 1. Cria a lista com os e-mails dos fornecedores
+            const listaEnvio = fornecedoresData.map(f => ({ 
+                nome: f.nome, 
+                email: f.email || f.contato 
+            }));
+            
+            // 2. INJETA a sua cópia oculta na lista de disparos
+            listaEnvio.push({ 
+                nome: "Cópia Suprimentos", 
+                email: "gustavocosta@casagrandeurbanismo.com.br" // COLOQUE SEU E-MAIL REAL AQUI
+            });
+            
+            const resposta = await fetch('https://suprimentos-cgvga.vercel.app/api/enviar-email', { 
+                method: 'POST', 
+                headers: { 'Content-Type': 'application/json' }, 
+                body: JSON.stringify({ 
+                    fornecedores: listaEnvio, 
+                    rcData: { ...p.req, respNome: respNome, speInfo: speInfo } 
+                }) 
+            });
+
+            // Verifica se o servidor retornou erro e avisa na tela
+            const textoResposta = await resposta.text();
+            let dados;
+            try { dados = JSON.parse(textoResposta); } catch(e) {}
+            
+            if (!resposta.ok || (dados && (dados.error || dados.success === false))) {
+                throw new Error(dados?.error || `Erro de conexão HTTP ${resposta.status}`);
+            }
+
+        } catch (err) { 
+            console.error("Falha ao acionar API:", err);
+            alert("Erro no disparo em massa. E-mails NÃO foram enviados. Detalhe: " + err.message);
+            document.getElementById('db-loader').style.opacity = '0';
+            setTimeout(()=> document.getElementById('db-loader').style.display = 'none', 500);
+            return; 
+        }
+        
         document.getElementById('db-loader').style.opacity = '0';
         setTimeout(()=> document.getElementById('db-loader').style.display = 'none', 500);
     }
+    
     p.status = 'cotando'; 
     p.propostas = p.fornecedoresSelecionados.map(fid => {
         const f = DB.data.fornecedores.find(x => x.id === fid);
         return { fornId: fid, nome: f ? f.nome : 'Fornecedor', doc: f ? (f.cnpj || f.doc || '') : '', tel: f ? (f.tel || '') : '', email: f ? (f.email || f.contato || '') : '', status: 'pendente', itens: {}, frete: 0, imposto: 0, prazo: f ? (f.prazo || '') : '', cond: '' };
     });
+    
     App.logHistory(p.id, "Cotação ativada com " + p.fornecedoresSelecionados.length + " fornecedores.");
-    DB.save(); UI.toast("Cotações iniciadas!"); App.nav('processos'); 
+    DB.save(); 
+    UI.toast("Cotações iniciadas!"); 
+    App.nav('processos'); 
   }
 };
 
@@ -4446,23 +4493,42 @@ window.enviarCotacaoAvulsa = async (propId) => {
   
   try {
       const speInfo = p.spe && SPES[p.spe] ? `${SPES[p.spe].nome} (CNPJ: ${SPES[p.spe].cnpj})` : "A confirmar";
-      const respNome = p.req.resp || "Gestão de Suprimentos";
+      const selectResp = document.getElementById('rcResp');
+      const respNome = selectResp && selectResp.options[selectResp.selectedIndex].value !== "" 
+          ? selectResp.options[selectResp.selectedIndex].text 
+          : (p.req.resp || "Gestão de Suprimentos");
       
-      await fetch('https://suprimentos-cgvga.vercel.app/api/enviar-email', {
+      // 1. Preparamos a lista de envio com o fornecedor
+      const listaEnvio = [{ nome: nomeDestino, email: emailDestino }];
+      
+      // 2. FORÇAMOS a inclusão do seu e-mail na lista para receber a cópia
+      listaEnvio.push({ nome: "Cópia Suprimentos", email: "gustavocosta@casagrandeurbanismo.com.br" });
+
+      const resposta = await fetch('https://suprimentos-cgvga.vercel.app/api/enviar-email', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-              fornecedores: [{ nome: nomeDestino, email: emailDestino }],
+              fornecedores: listaEnvio, // Envia a lista com o fornecedor + sua cópia
               rcData: { ...p.req, respNome: respNome, speInfo: speInfo }
           })
       });
       
+      const textoResposta = await resposta.text();
+      let dados;
+      try { dados = JSON.parse(textoResposta); } catch(e) { dados = { error: "API não retornou JSON." }; }
+
+      if (!resposta.ok || dados.error || dados.success === false) {
+          throw new Error(dados.error || `Servidor bloqueou o envio (Status HTTP ${resposta.status})`);
+      }
+      
       UI.toast("E-mail enviado com sucesso!");
       App.logHistory(p.id, `Cotação disparada avulsa para: ${nomeDestino}.`);
   } catch (err) {
-      alert("Erro ao enviar o e-mail. Verifique se há algum bloqueio na API.");
+      console.error("Erro no envio:", err);
+      alert("Falha ao enviar e-mail. Verifique se o servidor / API de e-mail está ativado e online.");
   }
   
+  // Limpa o loader da tela
   document.getElementById('db-loader').style.opacity = '0';
   setTimeout(()=> {
       document.getElementById('db-loader').style.display = 'none';
