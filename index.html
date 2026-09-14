@@ -5032,22 +5032,40 @@ const Escopo = {
    },
 
    imprimir: () => {
-      // 1. Expande os textos perfeitamente sem rolagens (usando a altura real + uma folga de segurança)
+      // 1. TRUQUE DEFINITIVO: Troca as caixas de texto problemáticas por texto livre na impressão
       document.querySelectorAll('.escopo-textarea').forEach(ta => {
-         ta.style.height = '1px'; // Reseta momentaneamente
-         ta.style.height = (ta.scrollHeight + 10) + 'px'; // Expande totalmente
-         ta.style.overflow = 'visible'; 
+         const div = document.createElement('div');
+         div.className = 'temp-print-text';
+         div.style.whiteSpace = 'pre-wrap';
+         div.style.wordWrap = 'break-word';
+         div.style.fontSize = '12.5px';
+         div.style.color = '#000';
+         div.style.lineHeight = '1.5';
+         div.style.marginTop = '4px';
+         div.textContent = ta.value; // Pega o que o usuário digitou
+         ta.style.display = 'none'; // Esconde a caixa com barra de rolagem
+         ta.parentNode.insertBefore(div, ta.nextSibling); // Insere o texto puro na tela
       });
 
-      // 2. Reduz a margem apenas no topo (5mm) para o título fixar bem alto, mantendo as laterais
+      // 2. FORÇA BRUTA NO TOPO: Zera qualquer margem global que empurra o título para baixo
       const printStyle = document.createElement('style');
-      printStyle.innerHTML = '@media print { @page { size: A4 portrait !important; margin: 5mm 15mm 15mm 15mm !important; } }';
+      printStyle.innerHTML = `
+         @media print { 
+            @page { size: A4 portrait !important; margin: 5mm 15mm 15mm 15mm !important; } 
+            body, html, main, .app, #view-escopo { margin: 0 !important; padding: 0 !important; } 
+            #view-escopo h1 { margin-top: 0 !important; padding-top: 0 !important; }
+         }
+      `;
       document.head.appendChild(printStyle);
       
       setTimeout(() => {
-         window.print();
-         document.head.removeChild(printStyle);
-      }, 300); // Esse pequeno delay dá tempo pro navegador desenhar a tela expandida antes de abrir o PDF
+         window.print(); // Abre a tela de PDF
+         
+         // 3. DEVOLVE TUDO AO NORMAL APÓS A IMPRESSÃO
+         document.querySelectorAll('.temp-print-text').forEach(div => div.remove()); // Remove o texto puro
+         document.querySelectorAll('.escopo-textarea').forEach(ta => ta.style.display = 'block'); // Devolve as caixas
+         document.head.removeChild(printStyle); // Remove o bloqueio de margens
+      }, 300);
    },
 
    addImagem: () => {
