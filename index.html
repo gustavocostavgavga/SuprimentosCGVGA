@@ -361,6 +361,37 @@
     #view-atd-print table.items td { font-size: 11px; padding: 8px; border: 1px solid #ccc; word-wrap: break-word; }
     #view-atd-print .winner-col { background-color: #e8f0e9 !important; border: 2px solid #24783d !important; }
   }
+
+/* ====== ESCOPO EXECUTIVO ====== */
+  .escopo-input, .escopo-textarea {
+     border: 1px solid transparent;
+     border-bottom: 1px dashed var(--line);
+     width: 100%;
+     font-family: 'Montserrat', sans-serif;
+     font-size: 12.5px;
+     outline: none;
+     background: transparent;
+     color: var(--ink);
+     resize: none;
+     overflow: hidden;
+     line-height: 1.5;
+  }
+  .escopo-input:hover, .escopo-textarea:hover, .escopo-input:focus, .escopo-textarea:focus {
+     border-bottom-color: var(--navy);
+  }
+  .esc-img-block {
+     border: 1px dashed var(--line); padding: 15px; border-radius: 6px; text-align: center; position: relative; margin-bottom: 20px; page-break-inside: avoid;
+  }
+  
+  @media print {
+     #view-escopo .doc-head, #view-escopo .no-print { display: none !important; }
+     #view-escopo { background: #fff !important; }
+     #view-escopo .escopo-print-area { padding: 0 !important; border: none !important; }
+     .escopo-input, .escopo-textarea { border: none !important; resize: none; overflow: visible !important; color: #000 !important; }
+     .escopo-input::placeholder, .escopo-textarea::placeholder { color: transparent !important; }
+     .esc-img-block { border: none !important; padding: 0 !important; margin-bottom: 15px !important; }
+  }
+
 </style>
 </head>
 <body>
@@ -438,6 +469,7 @@
       <button class="nav-btn" onclick="App.nav('atds')">ATD</button>
       <button class="nav-btn" onclick="App.nav('politica')">Política de Fornecedores</button>
       <button class="nav-btn" onclick="App.nav('manual')">Manual de Compras</button>
+      <button class="nav-btn" onclick="App.nav('escopo')">Escopo de Obras</button>
 
       <div class="nav-label" style="margin-top:24px;">Ações Globais</div>
       <button class="nav-btn" onclick="imprimirTela()">Imprimir Tela Atual</button>
@@ -1572,7 +1604,77 @@
         </div>
     </div>
 
-  </main>
+<!-- ==================== VIEW: ESCOPO EXECUTIVO ==================== -->
+    <div id="view-escopo" class="view">
+      <div class="doc-head">
+        <div class="doc-title">Construtor de Escopos<small>Plano Executivo de Obras e Serviços</small></div>
+        <div class="header-actions">
+           <button class="btn btn-outline" onclick="Escopo.limpar()">🔄 Limpar / Novo</button>
+           <button class="btn btn-solid" onclick="Escopo.imprimir()">🖨️ Imprimir PDF / Salvar</button>
+        </div>
+      </div>
+
+      <div class="escopo-print-area" style="background: var(--paper); padding: 40px; border: 1px solid var(--line); border-radius: 6px; box-shadow: 0 4px 10px rgba(0,0,0,0.05);">
+         <h1 style="text-align: center; color: var(--navy); font-size: 18px; text-decoration: underline; margin-bottom: 25px; font-weight: 800;">ESCOPO DE OBRAS / SERVIÇOS</h1>
+
+         <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 10px;">
+            <strong style="white-space: nowrap; font-size: 13px;">Nº REGISTRO:</strong>
+            <input type="text" id="esc-registro" placeholder="Ex: 1009" class="escopo-input" style="font-weight: bold;">
+         </div>
+
+         <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 10px;">
+            <strong style="white-space: nowrap; font-size: 13px;">OBJETO DE MANUTENÇÃO / CONSTRUÇÃO:</strong>
+            <input type="text" id="esc-objeto" placeholder="Descreva o objeto..." class="escopo-input">
+         </div>
+
+         <div style="margin-bottom: 25px; display: flex; flex-direction: column;">
+            <strong style="font-size: 13px; margin-bottom: 4px;">JUSTIFICATIVA:</strong>
+            <textarea id="esc-justificativa" class="escopo-textarea" rows="3" placeholder="Digite a justificativa..."></textarea>
+         </div>
+
+         <!-- ÁREA DE IMAGENS DINÂMICAS -->
+         <div id="esc-imagens-container" style="display: flex; flex-direction: column; gap: 15px;"></div>
+         <button class="btn btn-outline no-print" onclick="Escopo.addImagem()" style="width: 100%; margin-bottom: 25px; border-style: dashed; padding: 15px;">+ Inserir Imagem / Planta / Foto</button>
+
+         <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 20px;">
+            <strong style="white-space: nowrap; font-size: 13px;">ORÇAMENTO PREVISTO:</strong>
+            <input type="text" id="esc-orcamento" placeholder="R$ 0,00" class="escopo-input" oninput="Util.maskCur(this)" style="font-weight: 800; max-width: 200px;">
+         </div>
+
+         <div style="margin-bottom: 20px; display: flex; flex-direction: column;">
+            <strong style="font-size: 13px; margin-bottom: 4px;">Detalhamento:</strong>
+            <textarea id="esc-detalhamento" class="escopo-textarea" rows="5" placeholder="Passo a passo, descrição técnica..."></textarea>
+         </div>
+
+         <div style="margin-bottom: 25px; display: flex; flex-direction: column;">
+            <strong style="font-size: 13px; margin-bottom: 4px;">Observações:</strong>
+            <textarea id="esc-observacoes" class="escopo-textarea" rows="3" placeholder="Condições, responsabilidades, EPIs..."></textarea>
+         </div>
+
+         <div style="margin-bottom: 25px;">
+            <strong style="font-size: 13px; text-transform: uppercase;">Lista de Materiais / Mão de Obra:</strong>
+            <table class="items" style="width: 100%; margin-top: 10px; border-collapse: collapse;">
+               <thead>
+                  <tr>
+                     <th style="width: 15%; text-align: center; font-size: 10px; background:var(--highlight); border:1px solid var(--line);">QUANTIDADE</th>
+                     <th style="width: 15%; text-align: center; font-size: 10px; background:var(--highlight); border:1px solid var(--line);">UNIDADE</th>
+                     <th style="width: 65%; font-size: 10px; background:var(--highlight); border:1px solid var(--line);">DESCRIÇÃO</th>
+                     <th style="width: 5%; border:none; background:transparent;" class="no-print"></th>
+                  </tr>
+               </thead>
+               <tbody id="esc-materiais-body"></tbody>
+            </table>
+            <button class="btn btn-outline no-print" onclick="Escopo.addMaterial()" style="width: 100%; margin-top: 10px; border-style: dashed;">+ Adicionar Linha na Tabela</button>
+         </div>
+
+         <div style="margin-bottom: 20px; display: flex; flex-direction: column;">
+            <strong style="font-size: 13px; margin-bottom: 4px;">ANEXOS:</strong>
+            <textarea id="esc-anexos" class="escopo-textarea" rows="2" placeholder="Caminhos de rede, links de projetos..."></textarea>
+         </div>
+      </div>
+    </div>
+
+</main>
 </div>
 
 <!-- ====== MODALS ====== -->
@@ -1982,6 +2084,7 @@ const App = {
     if(viewId === 'recebimento') App.initInbox();
     if(viewId === 'atds') ATD.loadHistory();
     if(viewId === 'insumos') Insumos.render();
+    if(viewId === 'escopo') { if(document.getElementById('esc-materiais-body').children.length === 0) Escopo.addMaterial(); }
   },
   novoProcesso: () => {
     const d = new Date();
@@ -4755,6 +4858,84 @@ document.addEventListener('click', (e) => {
   }
 });
 
+// ==================== MODULO: ESCOPO EXECUTIVO ====================
+let escopoImgCount = 0;
+const Escopo = {
+   addImagem: () => {
+      escopoImgCount++;
+      const container = document.getElementById('esc-imagens-container');
+      const id = Util.genId();
+      const html = `
+         <div class="esc-img-block" id="esc_img_wrap_${id}">
+            <button class="del-btn no-print" onclick="this.parentElement.remove()" style="position: absolute; top: 5px; right: 5px; font-size: 20px;" title="Remover Bloco">×</button>
+            
+            <div class="no-print" style="margin-bottom: 15px; text-align: left; background: var(--bg); padding: 10px; border-radius: 4px;">
+               <label style="font-size: 10px; font-weight: bold; color: var(--navy);">TAMANHO DA IMAGEM NA IMPRESSÃO: <span id="val_${id}">100%</span></label>
+               <input type="range" min="20" max="100" value="100" style="width: 100%; margin-bottom: 10px;" oninput="document.getElementById('img_${id}').style.width = this.value + '%'; document.getElementById('val_${id}').textContent = this.value + '%';">
+               
+               <label style="font-size: 10px; font-weight: bold; color: var(--navy); display:block; margin-bottom:4px;">CARREGAR ARQUIVO:</label>
+               <input type="file" accept="image/*" onchange="Escopo.loadImage(event, 'img_${id}')" style="margin-bottom: 5px; font-size:11px;">
+            </div>
+
+            <img id="img_${id}" src="" style="width: 100%; max-width: 100%; object-fit: contain; margin-bottom: 10px; min-height: 80px;">
+            
+            <input type="text" class="escopo-input" style="font-weight: 800; text-align: center; font-size: 12px;" placeholder="Foto 0${escopoImgCount}: Título ou Descrição da Imagem...">
+            <input type="text" class="escopo-input" style="text-align: center; font-size: 11.5px; margin-top: 4px;" placeholder="Obs: ...">
+         </div>
+      `;
+      container.insertAdjacentHTML('beforeend', html);
+   },
+
+   loadImage: (event, imgId) => {
+      const file = event.target.files[0];
+      if(file) {
+         const reader = new FileReader();
+         reader.onload = (e) => { document.getElementById(imgId).src = e.target.result; };
+         reader.readAsDataURL(file);
+      }
+   },
+
+   addMaterial: () => {
+      const tb = document.getElementById('esc-materiais-body');
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+         <td style="padding: 4px; border: 1px solid var(--line);"><input type="text" class="escopo-input" style="text-align: center; border-bottom:none;" placeholder="Ex: 2"></td>
+         <td style="padding: 4px; border: 1px solid var(--line);"><input type="text" class="escopo-input" style="text-align: center; border-bottom:none;" placeholder="unid/m"></td>
+         <td style="padding: 4px; border: 1px solid var(--line);"><input type="text" class="escopo-input" style="border-bottom:none;" placeholder="Descrição do material ou mão de obra..."></td>
+         <td style="padding: 4px; text-align: center; border:none;" class="no-print"><button class="del-btn" onclick="this.closest('tr').remove()" title="Remover Linha">×</button></td>
+      `;
+      tb.appendChild(tr);
+   },
+
+   limpar: () => {
+      if(!confirm("Apagar todos os dados e iniciar um escopo em branco?")) return;
+      document.querySelectorAll('.escopo-input').forEach(i => i.value = '');
+      document.querySelectorAll('.escopo-textarea').forEach(t => { t.value = ''; t.style.height = 'auto'; });
+      document.getElementById('esc-imagens-container').innerHTML = '';
+      document.getElementById('esc-materiais-body').innerHTML = '';
+      escopoImgCount = 0;
+      Escopo.addMaterial(); 
+   },
+
+   imprimir: () => {
+      // Ajusta a altura dos textareas automaticamente para imprimir todo o texto digitado
+      document.querySelectorAll('.escopo-textarea').forEach(ta => {
+         ta.style.height = 'auto';
+         ta.style.height = (ta.scrollHeight) + 'px';
+      });
+
+      const landscapeStyle = document.createElement('style');
+      landscapeStyle.innerHTML = '@media print { @page { size: A4 portrait !important; margin: 15mm; } }';
+      document.head.appendChild(landscapeStyle);
+      
+      setTimeout(() => {
+         window.print();
+         document.head.removeChild(landscapeStyle);
+      }, 150);
+   }
+};
+
+window.Escopo = Escopo;
 window.onload = App.init;
 </script>
 </body>
