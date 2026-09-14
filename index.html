@@ -414,6 +414,7 @@
   <div class="db-loader-spinner"></div>
   <div style="font-weight:700; color:var(--navy); font-size:14px; letter-spacing:1px; text-transform:uppercase;">Conectando ao Firebase...</div>
 </div>
+<div id="toast" class="toast"></div>
 
 <div class="app">
   <!-- ====== SIDEBAR ====== -->
@@ -1993,9 +1994,16 @@ const App = {
       atd: null,
       historico: [{ data: Util.today(), txt: 'Processo criado' }]
     };
-    DB.data.processos.push(p); DB.save();
-    currentPID = p.id; UI.toast("Novo Processo Criado!");
-    Req.load(p); App.nav('req-form', true);
+    DB.data.processos.push(p); 
+    DB.save();
+    
+    // LINHA ADICIONADA: Força a atualização da lista visualmente no mesmo instante
+    App.renderProcessos(); 
+    
+    currentPID = p.id; 
+    UI.toast("Novo Processo Criado!");
+    Req.load(p); 
+    App.nav('req-form', true);
   },
   renderDash: () => {
     const procs = DB.data.processos;
@@ -2960,7 +2968,6 @@ const ATD = {
       }, 100);
   }
 };
-
 const Req = {
   load: (p) => {
     document.getElementById('rc-subtitle').textContent = `PROCESSO ${p.id}`;
@@ -3041,23 +3048,31 @@ const Req = {
     tb.appendChild(tr); Req.calcTotal();
   },
   onDescChange: (input) => {
-      const val = input.value;
+      const val = input.value || '';
       const match = val.match(/^\[(.*?)\]\s*(.*)$/);
       if (match) {
           const tr = input.closest('tr');
-          tr.querySelector('.item-cod').value = match[1];
+          const codInput = tr.querySelector('.item-cod');
+          if (codInput) codInput.value = match[1];
           input.value = match[2];
       }
       const clean = Insumos.extractDesc(input.value);
-      const ins = DB.data.insumos.find(x => x.desc.toLowerCase() === clean.toLowerCase());
+      // PREVENÇÃO DE ERRO: Garante que não quebre se x.desc for null na base antiga
+      const ins = DB.data.insumos.find(x => (x.desc || '').toLowerCase() === (clean || '').toLowerCase());
       if(ins && ins.unid) {
           const tr = input.closest('tr');
-          tr.querySelector('.unit').value = ins.unid;
+          const unitInput = tr.querySelector('.unit');
+          if (unitInput) unitInput.value = ins.unid;
       }
   },
   verHistorico: (btn) => {
       const tr = btn.closest('tr');
-      const rawDesc = tr.querySelector('.desc').value;
+      const codEl = tr.querySelector('.item-cod');
+      const descEl = tr.querySelector('.desc');
+      let rawDesc = descEl ? descEl.value : '';
+      if (codEl && codEl.value.trim() !== '') {
+          rawDesc = `[${codEl.value.trim()}] ${rawDesc}`;
+      }
       window.verHistoricoItem(rawDesc);
   },
   calcTotal: () => {
@@ -3065,10 +3080,12 @@ const Req = {
     document.querySelectorAll('#rcItemsBody tr').forEach(tr=>{
       const q = parseFloat(tr.querySelector('.qty').value)||0;
       const p = Util.unmaskCur(tr.querySelector('.price').value);
-      tr.querySelector('.row-total').textContent = Util.formatBRL(q*p);
+      const rowTot = tr.querySelector('.row-total');
+      if (rowTot) rowTot.textContent = Util.formatBRL(q*p);
       tot+= (q*p);
     });
-    document.getElementById('rcTotal').textContent = Util.formatBRL(tot);
+    const totalEl = document.getElementById('rcTotal');
+    if (totalEl) totalEl.textContent = Util.formatBRL(tot);
   },
   save: () => {
     const p = DB.getProcess(currentPID);
@@ -3084,6 +3101,10 @@ const Req = {
     document.querySelectorAll('#rcItemsBody tr').forEach(tr=>{
       const inputCod = tr.querySelector('.item-cod');
       const inputDesc = tr.querySelector('.desc');
+      
+      // Failsafe contra DOMs antigos
+      if(!inputCod || !inputDesc) return;
+
       const codEl = inputCod.value.trim();
       const descEl = inputDesc.value.trim();
       
@@ -3101,10 +3122,13 @@ const Req = {
 
       const rawDesc = `[${codEl}] ${descEl}`;
       const unid = tr.querySelector('.unit').value;
+      const qtyVal = parseFloat(tr.querySelector('.qty').value)||0;
+      const priceVal = Util.unmaskCur(tr.querySelector('.price').value);
       
-      p.req.itens.push({ id: tr.dataset.id, desc: rawDesc, qtd: parseFloat(tr.querySelector('.qty').value)||0, unid: unid, preco: Util.unmaskCur(tr.querySelector('.price').value) });
+      p.req.itens.push({ id: tr.dataset.id, desc: rawDesc, qtd: qtyVal, unid: unid, preco: priceVal });
       
-      if (!DB.data.insumos.find(x => x.desc.toLowerCase() === descEl.toLowerCase())) {
+      // PREVENÇÃO DE ERRO MAXIMA: Varredura protegida com "(x.desc || '')"
+      if (!DB.data.insumos.find(x => (x.desc || '').toLowerCase() === descEl.toLowerCase())) {
           DB.data.insumos.push({ id: Util.genId(), codigo: codEl, desc: descEl, unid: unid, criadoEm: Util.today() });
       }
     });
@@ -3130,6 +3154,7 @@ const Req = {
     });
   },
   enviarCotacao: async () => {
+    // Agora o sistema PARA imediatamente se tiver erro no Req.save()
     const savedOk = Req.save(); 
     if(savedOk === false) return;
 
@@ -3162,7 +3187,10 @@ const Req = {
 // ==================== MODULO: AI ====================
 const AI = {
   openSupplierSuggestion: () => {
-    Req.save(); 
+    // Agora o sistema PARA imediatamente se tiver erro no Req.save()
+    const savedOk = Req.save(); 
+    if(savedOk === false) return;
+
     const speKey = document.getElementById('rcSpe').value;
     const speObj = SPES[speKey];
     if(!speObj) return alert("Selecione a Empresa Solicitante (SPE) primeiro para calcular a distância.");
@@ -3193,7 +3221,7 @@ const AI = {
     });
     UI.openModal('modal-ia-forn');
   },
-confirmSuppliers: () => {
+  confirmSuppliers: () => {
     const p = DB.getProcess(currentPID); 
     // Apenas adiciona sem apagar a lista que já existe
     document.querySelectorAll('.ia-forn-chk:checked').forEach(c => {
