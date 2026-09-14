@@ -361,7 +361,7 @@
     #view-atd-print .winner-col { background-color: #e8f0e9 !important; border: 2px solid #24783d !important; }
   }
 
-/* ====== ESCOPO EXECUTIVO ====== */
+/* ====== ESCOPO EXECUTIVO (FORMATO A4 WYSIWYG) ====== */
   .escopo-input, .escopo-textarea {
      border: 1px solid transparent;
      border-bottom: 1px dashed var(--line);
@@ -371,38 +371,43 @@
      outline: none;
      background: transparent;
      color: var(--ink);
-     resize: none;
-     overflow: hidden;
      line-height: 1.5;
   }
-  .escopo-input:hover, .escopo-textarea:hover, .escopo-input:focus, .escopo-textarea:focus {
-     border-bottom-color: var(--navy);
-  }
-  .esc-img-block {
-     border: 1px dashed var(--line); padding: 15px; border-radius: 6px; text-align: center; position: relative; margin-bottom: 20px; page-break-inside: avoid;
-  }
+  .escopo-input:hover, .escopo-textarea:hover, .escopo-input:focus, .escopo-textarea:focus { border-bottom-color: var(--navy); }
+  .esc-img-block { border: 1px dashed var(--line); padding: 15px; border-radius: 6px; text-align: center; position: relative; margin-bottom: 20px; }
   
-  @media print {
-     #view-escopo .doc-head, #view-escopo .no-print, #view-escopos-lista { display: none !important; }
-     #view-escopo { background: #fff !important; display: block !important; padding: 0 !important; margin: 0 !important; }
-     #view-escopo .escopo-print-area { padding: 0 !important; margin: 0 !important; border: none !important; box-shadow: none !important; }
-     
-     /* Alinha o título no topo reduzindo margens ao redor */
-     #view-escopo h1 { margin-top: 0 !important; padding-top: 0 !important; color: #000 !important; }
-     #view-escopo h1 input { color: #000 !important; border: none !important; padding: 0 !important; margin: 0 !important; }
-     
-     /* A MÁGICA: Remove a altura fixa e permite ao texto expandir na folha */
-     .escopo-input, .escopo-textarea { 
-         border: none !important; 
-         resize: none !important; 
-         overflow: visible !important; 
-         color: #000 !important; 
-         /* A regra que causava o erro (height: auto) foi removida daqui! */
-         max-height: none !important;
-         white-space: pre-wrap !important;
-         word-wrap: break-word !important;
-         background: transparent !important;
-     }
+  /* TEXTAREAS AUTO-EXPANSÍVEIS */
+  .escopo-textarea { overflow: hidden !important; resize: none !important; min-height: 20px; }
+
+  /* MÁGICA DO A4 NA TELA */
+  .escopo-print-area {
+      width: 210mm !important; /* Largura Exata do A4 */
+      min-height: 297mm; /* Altura Exata de 1 página A4 */
+      margin: 0 auto;
+      background: #ffffff;
+      /* As margens da folha agora são Padding da tela (Topo, Direita, Baixo, Esquerda) */
+      padding: 10mm 15mm 15mm 15mm !important; 
+      box-sizing: border-box;
+      position: relative;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+  }
+
+  /* LINHA VERMELHA DE CORTE DA PÁGINA (A cada 297mm) */
+  .escopo-print-area::after {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+      pointer-events: none; /* Não atrapalha o clique */
+      background-image: repeating-linear-gradient(
+          to bottom,
+          transparent,
+          transparent calc(297mm - 2px),
+          rgba(239, 68, 68, 0.8) calc(297mm - 2px),
+          rgba(239, 68, 68, 0.8) 297mm
+      );
+      z-index: 100;
+  }
+
+  /* ESCONDE A LINHA DE CORTE NA HORA DE SALVAR O PDF */
+  .escopo-print-area.gerando-pdf::after { display: none !important; }
      .escopo-input::placeholder, .escopo-textarea::placeholder { color: transparent !important; }
      .esc-img-block { border: none !important; padding: 0 !important; margin-bottom: 15px !important; page-break-inside: avoid; }
   }
@@ -1665,9 +1670,8 @@
         </div>
       </div>
 
-      <div id="escopo-content-area" class="escopo-print-area" style="background: var(--paper); padding: 40px; border: 1px solid var(--line); border-radius: 6px; box-shadow: 0 4px 10px rgba(0,0,0,0.05);">
+      <div id="escopo-content-area" class="escopo-print-area">
          
-         <!-- TÍTULO DINÂMICO PREPARADO PARA O GERADOR DE PDF -->
          <h1 id="esc-titulo-wrapper" style="text-align: center; color: var(--navy); font-size: 18px; text-decoration: underline; margin-top: 0; margin-bottom: 25px; font-weight: 800; display: flex; justify-content: center; align-items: center; gap: 4px;">
             ESCOPO DE OBRAS E SERVIÇOS N° <span id="esc-par-esq" class="no-print" style="margin-left: 4px;">(</span><input type="text" id="esc-registro" placeholder="XXXX" class="escopo-input" style="font-weight: 800; width: 65px; text-align: center; font-size: 18px; color: var(--navy); border-bottom: 2px dashed var(--line); padding: 0;"><span id="esc-par-dir" class="no-print">)</span>
          </h1>
@@ -1676,7 +1680,6 @@
             Data de Registro: <span id="esc-data-registro" style="font-weight: bold; color: var(--navy);"></span>
          </div>
 
-         <!-- NOVO CAMPO DE OBRA -->
          <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 10px;">
             <strong style="white-space: nowrap; font-size: 13px;">OBRA:</strong>
             <input type="text" id="esc-obra" placeholder="Ex: Mirante da Lagoa" class="escopo-input" style="font-weight: 700;">
@@ -1689,7 +1692,7 @@
 
          <div style="margin-bottom: 25px; display: flex; flex-direction: column;">
             <strong style="font-size: 13px; margin-bottom: 4px;">JUSTIFICATIVA:</strong>
-            <textarea id="esc-justificativa" class="escopo-textarea" rows="3" placeholder="Digite a justificativa..."></textarea>
+            <textarea id="esc-justificativa" class="escopo-textarea" rows="3" placeholder="Digite a justificativa..." oninput="this.style.height='auto'; this.style.height=this.scrollHeight+'px'; this.textContent=this.value;"></textarea>
          </div>
 
          <!-- ÁREA DE IMAGENS -->
@@ -1703,12 +1706,12 @@
 
          <div style="margin-bottom: 20px; display: flex; flex-direction: column;">
             <strong style="font-size: 13px; margin-bottom: 4px;">DETALHAMENTO:</strong>
-            <textarea id="esc-detalhamento" class="escopo-textarea" rows="5" placeholder="Passo a passo, descrição técnica..."></textarea>
+            <textarea id="esc-detalhamento" class="escopo-textarea" rows="5" placeholder="Passo a passo, descrição técnica..." oninput="this.style.height='auto'; this.style.height=this.scrollHeight+'px'; this.textContent=this.value;"></textarea>
          </div>
 
          <div style="margin-bottom: 25px; display: flex; flex-direction: column;">
             <strong style="font-size: 13px; margin-bottom: 4px;">OBSERVAÇÕES:</strong>
-            <textarea id="esc-observacoes" class="escopo-textarea" rows="3" placeholder="Condições, responsabilidades, EPIs..."></textarea>
+            <textarea id="esc-observacoes" class="escopo-textarea" rows="3" placeholder="Condições, responsabilidades, EPIs..." oninput="this.style.height='auto'; this.style.height=this.scrollHeight+'px'; this.textContent=this.value;"></textarea>
          </div>
 
          <div style="margin-bottom: 25px;">
@@ -1729,10 +1732,9 @@
 
          <div style="margin-bottom: 20px; display: flex; flex-direction: column;">
             <strong style="font-size: 13px; margin-bottom: 4px;">ANEXOS:</strong>
-            <textarea id="esc-anexos" class="escopo-textarea" rows="2" placeholder="Caminhos de rede, links de projetos..."></textarea>
+            <textarea id="esc-anexos" class="escopo-textarea" rows="2" placeholder="Caminhos de rede, links de projetos..." oninput="this.style.height='auto'; this.style.height=this.scrollHeight+'px'; this.textContent=this.value;"></textarea>
          </div>
       </div>
-    </div>
 
 </main>
 </div>
@@ -4998,8 +5000,15 @@ const Escopo = {
       Escopo.currentId = e.id;
       document.getElementById('escopo-content-area').innerHTML = e.htmlContent;
       
+      // Restaura os campos menores
       document.querySelectorAll('#escopo-content-area .escopo-input').forEach(i => i.value = i.getAttribute('value') || '');
-      document.querySelectorAll('#escopo-content-area .escopo-textarea').forEach(t => t.value = t.textContent || '');
+      
+      // Restaura as caixas de texto maiores E as expande automaticamente (correção aplicada aqui!)
+      document.querySelectorAll('#escopo-content-area .escopo-textarea').forEach(t => { 
+          t.value = t.textContent || ''; 
+          t.style.height = 'auto'; 
+          t.style.height = t.scrollHeight + 'px'; 
+      });
       
       App.nav('escopo');
    },
@@ -5034,37 +5043,27 @@ const Escopo = {
    },
 
    baixarPDF: () => {
-      // 1. Seleciona o container que vai virar PDF
       const elemento = document.getElementById('escopo-content-area');
       
-      // 2. Prepara o Layout para máxima ocupação da tela
-      const originalPadding = elemento.style.padding;
-      const originalBorder = elemento.style.border;
-      const originalShadow = elemento.style.boxShadow;
-      elemento.style.padding = '10px 15px'; // Padding enxuto para grudar no topo
-      elemento.style.border = 'none';
-      elemento.style.boxShadow = 'none';
-      
+      // Esconde botões e marca o container para esconder a linha vermelha
       document.querySelectorAll('#escopo-content-area .no-print').forEach(el => el.style.display = 'none');
+      elemento.classList.add('gerando-pdf'); 
 
-      // 3. CONVERTE TEXTAREAS E JUSTIFICA O TEXTO
       const textareas = elemento.querySelectorAll('.escopo-textarea');
       textareas.forEach(ta => {
          const div = document.createElement('div');
          div.className = 'temp-pdf-text';
          div.style.whiteSpace = 'pre-wrap';
          div.style.wordWrap = 'break-word';
-         div.style.textAlign = 'justify'; // Texto 100% justificado
+         div.style.textAlign = 'justify'; 
          div.style.fontSize = '12px';
          div.style.color = '#000';
-         div.style.lineHeight = '1.4';
-         div.style.marginTop = '4px';
+         div.style.lineHeight = '1.6';
          div.textContent = ta.value || ' ';
          ta.style.display = 'none';
          ta.parentNode.insertBefore(div, ta.nextSibling);
       });
 
-      // 4. CONVERTE OS INPUTS EM TEXTO PURO (Limpa a tela e esconde parênteses)
       const inputs = elemento.querySelectorAll('.escopo-input');
       inputs.forEach(inp => {
          const span = document.createElement('span');
@@ -5075,7 +5074,6 @@ const Escopo = {
          span.style.display = 'inline-block';
          span.style.textAlign = inp.style.textAlign || 'left';
          
-         // Se for o título, junta o número sem os parênteses
          if(inp.id === 'esc-registro') {
             span.textContent = inp.value ? inp.value : '';
             span.style.textDecoration = 'underline';
@@ -5089,43 +5087,30 @@ const Escopo = {
          inp.parentNode.insertBefore(span, inp.nextSibling);
       });
 
-      // ENXUGA AS MARGENS GIGANTES DA TELA PARA O PDF FICAR COMPACTO
-      const espacos = elemento.querySelectorAll('div[style*="margin-bottom: 25px"], div[style*="margin-bottom: 20px"]');
-      espacos.forEach(d => { 
-         d.dataset.origMb = d.style.marginBottom; 
-         d.style.marginBottom = '8px'; 
-      });
-
-      // Mostra tela de carregamento
       document.getElementById('db-loader').style.display = 'flex';
       document.getElementById('db-loader').style.opacity = '1';
       document.getElementById('db-loader').children[1].textContent = 'GERANDO ARQUIVO PDF COMPACTO...';
 
-      // 5. GERA O PDF DIRETAMENTE - O SEGREDO DO ESPAÇO ESTÁ AQUI (Removido o avoid-all)
       const numeroEscopo = document.getElementById('esc-registro').value || 'Sem_Numero';
+      
       const opt = {
-         margin:       [10, 12, 10, 12], // Margens do PDF bem finas
+         margin:       0, // Margem 0! O padding interno do layout A4 já faz a margem perfeita!
          filename:     `Escopo_Obras_${numeroEscopo}.pdf`,
-         image:        { type: 'jpeg', quality: 0.98 },
+         image:        { type: 'jpeg', quality: 1 },
          html2canvas:  { scale: 2, useCORS: true },
          jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' },
-         // Aqui tiramos a trava. Agora ele preenche a página e evita cortar APENAS imagens e tabelas!
+         // Tira a trava "avoid-all" que causava os espaços em branco, evitando corte apenas em fotos.
          pagebreak:    { mode: ['css', 'legacy'], avoid: ['.esc-img-block', 'tr'] } 
       };
 
       html2pdf().set(opt).from(elemento).save().then(() => {
-         // 6. RESTAURA A TELA PARA CONTINUAR EDITANDO
+         // RESTAURA A TELA
          document.querySelectorAll('.temp-pdf-text, .temp-pdf-input').forEach(el => el.remove());
          textareas.forEach(ta => ta.style.display = '');
          inputs.forEach(inp => inp.style.display = '');
          document.querySelectorAll('#escopo-content-area .no-print').forEach(el => el.style.display = '');
          
-         // Devolve os espaços grandes pra tela de edição
-         espacos.forEach(d => { d.style.marginBottom = d.dataset.origMb; });
-
-         elemento.style.padding = originalPadding;
-         elemento.style.border = originalBorder;
-         elemento.style.boxShadow = originalShadow;
+         elemento.classList.remove('gerando-pdf');
 
          document.getElementById('db-loader').style.opacity = '0';
          setTimeout(()=> document.getElementById('db-loader').style.display = 'none', 500);
@@ -5189,20 +5174,20 @@ const Escopo = {
 
    templateOriginal: () => {
       return `
-         <h1 style="text-align: center; color: var(--navy); font-size: 18px; text-decoration: underline; margin-bottom: 25px; font-weight: 800; display: flex; justify-content: center; align-items: center; gap: 4px;">
-            ESCOPO DE OBRAS E SERVIÇOS N° <span class="no-print" style="margin-left: 4px;">(</span><input type="text" id="esc-registro" placeholder="XXXX" class="escopo-input" style="font-weight: 800; width: 65px; text-align: center; font-size: 18px; color: var(--navy); border-bottom: 2px dashed var(--line); padding: 0;"><span class="no-print">)</span>
+         <h1 id="esc-titulo-wrapper" style="text-align: center; color: var(--navy); font-size: 18px; text-decoration: underline; margin-top: 0; margin-bottom: 25px; font-weight: 800; display: flex; justify-content: center; align-items: center; gap: 4px;">
+            ESCOPO DE OBRAS E SERVIÇOS N° <span id="esc-par-esq" class="no-print" style="margin-left: 4px;">(</span><input type="text" id="esc-registro" placeholder="XXXX" class="escopo-input" style="font-weight: 800; width: 65px; text-align: center; font-size: 18px; color: var(--navy); border-bottom: 2px dashed var(--line); padding: 0;"><span id="esc-par-dir" class="no-print">)</span>
          </h1>
          <div style="font-size: 11px; color: var(--muted); text-align: right; margin-bottom: 15px;">Data de Registro: <span id="esc-data-registro" style="font-weight: bold; color: var(--navy);"></span></div>
          <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 10px;"><strong style="white-space: nowrap; font-size: 13px;">OBRA:</strong><input type="text" id="esc-obra" placeholder="Ex: Mirante da Lagoa" class="escopo-input" style="font-weight: 700;"></div>
          <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 10px;"><strong style="white-space: nowrap; font-size: 13px;">OBJETO DE MANUTENÇÃO / CONSTRUÇÃO:</strong><input type="text" id="esc-objeto" placeholder="Descreva o objeto..." class="escopo-input"></div>
-         <div style="margin-bottom: 25px; display: flex; flex-direction: column;"><strong style="font-size: 13px; margin-bottom: 4px;">JUSTIFICATIVA:</strong><textarea id="esc-justificativa" class="escopo-textarea" rows="3" placeholder="Digite a justificativa..."></textarea></div>
+         <div style="margin-bottom: 25px; display: flex; flex-direction: column;"><strong style="font-size: 13px; margin-bottom: 4px;">JUSTIFICATIVA:</strong><textarea id="esc-justificativa" class="escopo-textarea" rows="3" placeholder="Digite a justificativa..." oninput="this.style.height='auto'; this.style.height=this.scrollHeight+'px'; this.textContent=this.value;"></textarea></div>
          <div id="esc-imagens-container" style="display: flex; flex-direction: column; gap: 15px;"></div>
          <button class="btn btn-outline no-print" onclick="Escopo.addImagem()" style="width: 100%; margin-bottom: 25px; border-style: dashed; padding: 15px;">+ Inserir Imagem / Planta / Foto</button>
          <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 20px;"><strong style="white-space: nowrap; font-size: 13px;">ORÇAMENTO PREVISTO:</strong><input type="text" id="esc-orcamento" placeholder="R$ 0,00" class="escopo-input" oninput="Util.maskCur(this)" style="font-weight: 800; max-width: 200px;"></div>
-         <div style="margin-bottom: 20px; display: flex; flex-direction: column;"><strong style="font-size: 13px; margin-bottom: 4px;">DETALHAMENTO:</strong><textarea id="esc-detalhamento" class="escopo-textarea" rows="5" placeholder="Passo a passo, descrição técnica..."></textarea></div>
-         <div style="margin-bottom: 25px; display: flex; flex-direction: column;"><strong style="font-size: 13px; margin-bottom: 4px;">OBSERVAÇÕES:</strong><textarea id="esc-observacoes" class="escopo-textarea" rows="3" placeholder="Condições, responsabilidades, EPIs..."></textarea></div>
+         <div style="margin-bottom: 20px; display: flex; flex-direction: column;"><strong style="font-size: 13px; margin-bottom: 4px;">DETALHAMENTO:</strong><textarea id="esc-detalhamento" class="escopo-textarea" rows="5" placeholder="Passo a passo, descrição técnica..." oninput="this.style.height='auto'; this.style.height=this.scrollHeight+'px'; this.textContent=this.value;"></textarea></div>
+         <div style="margin-bottom: 25px; display: flex; flex-direction: column;"><strong style="font-size: 13px; margin-bottom: 4px;">OBSERVAÇÕES:</strong><textarea id="esc-observacoes" class="escopo-textarea" rows="3" placeholder="Condições, responsabilidades, EPIs..." oninput="this.style.height='auto'; this.style.height=this.scrollHeight+'px'; this.textContent=this.value;"></textarea></div>
          <div style="margin-bottom: 25px;"><strong style="font-size: 13px; text-transform: uppercase;">LISTA DE MATERIAIS / MÃO DE OBRA:</strong><table class="items" style="width: 100%; margin-top: 10px; border-collapse: collapse;"><thead><tr><th style="width: 15%; text-align: center; font-size: 10px; background:var(--highlight); border:1px solid var(--line);">QUANTIDADE</th><th style="width: 15%; text-align: center; font-size: 10px; background:var(--highlight); border:1px solid var(--line);">UNIDADE</th><th style="width: 65%; font-size: 10px; background:var(--highlight); border:1px solid var(--line);">DESCRIÇÃO</th><th style="width: 5%; border:none; background:transparent;" class="no-print"></th></tr></thead><tbody id="esc-materiais-body"></tbody></table><button class="btn btn-outline no-print" onclick="Escopo.addMaterial()" style="width: 100%; margin-top: 10px; border-style: dashed;">+ Adicionar Linha na Tabela</button></div>
-         <div style="margin-bottom: 20px; display: flex; flex-direction: column;"><strong style="font-size: 13px; margin-bottom: 4px;">ANEXOS:</strong><textarea id="esc-anexos" class="escopo-textarea" rows="2" placeholder="Caminhos de rede, links de projetos..."></textarea></div>
+         <div style="margin-bottom: 20px; display: flex; flex-direction: column;"><strong style="font-size: 13px; margin-bottom: 4px;">ANEXOS:</strong><textarea id="esc-anexos" class="escopo-textarea" rows="2" placeholder="Caminhos de rede, links de projetos..." oninput="this.style.height='auto'; this.style.height=this.scrollHeight+'px'; this.textContent=this.value;"></textarea></div>
       `;
    }
 };
