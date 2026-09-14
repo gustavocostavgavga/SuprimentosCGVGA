@@ -1665,12 +1665,11 @@
         <div class="header-actions">
            <button class="btn btn-outline" onclick="App.nav('escopos-lista')">← Voltar à Lista</button>
            <button class="btn btn-success" onclick="Escopo.salvar()">💾 Salvar Escopo</button>
-           <!-- NOVO BOTÃO MINIMALISTA DE DOWNLOAD -->
            <button class="btn" style="color: var(--muted); border: 1px solid var(--line); font-size: 16px; padding: 6px 12px; background: transparent; transition: 0.2s;" onmouseover="this.style.color='var(--navy)'; this.style.borderColor='var(--navy)';" onmouseout="this.style.color='var(--muted)'; this.style.borderColor='var(--line)';" onclick="Escopo.baixarPDF()" title="Download PDF"><i class="fa-solid fa-download"></i></button>
         </div>
       </div>
 
-      <div id="escopo-content-area" class="escopo-print-area">
+      <div id="escopo-content-area" class="escopo-print-area" style="background: var(--paper); padding: 40px; border: 1px solid var(--line); border-radius: 6px; box-shadow: 0 4px 10px rgba(0,0,0,0.05);">
          
          <h1 id="esc-titulo-wrapper" style="text-align: center; color: var(--navy); font-size: 18px; text-decoration: underline; margin-top: 0; margin-bottom: 25px; font-weight: 800; display: flex; justify-content: center; align-items: center; gap: 4px;">
             ESCOPO DE OBRAS E SERVIÇOS N° <span id="esc-par-esq" class="no-print" style="margin-left: 4px;">(</span><input type="text" id="esc-registro" placeholder="XXXX" class="escopo-input" style="font-weight: 800; width: 65px; text-align: center; font-size: 18px; color: var(--navy); border-bottom: 2px dashed var(--line); padding: 0;"><span id="esc-par-dir" class="no-print">)</span>
@@ -1692,26 +1691,30 @@
 
          <div style="margin-bottom: 25px; display: flex; flex-direction: column;">
             <strong style="font-size: 13px; margin-bottom: 4px;">JUSTIFICATIVA:</strong>
-            <textarea id="esc-justificativa" class="escopo-textarea" rows="3" placeholder="Digite a justificativa..." oninput="this.style.height='auto'; this.style.height=this.scrollHeight+'px'; this.textContent=this.value;"></textarea>
+            <textarea id="esc-justificativa" class="escopo-textarea" rows="3" placeholder="Digite a justificativa..." oninput="this.style.height='auto'; this.style.height=this.scrollHeight+'px';"></textarea>
          </div>
 
          <!-- ÁREA DE IMAGENS -->
          <div id="esc-imagens-container" style="display: flex; flex-direction: column; gap: 15px;"></div>
-         <button class="btn btn-outline no-print" onclick="Escopo.addImagem()" style="width: 100%; margin-bottom: 25px; border-style: dashed; padding: 15px;">+ Inserir Imagem / Planta / Foto</button>
+         
+         <!-- BOTÃO DE INSERIR IMAGEM (FLUTUANTE DE FORA DA PÁGINA) -->
+         <div class="no-print" style="position: relative; height: 0; z-index: 50;">
+             <button class="btn btn-outline" onclick="Escopo.addImagem()" style="position: absolute; left: 100%; top: -20px; margin-left: 15px; width: 140px; font-size: 10px; padding: 8px; border-style: dashed; background: var(--paper); box-shadow: 0 4px 6px rgba(0,0,0,0.1);">+ Inserir Imagem</button>
+         </div>
 
-         <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 20px;">
+         <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 20px; margin-top: 15px;">
             <strong style="white-space: nowrap; font-size: 13px;">ORÇAMENTO PREVISTO:</strong>
             <input type="text" id="esc-orcamento" placeholder="R$ 0,00" class="escopo-input" oninput="Util.maskCur(this)" style="font-weight: 800; max-width: 200px;">
          </div>
 
          <div style="margin-bottom: 20px; display: flex; flex-direction: column;">
             <strong style="font-size: 13px; margin-bottom: 4px;">DETALHAMENTO:</strong>
-            <textarea id="esc-detalhamento" class="escopo-textarea" rows="5" placeholder="Passo a passo, descrição técnica..." oninput="this.style.height='auto'; this.style.height=this.scrollHeight+'px'; this.textContent=this.value;"></textarea>
+            <textarea id="esc-detalhamento" class="escopo-textarea" rows="5" placeholder="Passo a passo, descrição técnica..." oninput="this.style.height='auto'; this.style.height=this.scrollHeight+'px';"></textarea>
          </div>
 
          <div style="margin-bottom: 25px; display: flex; flex-direction: column;">
             <strong style="font-size: 13px; margin-bottom: 4px;">OBSERVAÇÕES:</strong>
-            <textarea id="esc-observacoes" class="escopo-textarea" rows="3" placeholder="Condições, responsabilidades, EPIs..." oninput="this.style.height='auto'; this.style.height=this.scrollHeight+'px'; this.textContent=this.value;"></textarea>
+            <textarea id="esc-observacoes" class="escopo-textarea" rows="3" placeholder="Condições, responsabilidades, EPIs..." oninput="this.style.height='auto'; this.style.height=this.scrollHeight+'px';"></textarea>
          </div>
 
          <div style="margin-bottom: 25px;">
@@ -1727,14 +1730,19 @@
                </thead>
                <tbody id="esc-materiais-body"></tbody>
             </table>
-            <button class="btn btn-outline no-print" onclick="Escopo.addMaterial()" style="width: 100%; margin-top: 10px; border-style: dashed;">+ Adicionar Linha na Tabela</button>
+            
+            <!-- BOTÃO DE ADD LINHA (FLUTUANTE DE FORA DA PÁGINA) -->
+            <div class="no-print" style="position: relative; height: 0; z-index: 50;">
+                <button class="btn btn-outline" onclick="Escopo.addMaterial()" style="position: absolute; left: 100%; top: -20px; margin-left: 15px; width: 140px; font-size: 10px; padding: 8px; border-style: dashed; background: var(--paper); box-shadow: 0 4px 6px rgba(0,0,0,0.1);">+ Add Linha</button>
+            </div>
          </div>
 
          <div style="margin-bottom: 20px; display: flex; flex-direction: column;">
             <strong style="font-size: 13px; margin-bottom: 4px;">ANEXOS:</strong>
-            <textarea id="esc-anexos" class="escopo-textarea" rows="2" placeholder="Caminhos de rede, links de projetos..." oninput="this.style.height='auto'; this.style.height=this.scrollHeight+'px'; this.textContent=this.value;"></textarea>
+            <textarea id="esc-anexos" class="escopo-textarea" rows="2" placeholder="Caminhos de rede, links de projetos..." oninput="this.style.height='auto'; this.style.height=this.scrollHeight+'px';"></textarea>
          </div>
       </div>
+    </div>
 
 </main>
 </div>
@@ -4922,7 +4930,6 @@ document.addEventListener('click', (e) => {
   }
 });
 
-// ==================== MODULO: ESCOPO EXECUTIVO ====================
 let escopoImgCount = 0;
 const Escopo = {
    currentId: null,
@@ -5000,10 +5007,7 @@ const Escopo = {
       Escopo.currentId = e.id;
       document.getElementById('escopo-content-area').innerHTML = e.htmlContent;
       
-      // Restaura os campos menores
       document.querySelectorAll('#escopo-content-area .escopo-input').forEach(i => i.value = i.getAttribute('value') || '');
-      
-      // Restaura as caixas de texto maiores E as expande automaticamente (correção aplicada aqui!)
       document.querySelectorAll('#escopo-content-area .escopo-textarea').forEach(t => { 
           t.value = t.textContent || ''; 
           t.style.height = 'auto'; 
@@ -5045,7 +5049,13 @@ const Escopo = {
    baixarPDF: () => {
       const elemento = document.getElementById('escopo-content-area');
       
-      // Esconde botões e marca o container para esconder a linha vermelha
+      const originalPadding = elemento.style.padding;
+      const originalBorder = elemento.style.border;
+      const originalShadow = elemento.style.boxShadow;
+      elemento.style.padding = '10px 15px'; 
+      elemento.style.border = 'none';
+      elemento.style.boxShadow = 'none';
+      
       document.querySelectorAll('#escopo-content-area .no-print').forEach(el => el.style.display = 'none');
       elemento.classList.add('gerando-pdf'); 
 
@@ -5087,6 +5097,12 @@ const Escopo = {
          inp.parentNode.insertBefore(span, inp.nextSibling);
       });
 
+      const espacos = elemento.querySelectorAll('div[style*="margin-bottom: 25px"], div[style*="margin-bottom: 20px"]');
+      espacos.forEach(d => { 
+         d.dataset.origMb = d.style.marginBottom; 
+         d.style.marginBottom = '8px'; 
+      });
+
       document.getElementById('db-loader').style.display = 'flex';
       document.getElementById('db-loader').style.opacity = '1';
       document.getElementById('db-loader').children[1].textContent = 'GERANDO ARQUIVO PDF COMPACTO...';
@@ -5094,23 +5110,26 @@ const Escopo = {
       const numeroEscopo = document.getElementById('esc-registro').value || 'Sem_Numero';
       
       const opt = {
-         margin:       0, // Margem 0! O padding interno do layout A4 já faz a margem perfeita!
+         margin:       [10, 12, 10, 12], 
          filename:     `Escopo_Obras_${numeroEscopo}.pdf`,
-         image:        { type: 'jpeg', quality: 1 },
+         image:        { type: 'jpeg', quality: 0.98 },
          html2canvas:  { scale: 2, useCORS: true },
          jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' },
-         // Tira a trava "avoid-all" que causava os espaços em branco, evitando corte apenas em fotos.
          pagebreak:    { mode: ['css', 'legacy'], avoid: ['.esc-img-block', 'tr'] } 
       };
 
       html2pdf().set(opt).from(elemento).save().then(() => {
-         // RESTAURA A TELA
          document.querySelectorAll('.temp-pdf-text, .temp-pdf-input').forEach(el => el.remove());
          textareas.forEach(ta => ta.style.display = '');
          inputs.forEach(inp => inp.style.display = '');
          document.querySelectorAll('#escopo-content-area .no-print').forEach(el => el.style.display = '');
          
+         espacos.forEach(d => { d.style.marginBottom = d.dataset.origMb; });
+
          elemento.classList.remove('gerando-pdf');
+         elemento.style.padding = originalPadding;
+         elemento.style.border = originalBorder;
+         elemento.style.boxShadow = originalShadow;
 
          document.getElementById('db-loader').style.opacity = '0';
          setTimeout(()=> document.getElementById('db-loader').style.display = 'none', 500);
@@ -5122,24 +5141,19 @@ const Escopo = {
       const container = document.getElementById('esc-imagens-container');
       const id = Util.genId();
       const html = `
-         <div class="esc-img-block" id="esc_img_wrap_${id}">
-            <button class="del-btn no-print" onclick="this.parentElement.remove()" style="position: absolute; top: 5px; right: 5px; font-size: 20px;" title="Remover Bloco">×</button>
-            
-            <!-- CONTROLES DA IMAGEM -->
-            <div class="no-print" id="ctrl_${id}" style="margin-bottom: 15px; text-align: left; background: var(--bg); padding: 10px; border-radius: 4px;">
-               <label style="font-size: 10px; font-weight: bold; color: var(--navy);">TAMANHO DA IMAGEM NA IMPRESSÃO: <span id="val_${id}">100%</span></label>
-               <input type="range" min="20" max="100" value="100" style="width: 100%; margin-bottom: 10px;" oninput="document.getElementById('img_${id}').style.width = this.value + '%'; document.getElementById('val_${id}').textContent = this.value + '%';">
-               
-               <label style="font-size: 10px; font-weight: bold; color: var(--navy); display:block; margin-bottom:4px;">CARREGAR ARQUIVO:</label>
-               <input type="file" accept="image/*" onchange="Escopo.loadImage(event, 'img_${id}')" style="margin-bottom: 5px; font-size:11px; width: 100%;">
-               
-               <button class="btn btn-outline" style="width: 100%; font-size: 10px; padding: 6px; margin-top: 10px; border-color: var(--line);" onclick="document.getElementById('ctrl_${id}').style.display='none'; document.getElementById('btn_show_${id}').style.display='inline-flex';">⬆️ Ocultar Ferramentas desta Imagem</button>
-            </div>
-            
-            <!-- BOTÃO PARA REEXIBIR CONTROLES -->
-            <button class="btn btn-outline no-print" id="btn_show_${id}" style="display: none; font-size: 10px; padding: 4px 8px; margin-bottom: 10px; border-style: dashed;" onclick="document.getElementById('ctrl_${id}').style.display='block'; this.style.display='none';">⚙️ Editar Imagem</button>
+         <div class="esc-img-block" id="esc_img_wrap_${id}" style="border: 1px dashed var(--line); padding: 15px; border-radius: 6px; text-align: center; position: relative; margin-bottom: 20px;">
+            <button class="del-btn no-print" onclick="this.parentElement.remove()" style="position: absolute; top: 5px; right: 5px; font-size: 20px; z-index: 10;" title="Remover Bloco">×</button>
+            <button class="btn btn-outline no-print" style="position: absolute; top: 5px; left: 5px; font-size: 10px; padding: 4px 8px; z-index: 5;" onclick="document.getElementById('ctrl_${id}').style.display='block';">⚙️ Editar Imagem</button>
 
-            <img id="img_${id}" src="" style="width: 100%; max-width: 100%; object-fit: contain; margin-bottom: 10px; min-height: 80px;">
+            <div class="no-print" id="ctrl_${id}" style="display: none; position: absolute; top: 35px; left: 5px; background: rgba(255,255,255,0.95); padding: 15px; border-radius: 6px; border: 1px solid var(--navy); box-shadow: 0 4px 12px rgba(0,0,0,0.2); width: 220px; z-index: 20; text-align: left;">
+               <label style="font-size: 10px; font-weight: bold; color: var(--navy);">TAMANHO DA IMAGEM: <span id="val_${id}">100%</span></label>
+               <input type="range" min="20" max="100" value="100" style="width: 100%; margin-bottom: 10px;" oninput="document.getElementById('img_${id}').style.width = this.value + '%'; document.getElementById('val_${id}').textContent = this.value + '%';">
+               <label style="font-size: 10px; font-weight: bold; color: var(--navy); display:block; margin-bottom:4px;">CARREGAR ARQUIVO:</label>
+               <input type="file" accept="image/*" onchange="Escopo.loadImage(event, 'img_${id}')" style="margin-bottom: 10px; font-size:11px; width: 100%;">
+               <button class="btn btn-solid" style="width: 100%; font-size: 10px; padding: 6px;" onclick="document.getElementById('ctrl_${id}').style.display='none';">Aplicar e Fechar</button>
+            </div>
+
+            <img id="img_${id}" src="" style="width: 100%; max-width: 100%; object-fit: contain; margin-bottom: 10px; min-height: 80px; display:block; margin-left:auto; margin-right:auto;">
             
             <input type="text" class="escopo-input" style="font-weight: 800; text-align: center; font-size: 12px;" placeholder="Foto 0${escopoImgCount}: Título ou Descrição da Imagem..." oninput="this.setAttribute('value', this.value)">
             <input type="text" class="escopo-input" style="text-align: center; font-size: 11.5px; margin-top: 4px;" placeholder="Obs: ..." oninput="this.setAttribute('value', this.value)">
@@ -5180,17 +5194,23 @@ const Escopo = {
          <div style="font-size: 11px; color: var(--muted); text-align: right; margin-bottom: 15px;">Data de Registro: <span id="esc-data-registro" style="font-weight: bold; color: var(--navy);"></span></div>
          <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 10px;"><strong style="white-space: nowrap; font-size: 13px;">OBRA:</strong><input type="text" id="esc-obra" placeholder="Ex: Mirante da Lagoa" class="escopo-input" style="font-weight: 700;"></div>
          <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 10px;"><strong style="white-space: nowrap; font-size: 13px;">OBJETO DE MANUTENÇÃO / CONSTRUÇÃO:</strong><input type="text" id="esc-objeto" placeholder="Descreva o objeto..." class="escopo-input"></div>
-         <div style="margin-bottom: 25px; display: flex; flex-direction: column;"><strong style="font-size: 13px; margin-bottom: 4px;">JUSTIFICATIVA:</strong><textarea id="esc-justificativa" class="escopo-textarea" rows="3" placeholder="Digite a justificativa..." oninput="this.style.height='auto'; this.style.height=this.scrollHeight+'px'; this.textContent=this.value;"></textarea></div>
+         <div style="margin-bottom: 25px; display: flex; flex-direction: column;"><strong style="font-size: 13px; margin-bottom: 4px;">JUSTIFICATIVA:</strong><textarea id="esc-justificativa" class="escopo-textarea" rows="3" placeholder="Digite a justificativa..." oninput="this.style.height='auto'; this.style.height=this.scrollHeight+'px';"></textarea></div>
+         
          <div id="esc-imagens-container" style="display: flex; flex-direction: column; gap: 15px;"></div>
-         <button class="btn btn-outline no-print" onclick="Escopo.addImagem()" style="width: 100%; margin-bottom: 25px; border-style: dashed; padding: 15px;">+ Inserir Imagem / Planta / Foto</button>
-         <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 20px;"><strong style="white-space: nowrap; font-size: 13px;">ORÇAMENTO PREVISTO:</strong><input type="text" id="esc-orcamento" placeholder="R$ 0,00" class="escopo-input" oninput="Util.maskCur(this)" style="font-weight: 800; max-width: 200px;"></div>
-         <div style="margin-bottom: 20px; display: flex; flex-direction: column;"><strong style="font-size: 13px; margin-bottom: 4px;">DETALHAMENTO:</strong><textarea id="esc-detalhamento" class="escopo-textarea" rows="5" placeholder="Passo a passo, descrição técnica..." oninput="this.style.height='auto'; this.style.height=this.scrollHeight+'px'; this.textContent=this.value;"></textarea></div>
-         <div style="margin-bottom: 25px; display: flex; flex-direction: column;"><strong style="font-size: 13px; margin-bottom: 4px;">OBSERVAÇÕES:</strong><textarea id="esc-observacoes" class="escopo-textarea" rows="3" placeholder="Condições, responsabilidades, EPIs..." oninput="this.style.height='auto'; this.style.height=this.scrollHeight+'px'; this.textContent=this.value;"></textarea></div>
-         <div style="margin-bottom: 25px;"><strong style="font-size: 13px; text-transform: uppercase;">LISTA DE MATERIAIS / MÃO DE OBRA:</strong><table class="items" style="width: 100%; margin-top: 10px; border-collapse: collapse;"><thead><tr><th style="width: 15%; text-align: center; font-size: 10px; background:var(--highlight); border:1px solid var(--line);">QUANTIDADE</th><th style="width: 15%; text-align: center; font-size: 10px; background:var(--highlight); border:1px solid var(--line);">UNIDADE</th><th style="width: 65%; font-size: 10px; background:var(--highlight); border:1px solid var(--line);">DESCRIÇÃO</th><th style="width: 5%; border:none; background:transparent;" class="no-print"></th></tr></thead><tbody id="esc-materiais-body"></tbody></table><button class="btn btn-outline no-print" onclick="Escopo.addMaterial()" style="width: 100%; margin-top: 10px; border-style: dashed;">+ Adicionar Linha na Tabela</button></div>
-         <div style="margin-bottom: 20px; display: flex; flex-direction: column;"><strong style="font-size: 13px; margin-bottom: 4px;">ANEXOS:</strong><textarea id="esc-anexos" class="escopo-textarea" rows="2" placeholder="Caminhos de rede, links de projetos..." oninput="this.style.height='auto'; this.style.height=this.scrollHeight+'px'; this.textContent=this.value;"></textarea></div>
+         <div class="no-print" style="position: relative; height: 0; z-index: 50;"><button class="btn btn-outline" onclick="Escopo.addImagem()" style="position: absolute; left: 100%; top: -20px; margin-left: 15px; width: 140px; font-size: 10px; padding: 8px; border-style: dashed; background: var(--paper); box-shadow: 0 4px 6px rgba(0,0,0,0.1);">+ Inserir Imagem</button></div>
+         
+         <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 20px; margin-top: 15px;"><strong style="white-space: nowrap; font-size: 13px;">ORÇAMENTO PREVISTO:</strong><input type="text" id="esc-orcamento" placeholder="R$ 0,00" class="escopo-input" oninput="Util.maskCur(this)" style="font-weight: 800; max-width: 200px;"></div>
+         <div style="margin-bottom: 20px; display: flex; flex-direction: column;"><strong style="font-size: 13px; margin-bottom: 4px;">DETALHAMENTO:</strong><textarea id="esc-detalhamento" class="escopo-textarea" rows="5" placeholder="Passo a passo, descrição técnica..." oninput="this.style.height='auto'; this.style.height=this.scrollHeight+'px';"></textarea></div>
+         <div style="margin-bottom: 25px; display: flex; flex-direction: column;"><strong style="font-size: 13px; margin-bottom: 4px;">OBSERVAÇÕES:</strong><textarea id="esc-observacoes" class="escopo-textarea" rows="3" placeholder="Condições, responsabilidades, EPIs..." oninput="this.style.height='auto'; this.style.height=this.scrollHeight+'px';"></textarea></div>
+         
+         <div style="margin-bottom: 25px;"><strong style="font-size: 13px; text-transform: uppercase;">LISTA DE MATERIAIS / MÃO DE OBRA:</strong><table class="items" style="width: 100%; margin-top: 10px; border-collapse: collapse;"><thead><tr><th style="width: 15%; text-align: center; font-size: 10px; background:var(--highlight); border:1px solid var(--line);">QUANTIDADE</th><th style="width: 15%; text-align: center; font-size: 10px; background:var(--highlight); border:1px solid var(--line);">UNIDADE</th><th style="width: 65%; font-size: 10px; background:var(--highlight); border:1px solid var(--line);">DESCRIÇÃO</th><th style="width: 5%; border:none; background:transparent;" class="no-print"></th></tr></thead><tbody id="esc-materiais-body"></tbody></table>
+         <div class="no-print" style="position: relative; height: 0; z-index: 50;"><button class="btn btn-outline" onclick="Escopo.addMaterial()" style="position: absolute; left: 100%; top: -20px; margin-left: 15px; width: 140px; font-size: 10px; padding: 8px; border-style: dashed; background: var(--paper); box-shadow: 0 4px 6px rgba(0,0,0,0.1);">+ Add Linha</button></div></div>
+         
+         <div style="margin-bottom: 20px; display: flex; flex-direction: column;"><strong style="font-size: 13px; margin-bottom: 4px;">ANEXOS:</strong><textarea id="esc-anexos" class="escopo-textarea" rows="2" placeholder="Caminhos de rede, links de projetos..." oninput="this.style.height='auto'; this.style.height=this.scrollHeight+'px';"></textarea></div>
       `;
    }
 };
+
 window.Escopo = Escopo;
 window.onload = App.init;
 </script>
