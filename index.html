@@ -16,6 +16,7 @@
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
 <style>
   :root {
@@ -1659,15 +1660,16 @@
         <div class="header-actions">
            <button class="btn btn-outline" onclick="App.nav('escopos-lista')">← Voltar à Lista</button>
            <button class="btn btn-success" onclick="Escopo.salvar()">💾 Salvar Escopo</button>
-           <button class="btn btn-solid" onclick="Escopo.imprimir()">🖨️ Imprimir PDF</button>
+           <!-- NOVO BOTÃO MINIMALISTA DE DOWNLOAD -->
+           <button class="btn" style="color: var(--muted); border: 1px solid var(--line); font-size: 16px; padding: 6px 12px; background: transparent; transition: 0.2s;" onmouseover="this.style.color='var(--navy)'; this.style.borderColor='var(--navy)';" onmouseout="this.style.color='var(--muted)'; this.style.borderColor='var(--line)';" onclick="Escopo.baixarPDF()" title="Download PDF"><i class="fa-solid fa-download"></i></button>
         </div>
       </div>
 
       <div id="escopo-content-area" class="escopo-print-area" style="background: var(--paper); padding: 40px; border: 1px solid var(--line); border-radius: 6px; box-shadow: 0 4px 10px rgba(0,0,0,0.05);">
          
-         <!-- NOVO TÍTULO DINÂMICO E LIMPO -->
-         <h1 style="text-align: center; color: var(--navy); font-size: 18px; text-decoration: underline; margin-bottom: 25px; font-weight: 800; display: flex; justify-content: center; align-items: center; gap: 4px;">
-            ESCOPO DE OBRAS E SERVIÇOS N° <span class="no-print" style="margin-left: 4px;">(</span><input type="text" id="esc-registro" placeholder="XXXX" class="escopo-input" style="font-weight: 800; width: 65px; text-align: center; font-size: 18px; color: var(--navy); border-bottom: 2px dashed var(--line); padding: 0;"><span class="no-print">)</span>
+         <!-- TÍTULO DINÂMICO PREPARADO PARA O GERADOR DE PDF -->
+         <h1 id="esc-titulo-wrapper" style="text-align: center; color: var(--navy); font-size: 18px; text-decoration: underline; margin-top: 0; margin-bottom: 25px; font-weight: 800; display: flex; justify-content: center; align-items: center; gap: 4px;">
+            ESCOPO DE OBRAS E SERVIÇOS N° <span id="esc-par-esq" class="no-print" style="margin-left: 4px;">(</span><input type="text" id="esc-registro" placeholder="XXXX" class="escopo-input" style="font-weight: 800; width: 65px; text-align: center; font-size: 18px; color: var(--navy); border-bottom: 2px dashed var(--line); padding: 0;"><span id="esc-par-dir" class="no-print">)</span>
          </h1>
 
          <div style="font-size: 11px; color: var(--muted); text-align: right; margin-bottom: 15px;">
@@ -5031,41 +5033,91 @@ const Escopo = {
       Escopo.listar();
    },
 
-   imprimir: () => {
-      // 1. TRUQUE DEFINITIVO: Troca as caixas de texto problemáticas por texto livre na impressão
-      document.querySelectorAll('.escopo-textarea').forEach(ta => {
+   baixarPDF: () => {
+      // 1. Seleciona o container que vai virar PDF
+      const elemento = document.getElementById('escopo-content-area');
+      
+      // 2. Prepara o Layout para máxima ocupação da tela (zera margens e esconde controles)
+      const originalPadding = elemento.style.padding;
+      const originalBorder = elemento.style.border;
+      const originalShadow = elemento.style.boxShadow;
+      elemento.style.padding = '10px 15px'; // Padding mínimo para grudar no topo
+      elemento.style.border = 'none';
+      elemento.style.boxShadow = 'none';
+      
+      document.querySelectorAll('#escopo-content-area .no-print').forEach(el => el.style.display = 'none');
+
+      // 3. CONVERTE TEXTAREAS EM TEXTO JUSTIFICADO LIVRE (Acaba com a barra de rolagem!)
+      const textareas = elemento.querySelectorAll('.escopo-textarea');
+      textareas.forEach(ta => {
          const div = document.createElement('div');
-         div.className = 'temp-print-text';
+         div.className = 'temp-pdf-text';
          div.style.whiteSpace = 'pre-wrap';
          div.style.wordWrap = 'break-word';
-         div.style.fontSize = '12.5px';
+         div.style.textAlign = 'justify'; // Texto 100% justificado
+         div.style.fontSize = '12px';
          div.style.color = '#000';
-         div.style.lineHeight = '1.5';
-         div.style.marginTop = '4px';
-         div.textContent = ta.value; // Pega o que o usuário digitou
-         ta.style.display = 'none'; // Esconde a caixa com barra de rolagem
-         ta.parentNode.insertBefore(div, ta.nextSibling); // Insere o texto puro na tela
+         div.style.lineHeight = '1.6';
+         div.textContent = ta.value || ' ';
+         ta.style.display = 'none';
+         ta.parentNode.insertBefore(div, ta.nextSibling);
       });
 
-      // 2. FORÇA BRUTA NO TOPO: Zera qualquer margem global que empurra o título para baixo
-      const printStyle = document.createElement('style');
-      printStyle.innerHTML = `
-         @media print { 
-            @page { size: A4 portrait !important; margin: 5mm 15mm 15mm 15mm !important; } 
-            body, html, main, .app, #view-escopo { margin: 0 !important; padding: 0 !important; } 
-            #view-escopo h1 { margin-top: 0 !important; padding-top: 0 !important; }
-         }
-      `;
-      document.head.appendChild(printStyle);
-      
-      setTimeout(() => {
-         window.print(); // Abre a tela de PDF
+      // 4. CONVERTE OS INPUTS EM TEXTO PURO (Limpa a tela e esconde parênteses)
+      const inputs = elemento.querySelectorAll('.escopo-input');
+      inputs.forEach(inp => {
+         const span = document.createElement('span');
+         span.className = 'temp-pdf-input';
+         span.style.fontWeight = inp.style.fontWeight || 'normal';
+         span.style.fontSize = inp.style.fontSize || '12px';
+         span.style.color = '#000';
+         span.style.display = 'inline-block';
+         span.style.textAlign = inp.style.textAlign || 'left';
          
-         // 3. DEVOLVE TUDO AO NORMAL APÓS A IMPRESSÃO
-         document.querySelectorAll('.temp-print-text').forEach(div => div.remove()); // Remove o texto puro
-         document.querySelectorAll('.escopo-textarea').forEach(ta => ta.style.display = 'block'); // Devolve as caixas
-         document.head.removeChild(printStyle); // Remove o bloqueio de margens
-      }, 300);
+         // Se for o título, junta o número sem os parênteses
+         if(inp.id === 'esc-registro') {
+            span.textContent = inp.value ? inp.value : '';
+            span.style.textDecoration = 'underline';
+            span.style.fontSize = '18px';
+            span.style.fontWeight = '800';
+         } else {
+            span.textContent = inp.value || ' ';
+         }
+         
+         inp.style.display = 'none';
+         inp.parentNode.insertBefore(span, inp.nextSibling);
+      });
+
+      // Mostra tela de carregamento
+      document.getElementById('db-loader').style.display = 'flex';
+      document.getElementById('db-loader').style.opacity = '1';
+      document.getElementById('db-loader').children[1].textContent = 'GERANDO ARQUIVO PDF...';
+
+      // 5. GERA O PDF DIRETAMENTE E FAZ DOWNLOAD
+      const numeroEscopo = document.getElementById('esc-registro').value || 'Sem_Numero';
+      const opt = {
+         margin:       [10, 15, 15, 15], // [Topo, Direita, Baixo, Esquerda] - Topo cravado na margem!
+         filename:     `Escopo_Obras_${numeroEscopo}.pdf`,
+         image:        { type: 'jpeg', quality: 0.98 },
+         html2canvas:  { scale: 2, useCORS: true },
+         jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' },
+         pagebreak:    { mode: ['avoid-all', 'css', 'legacy'] } // Evita quebra irregular de tabelas e fotos
+      };
+
+      html2pdf().set(opt).from(elemento).save().then(() => {
+         // 6. RESTAURA A TELA PARA CONTINUAR EDITANDO
+         document.querySelectorAll('.temp-pdf-text, .temp-pdf-input').forEach(el => el.remove());
+         textareas.forEach(ta => ta.style.display = '');
+         inputs.forEach(inp => inp.style.display = '');
+         document.querySelectorAll('#escopo-content-area .no-print').forEach(el => el.style.display = '');
+         
+         elemento.style.padding = originalPadding;
+         elemento.style.border = originalBorder;
+         elemento.style.boxShadow = originalShadow;
+
+         document.getElementById('db-loader').style.opacity = '0';
+         setTimeout(()=> document.getElementById('db-loader').style.display = 'none', 500);
+      });
    },
 
    addImagem: () => {
