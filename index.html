@@ -376,41 +376,29 @@
   .escopo-input:hover, .escopo-textarea:hover, .escopo-input:focus, .escopo-textarea:focus { border-bottom-color: var(--navy); }
   .esc-img-block { border: 1px dashed var(--line); padding: 15px; border-radius: 6px; text-align: center; position: relative; margin-bottom: 20px; }
   
-  /* TEXTAREAS AUTO-EXPANSÍVEIS */
   .escopo-textarea { overflow: hidden !important; resize: none !important; min-height: 20px; }
 
-  /* MÁGICA DO A4 NA TELA */
   .escopo-print-area {
-      width: 210mm !important; /* Largura Exata do A4 */
-      min-height: 297mm; /* Altura Exata de 1 página A4 */
+      width: 210mm !important; 
+      min-height: 297mm; 
       margin: 0 auto;
       background: #ffffff;
-      /* As margens da folha agora são Padding da tela (Topo, Direita, Baixo, Esquerda) */
-      padding: 10mm 15mm 15mm 15mm !important; 
+      padding: 15mm !important; 
       box-sizing: border-box;
       position: relative;
       box-shadow: 0 10px 30px rgba(0,0,0,0.15);
   }
 
-  /* LINHA VERMELHA DE CORTE DA PÁGINA (A cada 297mm) */
   .escopo-print-area::after {
       content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
-      pointer-events: none; /* Não atrapalha o clique */
-      background-image: repeating-linear-gradient(
-          to bottom,
-          transparent,
-          transparent calc(297mm - 2px),
-          rgba(239, 68, 68, 0.8) calc(297mm - 2px),
-          rgba(239, 68, 68, 0.8) 297mm
-      );
+      pointer-events: none; 
+      background-image: repeating-linear-gradient(to bottom, transparent, transparent calc(297mm - 2px), rgba(239, 68, 68, 0.8) calc(297mm - 2px), rgba(239, 68, 68, 0.8) 297mm);
       z-index: 100;
   }
 
-  /* ESCONDE A LINHA DE CORTE NA HORA DE SALVAR O PDF */
+  /* Retira restrições de largura na hora de desenhar o PDF para não cortar a direita */
   .escopo-print-area.gerando-pdf::after { display: none !important; }
-     .escopo-input::placeholder, .escopo-textarea::placeholder { color: transparent !important; }
-     .esc-img-block { border: none !important; padding: 0 !important; margin-bottom: 15px !important; page-break-inside: avoid; }
-  }
+  .escopo-print-area.gerando-pdf { width: 100% !important; min-height: auto !important; }
 
 </style>
 </head>
@@ -1669,56 +1657,55 @@
         </div>
       </div>
 
-      <div id="escopo-content-area" class="escopo-print-area" style="background: var(--paper); padding: 40px; border: 1px solid var(--line); border-radius: 6px; box-shadow: 0 4px 10px rgba(0,0,0,0.05);">
+      <div id="escopo-content-area" class="escopo-print-area">
          
-         <h1 id="esc-titulo-wrapper" style="text-align: center; color: var(--navy); font-size: 18px; text-decoration: underline; margin-top: 0; margin-bottom: 25px; font-weight: 800; display: flex; justify-content: center; align-items: center; gap: 4px;">
-            ESCOPO DE OBRAS E SERVIÇOS N° <span id="esc-par-esq" class="no-print" style="margin-left: 4px;">(</span><input type="text" id="esc-registro" placeholder="XXXX" class="escopo-input" style="font-weight: 800; width: 65px; text-align: center; font-size: 18px; color: var(--navy); border-bottom: 2px dashed var(--line); padding: 0;"><span id="esc-par-dir" class="no-print">)</span>
-         </h1>
-
-         <div style="font-size: 11px; color: var(--muted); text-align: right; margin-bottom: 15px;">
-            Data de Registro: <span id="esc-data-registro" style="font-weight: bold; color: var(--navy);"></span>
+         <div style="border: 2px solid var(--ink); padding: 15px; border-radius: 4px; text-align: center; margin-bottom: 20px;">
+            <h1 id="esc-titulo-wrapper" style="color: var(--ink); font-size: 18px; margin: 0; font-weight: 800; display: flex; justify-content: center; align-items: center; gap: 4px; text-transform: uppercase;">
+               ESCOPO DE OBRAS E SERVIÇOS N° <input type="text" id="esc-registro" placeholder="XXXX" class="escopo-input" style="font-weight: 800; width: 60px; text-align: center; font-size: 18px; color: var(--ink); border-bottom: 1px dashed var(--line); padding: 0;">
+            </h1>
          </div>
 
-         <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 10px;">
-            <strong style="white-space: nowrap; font-size: 13px;">OBRA:</strong>
+         <div style="font-size: 11px; color: var(--muted); text-align: right; margin-bottom: 20px; font-weight: 600;">
+            Data de Registro: <span id="esc-data-registro" style="font-weight: 800; color: var(--ink);"></span>
+         </div>
+
+         <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 15px;">
+            <strong style="white-space: nowrap; font-size: 13px; color: var(--ink);"><i class="fa-solid fa-building" style="color: var(--muted); margin-right: 6px;"></i>OBRA:</strong>
             <input type="text" id="esc-obra" placeholder="Ex: Mirante da Lagoa" class="escopo-input" style="font-weight: 700;">
          </div>
 
-         <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 10px;">
-            <strong style="white-space: nowrap; font-size: 13px;">OBJETO DE MANUTENÇÃO / CONSTRUÇÃO:</strong>
+         <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 15px;">
+            <strong style="white-space: nowrap; font-size: 13px; color: var(--ink);"><i class="fa-solid fa-screwdriver-wrench" style="color: var(--muted); margin-right: 6px;"></i>OBJETO:</strong>
             <input type="text" id="esc-objeto" placeholder="Descreva o objeto..." class="escopo-input">
          </div>
 
-         <div style="margin-bottom: 25px; display: flex; flex-direction: column;">
-            <strong style="font-size: 13px; margin-bottom: 4px;">JUSTIFICATIVA:</strong>
+         <div style="margin-bottom: 20px; display: flex; flex-direction: column;">
+            <strong style="font-size: 13px; margin-bottom: 6px; color: var(--ink);"><i class="fa-solid fa-file-lines" style="color: var(--muted); margin-right: 6px;"></i>JUSTIFICATIVA:</strong>
             <textarea id="esc-justificativa" class="escopo-textarea" rows="3" placeholder="Digite a justificativa..." oninput="this.style.height='auto'; this.style.height=this.scrollHeight+'px';"></textarea>
          </div>
 
-         <!-- ÁREA DE IMAGENS -->
          <div id="esc-imagens-container" style="display: flex; flex-direction: column; gap: 15px;"></div>
-         
-         <!-- BOTÃO DE INSERIR IMAGEM (FLUTUANTE DE FORA DA PÁGINA) -->
          <div class="no-print" style="position: relative; height: 0; z-index: 50;">
              <button class="btn btn-outline" onclick="Escopo.addImagem()" style="position: absolute; left: 100%; top: -20px; margin-left: 15px; width: 140px; font-size: 10px; padding: 8px; border-style: dashed; background: var(--paper); box-shadow: 0 4px 6px rgba(0,0,0,0.1);">+ Inserir Imagem</button>
          </div>
 
          <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 20px; margin-top: 15px;">
-            <strong style="white-space: nowrap; font-size: 13px;">ORÇAMENTO PREVISTO:</strong>
+            <strong style="white-space: nowrap; font-size: 13px; color: var(--ink);"><i class="fa-solid fa-money-bill-wave" style="color: var(--muted); margin-right: 6px;"></i>ORÇAMENTO PREVISTO:</strong>
             <input type="text" id="esc-orcamento" placeholder="R$ 0,00" class="escopo-input" oninput="Util.maskCur(this)" style="font-weight: 800; max-width: 200px;">
          </div>
 
          <div style="margin-bottom: 20px; display: flex; flex-direction: column;">
-            <strong style="font-size: 13px; margin-bottom: 4px;">DETALHAMENTO:</strong>
+            <strong style="font-size: 13px; margin-bottom: 6px; color: var(--ink);"><i class="fa-solid fa-list-check" style="color: var(--muted); margin-right: 6px;"></i>DETALHAMENTO:</strong>
             <textarea id="esc-detalhamento" class="escopo-textarea" rows="5" placeholder="Passo a passo, descrição técnica..." oninput="this.style.height='auto'; this.style.height=this.scrollHeight+'px';"></textarea>
          </div>
 
-         <div style="margin-bottom: 25px; display: flex; flex-direction: column;">
-            <strong style="font-size: 13px; margin-bottom: 4px;">OBSERVAÇÕES:</strong>
+         <div style="margin-bottom: 20px; display: flex; flex-direction: column;">
+            <strong style="font-size: 13px; margin-bottom: 6px; color: var(--ink);"><i class="fa-solid fa-circle-exclamation" style="color: var(--muted); margin-right: 6px;"></i>OBSERVAÇÕES:</strong>
             <textarea id="esc-observacoes" class="escopo-textarea" rows="3" placeholder="Condições, responsabilidades, EPIs..." oninput="this.style.height='auto'; this.style.height=this.scrollHeight+'px';"></textarea>
          </div>
 
-         <div style="margin-bottom: 25px;">
-            <strong style="font-size: 13px; text-transform: uppercase;">LISTA DE MATERIAIS / MÃO DE OBRA:</strong>
+         <div style="margin-bottom: 20px;">
+            <strong style="font-size: 13px; color: var(--ink); text-transform: uppercase;"><i class="fa-solid fa-boxes-stacked" style="color: var(--muted); margin-right: 6px;"></i>LISTA DE MATERIAIS / MÃO DE OBRA:</strong>
             <table class="items" style="width: 100%; margin-top: 10px; border-collapse: collapse;">
                <thead>
                   <tr>
@@ -1730,15 +1717,13 @@
                </thead>
                <tbody id="esc-materiais-body"></tbody>
             </table>
-            
-            <!-- BOTÃO DE ADD LINHA (FLUTUANTE DE FORA DA PÁGINA) -->
             <div class="no-print" style="position: relative; height: 0; z-index: 50;">
                 <button class="btn btn-outline" onclick="Escopo.addMaterial()" style="position: absolute; left: 100%; top: -20px; margin-left: 15px; width: 140px; font-size: 10px; padding: 8px; border-style: dashed; background: var(--paper); box-shadow: 0 4px 6px rgba(0,0,0,0.1);">+ Add Linha</button>
             </div>
          </div>
 
          <div style="margin-bottom: 20px; display: flex; flex-direction: column;">
-            <strong style="font-size: 13px; margin-bottom: 4px;">ANEXOS:</strong>
+            <strong style="font-size: 13px; margin-bottom: 6px; color: var(--ink);"><i class="fa-solid fa-paperclip" style="color: var(--muted); margin-right: 6px;"></i>ANEXOS:</strong>
             <textarea id="esc-anexos" class="escopo-textarea" rows="2" placeholder="Caminhos de rede, links de projetos..." oninput="this.style.height='auto'; this.style.height=this.scrollHeight+'px';"></textarea>
          </div>
       </div>
@@ -5049,10 +5034,16 @@ const Escopo = {
    baixarPDF: () => {
       const elemento = document.getElementById('escopo-content-area');
       
+      const originalWidth = elemento.style.width;
+      const originalMinHeight = elemento.style.minHeight;
       const originalPadding = elemento.style.padding;
       const originalBorder = elemento.style.border;
       const originalShadow = elemento.style.boxShadow;
-      elemento.style.padding = '10px 15px'; 
+      
+      // Removemos restrições de largura e bordas para o PDF assumir as margens
+      elemento.style.width = '100%';
+      elemento.style.minHeight = 'auto';
+      elemento.style.padding = '0'; 
       elemento.style.border = 'none';
       elemento.style.boxShadow = 'none';
       
@@ -5065,7 +5056,7 @@ const Escopo = {
          div.className = 'temp-pdf-text';
          div.style.whiteSpace = 'pre-wrap';
          div.style.wordWrap = 'break-word';
-         div.style.textAlign = 'justify'; 
+         div.style.textAlign = 'justify'; // Força texto justificado
          div.style.fontSize = '12px';
          div.style.color = '#000';
          div.style.lineHeight = '1.6';
@@ -5086,9 +5077,9 @@ const Escopo = {
          
          if(inp.id === 'esc-registro') {
             span.textContent = inp.value ? inp.value : '';
-            span.style.textDecoration = 'underline';
             span.style.fontSize = '18px';
             span.style.fontWeight = '800';
+            span.style.color = 'var(--ink)';
          } else {
             span.textContent = inp.value || ' ';
          }
@@ -5097,20 +5088,21 @@ const Escopo = {
          inp.parentNode.insertBefore(span, inp.nextSibling);
       });
 
-      const espacos = elemento.querySelectorAll('div[style*="margin-bottom: 25px"], div[style*="margin-bottom: 20px"]');
+      // Enxuga os espaçamentos para ficar compacto no PDF
+      const espacos = elemento.querySelectorAll('div[style*="margin-bottom: 20px"], div[style*="margin-bottom: 15px"]');
       espacos.forEach(d => { 
          d.dataset.origMb = d.style.marginBottom; 
-         d.style.marginBottom = '8px'; 
+         d.style.marginBottom = '12px'; 
       });
 
       document.getElementById('db-loader').style.display = 'flex';
       document.getElementById('db-loader').style.opacity = '1';
-      document.getElementById('db-loader').children[1].textContent = 'GERANDO ARQUIVO PDF COMPACTO...';
+      document.getElementById('db-loader').children[1].textContent = 'GERANDO ARQUIVO PDF...';
 
       const numeroEscopo = document.getElementById('esc-registro').value || 'Sem_Numero';
       
       const opt = {
-         margin:       [10, 12, 10, 12], 
+         margin:       [15, 15, 20, 15], // Topo, Direita, Fundo, Esquerda (Espaço para Paginação)
          filename:     `Escopo_Obras_${numeroEscopo}.pdf`,
          image:        { type: 'jpeg', quality: 0.98 },
          html2canvas:  { scale: 2, useCORS: true },
@@ -5118,7 +5110,16 @@ const Escopo = {
          pagebreak:    { mode: ['css', 'legacy'], avoid: ['.esc-img-block', 'tr'] } 
       };
 
-      html2pdf().set(opt).from(elemento).save().then(() => {
+      // Geração do PDF com Injeção de Numeração de Página
+      html2pdf().set(opt).from(elemento).toPdf().get('pdf').then(function (pdf) {
+         var totalPages = pdf.internal.getNumberOfPages();
+         for (let i = 1; i <= totalPages; i++) {
+             pdf.setPage(i);
+             pdf.setFontSize(8);
+             pdf.setTextColor(150);
+             pdf.text('Página ' + i + ' de ' + totalPages, pdf.internal.pageSize.getWidth() - 15, pdf.internal.pageSize.getHeight() - 10, {align: 'right'});
+         }
+      }).save().then(() => {
          document.querySelectorAll('.temp-pdf-text, .temp-pdf-input').forEach(el => el.remove());
          textareas.forEach(ta => ta.style.display = '');
          inputs.forEach(inp => inp.style.display = '');
@@ -5127,6 +5128,8 @@ const Escopo = {
          espacos.forEach(d => { d.style.marginBottom = d.dataset.origMb; });
 
          elemento.classList.remove('gerando-pdf');
+         elemento.style.width = originalWidth;
+         elemento.style.minHeight = originalMinHeight;
          elemento.style.padding = originalPadding;
          elemento.style.border = originalBorder;
          elemento.style.boxShadow = originalShadow;
@@ -5188,25 +5191,27 @@ const Escopo = {
 
    templateOriginal: () => {
       return `
-         <h1 id="esc-titulo-wrapper" style="text-align: center; color: var(--navy); font-size: 18px; text-decoration: underline; margin-top: 0; margin-bottom: 25px; font-weight: 800; display: flex; justify-content: center; align-items: center; gap: 4px;">
-            ESCOPO DE OBRAS E SERVIÇOS N° <span id="esc-par-esq" class="no-print" style="margin-left: 4px;">(</span><input type="text" id="esc-registro" placeholder="XXXX" class="escopo-input" style="font-weight: 800; width: 65px; text-align: center; font-size: 18px; color: var(--navy); border-bottom: 2px dashed var(--line); padding: 0;"><span id="esc-par-dir" class="no-print">)</span>
-         </h1>
-         <div style="font-size: 11px; color: var(--muted); text-align: right; margin-bottom: 15px;">Data de Registro: <span id="esc-data-registro" style="font-weight: bold; color: var(--navy);"></span></div>
-         <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 10px;"><strong style="white-space: nowrap; font-size: 13px;">OBRA:</strong><input type="text" id="esc-obra" placeholder="Ex: Mirante da Lagoa" class="escopo-input" style="font-weight: 700;"></div>
-         <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 10px;"><strong style="white-space: nowrap; font-size: 13px;">OBJETO DE MANUTENÇÃO / CONSTRUÇÃO:</strong><input type="text" id="esc-objeto" placeholder="Descreva o objeto..." class="escopo-input"></div>
-         <div style="margin-bottom: 25px; display: flex; flex-direction: column;"><strong style="font-size: 13px; margin-bottom: 4px;">JUSTIFICATIVA:</strong><textarea id="esc-justificativa" class="escopo-textarea" rows="3" placeholder="Digite a justificativa..." oninput="this.style.height='auto'; this.style.height=this.scrollHeight+'px';"></textarea></div>
+         <div style="border: 2px solid var(--ink); padding: 15px; border-radius: 4px; text-align: center; margin-bottom: 20px;">
+            <h1 id="esc-titulo-wrapper" style="color: var(--ink); font-size: 18px; margin: 0; font-weight: 800; display: flex; justify-content: center; align-items: center; gap: 4px; text-transform: uppercase;">
+               ESCOPO DE OBRAS E SERVIÇOS N° <input type="text" id="esc-registro" placeholder="XXXX" class="escopo-input" style="font-weight: 800; width: 60px; text-align: center; font-size: 18px; color: var(--ink); border-bottom: 1px dashed var(--line); padding: 0;">
+            </h1>
+         </div>
+         <div style="font-size: 11px; color: var(--muted); text-align: right; margin-bottom: 20px; font-weight: 600;">Data de Registro: <span id="esc-data-registro" style="font-weight: 800; color: var(--ink);"></span></div>
+         <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 15px;"><strong style="white-space: nowrap; font-size: 13px; color: var(--ink);"><i class="fa-solid fa-building" style="color: var(--muted); margin-right: 6px;"></i>OBRA:</strong><input type="text" id="esc-obra" placeholder="Ex: Mirante da Lagoa" class="escopo-input" style="font-weight: 700;"></div>
+         <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 15px;"><strong style="white-space: nowrap; font-size: 13px; color: var(--ink);"><i class="fa-solid fa-screwdriver-wrench" style="color: var(--muted); margin-right: 6px;"></i>OBJETO:</strong><input type="text" id="esc-objeto" placeholder="Descreva o objeto..." class="escopo-input"></div>
+         <div style="margin-bottom: 20px; display: flex; flex-direction: column;"><strong style="font-size: 13px; margin-bottom: 6px; color: var(--ink);"><i class="fa-solid fa-file-lines" style="color: var(--muted); margin-right: 6px;"></i>JUSTIFICATIVA:</strong><textarea id="esc-justificativa" class="escopo-textarea" rows="3" placeholder="Digite a justificativa..." oninput="this.style.height='auto'; this.style.height=this.scrollHeight+'px';"></textarea></div>
          
          <div id="esc-imagens-container" style="display: flex; flex-direction: column; gap: 15px;"></div>
          <div class="no-print" style="position: relative; height: 0; z-index: 50;"><button class="btn btn-outline" onclick="Escopo.addImagem()" style="position: absolute; left: 100%; top: -20px; margin-left: 15px; width: 140px; font-size: 10px; padding: 8px; border-style: dashed; background: var(--paper); box-shadow: 0 4px 6px rgba(0,0,0,0.1);">+ Inserir Imagem</button></div>
          
-         <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 20px; margin-top: 15px;"><strong style="white-space: nowrap; font-size: 13px;">ORÇAMENTO PREVISTO:</strong><input type="text" id="esc-orcamento" placeholder="R$ 0,00" class="escopo-input" oninput="Util.maskCur(this)" style="font-weight: 800; max-width: 200px;"></div>
-         <div style="margin-bottom: 20px; display: flex; flex-direction: column;"><strong style="font-size: 13px; margin-bottom: 4px;">DETALHAMENTO:</strong><textarea id="esc-detalhamento" class="escopo-textarea" rows="5" placeholder="Passo a passo, descrição técnica..." oninput="this.style.height='auto'; this.style.height=this.scrollHeight+'px';"></textarea></div>
-         <div style="margin-bottom: 25px; display: flex; flex-direction: column;"><strong style="font-size: 13px; margin-bottom: 4px;">OBSERVAÇÕES:</strong><textarea id="esc-observacoes" class="escopo-textarea" rows="3" placeholder="Condições, responsabilidades, EPIs..." oninput="this.style.height='auto'; this.style.height=this.scrollHeight+'px';"></textarea></div>
+         <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 20px; margin-top: 15px;"><strong style="white-space: nowrap; font-size: 13px; color: var(--ink);"><i class="fa-solid fa-money-bill-wave" style="color: var(--muted); margin-right: 6px;"></i>ORÇAMENTO PREVISTO:</strong><input type="text" id="esc-orcamento" placeholder="R$ 0,00" class="escopo-input" oninput="Util.maskCur(this)" style="font-weight: 800; max-width: 200px;"></div>
+         <div style="margin-bottom: 20px; display: flex; flex-direction: column;"><strong style="font-size: 13px; margin-bottom: 6px; color: var(--ink);"><i class="fa-solid fa-list-check" style="color: var(--muted); margin-right: 6px;"></i>DETALHAMENTO:</strong><textarea id="esc-detalhamento" class="escopo-textarea" rows="5" placeholder="Passo a passo, descrição técnica..." oninput="this.style.height='auto'; this.style.height=this.scrollHeight+'px';"></textarea></div>
+         <div style="margin-bottom: 20px; display: flex; flex-direction: column;"><strong style="font-size: 13px; margin-bottom: 6px; color: var(--ink);"><i class="fa-solid fa-circle-exclamation" style="color: var(--muted); margin-right: 6px;"></i>OBSERVAÇÕES:</strong><textarea id="esc-observacoes" class="escopo-textarea" rows="3" placeholder="Condições, responsabilidades, EPIs..." oninput="this.style.height='auto'; this.style.height=this.scrollHeight+'px';"></textarea></div>
          
-         <div style="margin-bottom: 25px;"><strong style="font-size: 13px; text-transform: uppercase;">LISTA DE MATERIAIS / MÃO DE OBRA:</strong><table class="items" style="width: 100%; margin-top: 10px; border-collapse: collapse;"><thead><tr><th style="width: 15%; text-align: center; font-size: 10px; background:var(--highlight); border:1px solid var(--line);">QUANTIDADE</th><th style="width: 15%; text-align: center; font-size: 10px; background:var(--highlight); border:1px solid var(--line);">UNIDADE</th><th style="width: 65%; font-size: 10px; background:var(--highlight); border:1px solid var(--line);">DESCRIÇÃO</th><th style="width: 5%; border:none; background:transparent;" class="no-print"></th></tr></thead><tbody id="esc-materiais-body"></tbody></table>
+         <div style="margin-bottom: 20px;"><strong style="font-size: 13px; color: var(--ink); text-transform: uppercase;"><i class="fa-solid fa-boxes-stacked" style="color: var(--muted); margin-right: 6px;"></i>LISTA DE MATERIAIS / MÃO DE OBRA:</strong><table class="items" style="width: 100%; margin-top: 10px; border-collapse: collapse;"><thead><tr><th style="width: 15%; text-align: center; font-size: 10px; background:var(--highlight); border:1px solid var(--line);">QUANTIDADE</th><th style="width: 15%; text-align: center; font-size: 10px; background:var(--highlight); border:1px solid var(--line);">UNIDADE</th><th style="width: 65%; font-size: 10px; background:var(--highlight); border:1px solid var(--line);">DESCRIÇÃO</th><th style="width: 5%; border:none; background:transparent;" class="no-print"></th></tr></thead><tbody id="esc-materiais-body"></tbody></table>
          <div class="no-print" style="position: relative; height: 0; z-index: 50;"><button class="btn btn-outline" onclick="Escopo.addMaterial()" style="position: absolute; left: 100%; top: -20px; margin-left: 15px; width: 140px; font-size: 10px; padding: 8px; border-style: dashed; background: var(--paper); box-shadow: 0 4px 6px rgba(0,0,0,0.1);">+ Add Linha</button></div></div>
          
-         <div style="margin-bottom: 20px; display: flex; flex-direction: column;"><strong style="font-size: 13px; margin-bottom: 4px;">ANEXOS:</strong><textarea id="esc-anexos" class="escopo-textarea" rows="2" placeholder="Caminhos de rede, links de projetos..." oninput="this.style.height='auto'; this.style.height=this.scrollHeight+'px';"></textarea></div>
+         <div style="margin-bottom: 20px; display: flex; flex-direction: column;"><strong style="font-size: 13px; margin-bottom: 6px; color: var(--ink);"><i class="fa-solid fa-paperclip" style="color: var(--muted); margin-right: 6px;"></i>ANEXOS:</strong><textarea id="esc-anexos" class="escopo-textarea" rows="2" placeholder="Caminhos de rede, links de projetos..." oninput="this.style.height='auto'; this.style.height=this.scrollHeight+'px';"></textarea></div>
       `;
    }
 };
