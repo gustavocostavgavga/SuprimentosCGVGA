@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -1968,7 +1967,14 @@ const DB = {
   
   init: async () => {
     try {
-      // 1. Tenta carregar das novas coleções (gavetas)
+      // 0. LÊ A MEMÓRIA DO NAVEGADOR (Onde os dados de ontem ficaram presos)
+      const cacheLocal = localStorage.getItem('grp_ai_db');
+      let dadosLocais = null;
+      if (cacheLocal) {
+          dadosLocais = JSON.parse(cacheLocal);
+      }
+
+      // 1. Verifica as novas coleções ilimitadas da nuvem
       const colecoes = ['processos', 'fornecedores', 'atds_avulsas', 'insumos', 'escopos'];
       let encontrouDadosNasColecoes = false;
       
@@ -1985,9 +1991,32 @@ const DB = {
          }
       }
 
-      // 2. SISTEMA DE MIGRAÇÃO: Se as gavetas novas estiverem vazias, busca no arquivo antigo e migra!
+      // 2. RESGATE DE EMERGÊNCIA: Se o navegador tiver mais dados que a nuvem nova, ele faz o upload forçado!
+      const totalLocal = dadosLocais ? ((dadosLocais.escopos?.length || 0) + (dadosLocais.processos?.length || 0) + (dadosLocais.atds_avulsas?.length || 0)) : 0;
+      const totalNuvemNova = DB.data.escopos.length + DB.data.processos.length + DB.data.atds_avulsas.length;
+
+      if (totalLocal > totalNuvemNova) {
+          console.log("Resgatando dados do navegador e forçando upload para a Nuvem...");
+          
+          DB.data.processos = dadosLocais.processos || [];
+          DB.data.fornecedores = dadosLocais.fornecedores || [];
+          DB.data.insumos = dadosLocais.insumos || [];
+          DB.data.escopos = dadosLocais.escopos || [];
+          DB.data.atds_avulsas = dadosLocais.atds_avulsas || [];
+
+          // Força o salvamento de TUDO nas gavetas novas do Firebase
+          DB.data.processos.forEach(p => DB.saveItem('processos', p));
+          DB.data.fornecedores.forEach(f => DB.saveItem('fornecedores', f));
+          DB.data.insumos.forEach(i => DB.saveItem('insumos', i));
+          DB.data.escopos.forEach(e => DB.saveItem('escopos', e));
+          DB.data.atds_avulsas.forEach(a => DB.saveItem('atds_avulsas', a));
+          
+          UI.toast("✅ Dados de ontem resgatados do navegador e salvos na nuvem!");
+          encontrouDadosNasColecoes = true;
+      }
+
+      // 3. (Fallback) Se a nuvem nova estiver vazia e o navegador também, tenta o arquivo velho da nuvem
       if (!encontrouDadosNasColecoes) {
-          console.log("Iniciando migração dos dados antigos para a nova arquitetura...");
           try {
               const docSnap = await getDoc(doc(db, "sistema", "suprimentos_db"));
               if (docSnap.exists()) {
@@ -1998,27 +2027,23 @@ const DB = {
                   DB.data.escopos = dadosAntigos.escopos || [];
                   DB.data.atds_avulsas = dadosAntigos.atds_avulsas || [];
 
-                  // Pega os dados do arquivo velho e já salva um por um nas gavetas novas automaticamente
                   DB.data.processos.forEach(p => DB.saveItem('processos', p));
                   DB.data.fornecedores.forEach(f => DB.saveItem('fornecedores', f));
                   DB.data.insumos.forEach(i => DB.saveItem('insumos', i));
                   DB.data.escopos.forEach(e => DB.saveItem('escopos', e));
                   DB.data.atds_avulsas.forEach(a => DB.saveItem('atds_avulsas', a));
                   
-                  UI.toast("✅ Banco de dados atualizado para a nova versão!");
+                  UI.toast("✅ Arquivo antigo migrado com sucesso!");
               }
-          } catch (e) { 
-              console.error("Nenhum arquivo antigo encontrado ou erro de leitura.", e); 
-          }
+          } catch (e) {}
       }
 
-      // 3. Salva um backup local para o app funcionar rápido
+      // 4. Atualiza o backup local com o sucesso
       localStorage.setItem('grp_ai_db', JSON.stringify(DB.data));
-
       if (DB.data.fornecedores.length === 0) { DB.seed(); }
 
     } catch (err) {
-      console.warn("Modo offline detectado. Carregando último backup do navegador...", err);
+      console.warn("Modo offline detectado.", err);
       const savedLocal = localStorage.getItem('grp_ai_db');
       if (savedLocal) DB.data = JSON.parse(savedLocal);
     }
