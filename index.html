@@ -382,12 +382,17 @@
       width: 210mm !important; 
       min-height: 297mm; 
       margin: 0 auto;
-      background: #ffffff;
+      background: var(--paper); /* CORREÇÃO MODO NOTURNO */
       padding: 15mm !important; 
       box-sizing: border-box;
       position: relative;
       box-shadow: 0 10px 30px rgba(0,0,0,0.15);
   }
+
+  /* REGRAS DO EDITOR RICO E MAPA */
+  .esc-editor-rico ol { list-style-type: upper-roman; padding-left: 20px; }
+  .esc-editor-rico ul { padding-left: 20px; }
+  .esc-editor-rico[contenteditable="true"]:empty:before { content: attr(placeholder); color: var(--muted); pointer-events: none; display: block; }
 
   .escopo-print-area::after {
       content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
@@ -3047,8 +3052,31 @@ const ATD = {
   reprint: (pid) => {
       const p = DB.getProcess(pid);
       if(!p || !p.atd) return;
-
-      document.getElementById('print-atd-subtitle').textContent = `PROCESSO: ${p.id} - ${p.req.cat || 'GERAL'}`;
+      
+      // LOGOTIPO AUTOMÁTICO NA ATD
+      let logoUrl = '';
+      if(p.spe === 'bocaiuva') logoUrl = 'LogoMiranteLagoa.png';
+      else if(p.spe === 'jleme') logoUrl = 'LogoJoaquimLeme.png';
+      else if(p.spe === 'mife') logoUrl = 'LogoPqNações.png';
+      else if(p.spe === 'nazareno') logoUrl = 'LogoCidadeNova.png';
+      
+      const headerContainer = document.querySelector('#view-atd-print .print-header');
+      if(headerContainer) {
+          headerContainer.style.display = 'flex';
+          headerContainer.style.justifyContent = 'space-between';
+          headerContainer.style.alignItems = 'center';
+          headerContainer.style.textAlign = 'left';
+          
+          let imgHtml = logoUrl ? `<img src="${logoUrl}" style="height:60px; object-fit:contain;">` : '';
+          
+          headerContainer.innerHTML = `
+              <div>
+                  <h1>ANÁLISE PARA TOMADA DE DECISÃO</h1>
+                  <p id="print-atd-subtitle">PROCESSO: ${p.id} - ${p.req.cat || 'GERAL'}</p>
+              </div>
+              ${imgHtml}
+          `;
+      }
       document.getElementById('print-atd-target').textContent = Util.formatBRL(p.atd.target);
       document.getElementById('print-atd-melhor').textContent = Util.formatBRL(p.atd.melhorPreco);
       
@@ -3573,12 +3601,16 @@ const MapaPrecos = {
     p.propostas.forEach(prop => {
       const f = DB.data.fornecedores.find(x=>x.id===prop.fornId) || prop;
       const hasOC = p.ocs && p.ocs.some(oc => oc.fornId === prop.fornId);
-      thHtml += `<th>
+      thHtml += `<th colspan="2">
         <input type="text" class="comp-forn-input" value="${f.nome || ''}" placeholder="Fornecedor" onchange="updatePropFornNome('${prop.fornId}', this.value)" onclick="editFornDetails('${prop.fornId}')">
         <div style="display:flex; justify-content:center; align-items:center; gap:6px; margin-top:6px;">
           <small style="font-weight:500; cursor:pointer;" onclick="editFornDetails('${prop.fornId}')">(Editar)</small>
           <button class="btn btn-outline" style="font-size:9px; padding:3px 6px; border-color:var(--navy-2); color:var(--navy-2);" onclick="enviarCotacaoAvulsa('${prop.fornId}')" title="Disparar e-mail para este fornecedor">✉️ Enviar</button>
           <button class="del-btn" style="font-size:14px; padding:0;" onclick="removeFornecedorComp('${prop.fornId}')">×</button>
+        </div>
+        <div style="display:flex; justify-content:space-between; margin-top:10px; border-top:1px dashed var(--line); padding-top:6px; font-size:9px; color:var(--muted);">
+           <span style="flex:1; text-align:center;">R$ Unitário</span>
+           <span style="flex:1; text-align:center; border-left:1px dashed var(--line);">R$ Total</span>
         </div>
       </th>`;
     });
@@ -3602,19 +3634,25 @@ const MapaPrecos = {
         const isItemWon = p.ocs && p.ocs.some(oc => oc.fornId === prop.fornId && oc.itens.some(oci => oci.id === i.id));
         const val = prop.itens[i.id] || 0;
         const vs = val>0 ? Util.formatBRL(val) : '';
-        tbHtml += `<td class="${isItemWon?'winner-col':''}">
-          <input type="text" id="in_${prop.fornId}_${i.id}" class="num item-val-input" style="width:110px" value="${vs}" placeholder="R$ 0,00" data-val="${val}" oninput="Util.maskCur(this)" onchange="updatePropPreco('${prop.fornId}', '${i.id}', this.value)">
+        const valTotal = val * i.qtd;
+        const vsTotal = valTotal > 0 ? Util.formatBRL(valTotal) : '-';
+        tbHtml += `
+        <td class="${isItemWon?'winner-col':''}" style="border-right:none;">
+          <input type="text" id="in_${prop.fornId}_${i.id}" class="num item-val-input" style="width:90px" value="${vs}" placeholder="R$ 0,00" data-val="${val}" oninput="Util.maskCur(this)" onchange="updatePropPreco('${prop.fornId}', '${i.id}', this.value)">
           <span id="dev_${prop.fornId}_${i.id}"></span>
+        </td>
+        <td class="${isItemWon?'winner-col':''}" id="tot_${prop.fornId}_${i.id}" style="font-weight:700; color:var(--ink); font-size:12px; vertical-align:middle; text-align:center;">
+          ${vsTotal}
         </td>`;
       });
       tbHtml += `</tr>`;
     });
 
-    tbHtml += `<tr><td colspan="3" style="text-align:right; font-size:11px;">Frete R$</td>`;
+   tbHtml += `<tr><td colspan="3" style="text-align:right; font-size:11px;">Frete R$</td>`;
     p.propostas.forEach(prop => { 
       const hasOC = p.ocs && p.ocs.some(oc => oc.fornId === prop.fornId);
       const markFrete = (hasOC && prop.frete > 0) ? 'winner-col' : '';
-      tbHtml += `<td class="${markFrete}"><input type="text" class="num" style="width:110px" value="${prop.frete>0?Util.formatBRL(prop.frete):''}" placeholder="R$ 0,00" oninput="Util.maskCur(this)" onchange="updatePropFreco('${prop.fornId}', this.value)"></td>`; 
+      tbHtml += `<td class="${markFrete}" colspan="2"><input type="text" class="num" style="width:110px" value="${prop.frete>0?Util.formatBRL(prop.frete):''}" placeholder="R$ 0,00" oninput="Util.maskCur(this)" onchange="updatePropFreco('${prop.fornId}', this.value)"></td>`; 
     });
     tbHtml += `</tr>`;
 
@@ -3649,7 +3687,7 @@ const MapaPrecos = {
       
       if (hasOC) { btn += `<div style="margin-top:10px; color:var(--success); font-size:11px; font-weight:800">★ OC EMITIDA</div>`; }
       
-      tfHtml += `<td class="${hasOC?'winner-col':''}" style="font-weight:800; color:var(--navy); font-size:14px; padding:15px; text-align:center;">
+      tfHtml += `<td colspan="2" class="${hasOC?'winner-col':''}" style="font-weight:800; color:var(--navy); font-size:14px; padding:15px; text-align:center;">
         ${t>0 ? Util.formatBRL(t) : '-'}${diffHtml}${btn}
       </td>`;
     });
@@ -3696,8 +3734,14 @@ const MapaPrecos = {
         const devSpan = document.getElementById(`dev_${prop.fornId}_${it.id}`);
         if (!input || !devSpan) return;
         input.classList.remove('best-price'); devSpan.innerHTML = '';
+        const totCell = document.getElementById(`tot_${prop.fornId}_${it.id}`);
+        if(totCell) totCell.classList.remove('best-price');
+        
         if (val > 0) {
-          if (val === min) input.classList.add('best-price');
+          if (val === min) {
+              input.classList.add('best-price');
+              if(totCell) totCell.classList.add('best-price'); // Marca o Total de verde também
+          }
           else { const perc = ((val - min) / min) * 100; devSpan.innerHTML = `<br><span style="color:var(--danger); font-size:10px; font-weight:800;">▲ +${perc.toFixed(1)}%</span>`; }
         }
       });
@@ -5028,7 +5072,21 @@ const Escopo = {
       Escopo.currentId = e.id;
       document.getElementById('escopo-content-area').innerHTML = e.htmlContent;
       
-      document.querySelectorAll('#escopo-content-area .escopo-input').forEach(i => i.value = i.getAttribute('value') || '');
+      document.querySelectorAll('#escopo-content-area .escopo-input').forEach(i => {
+          if(i.tagName === 'DIV') return; // Ignora a div do editor rico para não apagar o HTML dela
+          
+          if(i.tagName === 'SELECT') {
+              i.value = i.getAttribute('data-selected') || '';
+              // Restaura a imagem do select ao carregar
+              const img = document.getElementById('esc-logo-img');
+              if(i.value === 'Mirante da Lagoa') { img.src = 'LogoMiranteLagoa.png'; img.style.display='block'; }
+              else if(i.value === 'Joaquim Leme') { img.src = 'LogoJoaquimLeme.png'; img.style.display='block'; }
+              else if(i.value === 'Parque das Nações') { img.src = 'LogoPqNações.png'; img.style.display='block'; }
+              else if(i.value === 'Cidade Nova') { img.src = 'LogoCidadeNova.png'; img.style.display='block'; }
+          } else {
+              i.value = i.getAttribute('value') || '';
+          }
+      });
       document.querySelectorAll('#escopo-content-area .escopo-textarea').forEach(t => { 
           t.value = t.textContent || ''; 
           t.style.height = 'auto'; 
@@ -5041,7 +5099,11 @@ const Escopo = {
    salvar: () => {
       if(!Escopo.currentId) return;
       
-      document.querySelectorAll('#escopo-content-area .escopo-input').forEach(i => i.setAttribute('value', i.value));
+      document.querySelectorAll('#escopo-content-area .escopo-input').forEach(i => {
+          if(i.tagName === 'DIV') return; // Editor rico já salva o próprio HTML nativamente
+          if(i.tagName === 'SELECT') i.setAttribute('data-selected', i.value);
+          else i.setAttribute('value', i.value);
+      });
       document.querySelectorAll('#escopo-content-area .escopo-textarea').forEach(t => t.textContent = t.value);
       
       const numero = document.getElementById('esc-registro')?.value || '';
@@ -5246,27 +5308,64 @@ const Escopo = {
 
    templateOriginal: () => {
       return `
-         <div style="border: 2px solid var(--ink); padding: 15px; border-radius: 4px; text-align: center; margin-bottom: 20px;">
-            <h1 id="esc-titulo-wrapper" style="color: var(--ink); font-size: 18px; margin: 0; font-weight: 800; display: flex; justify-content: center; align-items: center; gap: 4px; text-transform: uppercase;">
-               ESCOPO DE OBRAS E SERVIÇOS N° <input type="text" id="esc-registro" placeholder="XXXX" class="escopo-input" style="font-weight: 800; width: 60px; text-align: center; font-size: 18px; color: var(--ink); border-bottom: 1px dashed var(--line); padding: 0;">
+         <div style="border: 2px solid var(--navy); padding: 15px; border-radius: 4px; display:flex; justify-content:space-between; align-items:center; margin-bottom: 20px;">
+            <h1 id="esc-titulo-wrapper" style="color: var(--navy); font-size: 18px; margin: 0; font-weight: 800; display: flex; justify-content: center; align-items: center; gap: 4px; text-transform: uppercase;">
+               ESCOPO DE OBRAS E SERVIÇOS N° <input type="text" id="esc-registro" placeholder="XXXX" class="escopo-input" style="font-weight: 800; width: 60px; text-align: center; font-size: 18px; color: var(--navy); border-bottom: 1px dashed var(--line); padding: 0;">
             </h1>
+            <img id="esc-logo-img" src="" style="height:50px; display:none; object-fit:contain;" />
          </div>
          <div style="font-size: 11px; color: var(--muted); text-align: right; margin-bottom: 20px; font-weight: 600;">Data de Registro: <span id="esc-data-registro" style="font-weight: 800; color: var(--ink);"></span></div>
-         <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 15px;"><strong style="white-space: nowrap; font-size: 13px; color: var(--ink);"><i class="fa-solid fa-building" style="color: var(--muted); margin-right: 6px;"></i>OBRA:</strong><input type="text" id="esc-obra" placeholder="Ex: Mirante da Lagoa" class="escopo-input" style="font-weight: 700;"></div>
-         <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 15px;"><strong style="white-space: nowrap; font-size: 13px; color: var(--ink);"><i class="fa-solid fa-screwdriver-wrench" style="color: var(--muted); margin-right: 6px;"></i>OBJETO:</strong><input type="text" id="esc-objeto" placeholder="Descreva o objeto..." class="escopo-input"></div>
-         <div style="margin-bottom: 20px; display: flex; flex-direction: column;"><strong style="font-size: 13px; margin-bottom: 6px; color: var(--ink);"><i class="fa-solid fa-file-lines" style="color: var(--muted); margin-right: 6px;"></i>JUSTIFICATIVA:</strong><textarea id="esc-justificativa" class="escopo-textarea" rows="3" placeholder="Digite a justificativa..." oninput="this.style.height='auto'; this.style.height=this.scrollHeight+'px';"></textarea></div>
+         
+         <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 15px;">
+            <strong style="white-space: nowrap; font-size: 13px; color: var(--navy);"><i class="fa-solid fa-building" style="color: var(--navy); margin-right: 6px;"></i>OBRA:</strong>
+            <select id="esc-obra" class="escopo-input" style="font-weight: 700; cursor:pointer;" onchange="
+                const val = this.value;
+                const img = document.getElementById('esc-logo-img');
+                if(val === 'Mirante da Lagoa') { img.src = 'LogoMiranteLagoa.png'; img.style.display='block'; }
+                else if(val === 'Joaquim Leme') { img.src = 'LogoJoaquimLeme.png'; img.style.display='block'; }
+                else if(val === 'Parque das Nações') { img.src = 'LogoPqNações.png'; img.style.display='block'; }
+                else if(val === 'Cidade Nova') { img.src = 'LogoCidadeNova.png'; img.style.display='block'; }
+                else { img.style.display='none'; }
+                this.setAttribute('data-selected', val);
+            ">
+               <option value="">Selecione a Obra...</option>
+               <option value="Mirante da Lagoa">Mirante da Lagoa (Bocaiuva)</option>
+               <option value="Joaquim Leme">Joaquim Leme (JLEME)</option>
+               <option value="Parque das Nações">Parque das Nações (MIFE)</option>
+               <option value="Cidade Nova">Cidade Nova (Lotear Nazareno)</option>
+            </select>
+         </div>
+
+         <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 15px;"><strong style="white-space: nowrap; font-size: 13px; color: var(--navy);"><i class="fa-solid fa-screwdriver-wrench" style="color: var(--navy); margin-right: 6px;"></i>OBJETO:</strong><input type="text" id="esc-objeto" placeholder="Descreva o objeto..." class="escopo-input"></div>
+         <div style="margin-bottom: 20px; display: flex; flex-direction: column;"><strong style="font-size: 13px; margin-bottom: 6px; color: var(--navy);"><i class="fa-solid fa-file-lines" style="color: var(--navy); margin-right: 6px;"></i>JUSTIFICATIVA:</strong><textarea id="esc-justificativa" class="escopo-textarea" rows="3" placeholder="Digite a justificativa..." oninput="this.style.height='auto'; this.style.height=this.scrollHeight+'px';"></textarea></div>
          
          <div id="esc-imagens-container" style="display: flex; flex-direction: column; gap: 15px;"></div>
          <div class="no-print" style="position: relative; height: 0; z-index: 50;"><button class="btn btn-outline" onclick="Escopo.addImagem()" style="position: absolute; left: 100%; top: -20px; margin-left: 15px; width: 140px; font-size: 10px; padding: 8px; border-style: dashed; background: var(--paper); box-shadow: 0 4px 6px rgba(0,0,0,0.1);">+ Inserir Imagem</button></div>
          
-         <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 20px; margin-top: 15px;"><strong style="white-space: nowrap; font-size: 13px; color: var(--ink);"><i class="fa-solid fa-money-bill-wave" style="color: var(--muted); margin-right: 6px;"></i>ORÇAMENTO PREVISTO:</strong><input type="text" id="esc-orcamento" placeholder="R$ 0,00" class="escopo-input" oninput="Util.maskCur(this)" style="font-weight: 800; max-width: 200px;"></div>
-         <div style="margin-bottom: 20px; display: flex; flex-direction: column;"><strong style="font-size: 13px; margin-bottom: 6px; color: var(--ink);"><i class="fa-solid fa-list-check" style="color: var(--muted); margin-right: 6px;"></i>DETALHAMENTO:</strong><textarea id="esc-detalhamento" class="escopo-textarea" rows="5" placeholder="Passo a passo, descrição técnica..." oninput="this.style.height='auto'; this.style.height=this.scrollHeight+'px';"></textarea></div>
-         <div style="margin-bottom: 20px; display: flex; flex-direction: column;"><strong style="font-size: 13px; margin-bottom: 6px; color: var(--ink);"><i class="fa-solid fa-circle-exclamation" style="color: var(--muted); margin-right: 6px;"></i>OBSERVAÇÕES:</strong><textarea id="esc-observacoes" class="escopo-textarea" rows="3" placeholder="Condições, responsabilidades, EPIs..." oninput="this.style.height='auto'; this.style.height=this.scrollHeight+'px';"></textarea></div>
+         <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 20px; margin-top: 15px;"><strong style="white-space: nowrap; font-size: 13px; color: var(--navy);"><i class="fa-solid fa-money-bill-wave" style="color: var(--navy); margin-right: 6px;"></i>ORÇAMENTO PREVISTO:</strong><input type="text" id="esc-orcamento" placeholder="R$ 0,00" class="escopo-input" oninput="Util.maskCur(this)" style="font-weight: 800; max-width: 200px;"></div>
          
-         <div style="margin-bottom: 20px;"><strong style="font-size: 13px; color: var(--ink); text-transform: uppercase;"><i class="fa-solid fa-boxes-stacked" style="color: var(--muted); margin-right: 6px;"></i>LISTA DE MATERIAIS / MÃO DE OBRA:</strong><table class="items" style="width: 100%; margin-top: 10px; border-collapse: collapse;"><thead><tr><th style="width: 15%; text-align: center; font-size: 10px; background:var(--highlight); border:1px solid var(--line);">QUANTIDADE</th><th style="width: 15%; text-align: center; font-size: 10px; background:var(--highlight); border:1px solid var(--line);">UNIDADE</th><th style="width: 65%; font-size: 10px; background:var(--highlight); border:1px solid var(--line);">DESCRIÇÃO</th><th style="width: 5%; border:none; background:transparent;" class="no-print"></th></tr></thead><tbody id="esc-materiais-body"></tbody></table>
+         <div style="margin-bottom: 20px; display: flex; flex-direction: column;">
+            <strong style="font-size: 13px; margin-bottom: 6px; color: var(--navy);"><i class="fa-solid fa-list-check" style="color: var(--navy); margin-right: 6px;"></i>DETALHAMENTO:</strong>
+            
+            <!-- BARRA DE FERRAMENTAS DO EDITOR RICO -->
+            <div class="no-print" style="display:flex; gap:6px; margin-bottom:8px; background:var(--highlight); padding:6px; border-radius:4px; border:1px solid var(--line);">
+               <button class="btn btn-outline" style="padding:4px 10px; font-size:11px;" onclick="document.execCommand('bold',false,null)" title="Negrito"><i class="fa-solid fa-bold"></i></button>
+               <button class="btn btn-outline" style="padding:4px 10px; font-size:11px;" onclick="document.execCommand('underline',false,null)" title="Sublinhado"><i class="fa-solid fa-underline"></i></button>
+               <button class="btn btn-outline" style="padding:4px 10px; font-size:11px;" onclick="document.execCommand('insertOrderedList',false,null)" title="Numeração Romana"><i class="fa-solid fa-list-ol"></i> Romana</button>
+               <button class="btn btn-outline" style="padding:4px 10px; font-size:11px;" onclick="document.execCommand('indent',false,null)" title="Recuar (Tab)"><i class="fa-solid fa-indent"></i></button>
+               <button class="btn btn-outline" style="padding:4px 10px; font-size:11px;" onclick="document.execCommand('outdent',false,null)" title="Remover Recuo"><i class="fa-solid fa-outdent"></i></button>
+            </div>
+            
+            <!-- CAIXA DE TEXTO RICA (DIV SUBSTITUINDO TEXTAREA) -->
+            <div id="esc-detalhamento" class="escopo-input esc-editor-rico" contenteditable="true" placeholder="Passo a passo, descrição técnica..." style="min-height:80px; padding:10px; border:1px dashed var(--line); border-radius:4px; line-height:1.6; text-align:justify;"></div>
+         </div>
+
+         <div style="margin-bottom: 20px; display: flex; flex-direction: column;"><strong style="font-size: 13px; margin-bottom: 6px; color: var(--navy);"><i class="fa-solid fa-circle-exclamation" style="color: var(--navy); margin-right: 6px;"></i>OBSERVAÇÕES:</strong><textarea id="esc-observacoes" class="escopo-textarea" rows="3" placeholder="Condições, responsabilidades, EPIs..." oninput="this.style.height='auto'; this.style.height=this.scrollHeight+'px';"></textarea></div>
+         
+         <div style="margin-bottom: 20px;"><strong style="font-size: 13px; color: var(--navy); text-transform: uppercase;"><i class="fa-solid fa-boxes-stacked" style="color: var(--navy); margin-right: 6px;"></i>LISTA DE MATERIAIS / MÃO DE OBRA:</strong><table class="items" style="width: 100%; margin-top: 10px; border-collapse: collapse;"><thead><tr><th style="width: 15%; text-align: center; font-size: 10px; background:var(--highlight); border:1px solid var(--line); color:var(--navy);">QUANTIDADE</th><th style="width: 15%; text-align: center; font-size: 10px; background:var(--highlight); border:1px solid var(--line); color:var(--navy);">UNIDADE</th><th style="width: 65%; font-size: 10px; background:var(--highlight); border:1px solid var(--line); color:var(--navy);">DESCRIÇÃO</th><th style="width: 5%; border:none; background:transparent;" class="no-print"></th></tr></thead><tbody id="esc-materiais-body"></tbody></table>
          <div class="no-print" style="position: relative; height: 0; z-index: 50;"><button class="btn btn-outline" onclick="Escopo.addMaterial()" style="position: absolute; left: 100%; top: -20px; margin-left: 15px; width: 140px; font-size: 10px; padding: 8px; border-style: dashed; background: var(--paper); box-shadow: 0 4px 6px rgba(0,0,0,0.1);">+ Add Linha</button></div></div>
          
-         <div style="margin-bottom: 20px; display: flex; flex-direction: column;"><strong style="font-size: 13px; margin-bottom: 6px; color: var(--ink);"><i class="fa-solid fa-paperclip" style="color: var(--muted); margin-right: 6px;"></i>ANEXOS:</strong><textarea id="esc-anexos" class="escopo-textarea" rows="2" placeholder="Caminhos de rede, links de projetos..." oninput="this.style.height='auto'; this.style.height=this.scrollHeight+'px';"></textarea></div>
+         <div style="margin-bottom: 20px; display: flex; flex-direction: column;"><strong style="font-size: 13px; margin-bottom: 6px; color: var(--navy);"><i class="fa-solid fa-paperclip" style="color: var(--navy); margin-right: 6px;"></i>ANEXOS:</strong><textarea id="esc-anexos" class="escopo-textarea" rows="2" placeholder="Caminhos de rede, links de projetos..." oninput="this.style.height='auto'; this.style.height=this.scrollHeight+'px';"></textarea></div>
       `;
    }
 };
