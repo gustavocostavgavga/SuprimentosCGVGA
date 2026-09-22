@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -1903,7 +1904,7 @@
 =========================================== -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getFirestore, doc, getDoc, getDocs, setDoc, deleteDoc, collection } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyCB4tLW-cTLeNiE21YDVsxy7dj8svFpjfE",
@@ -1964,71 +1965,93 @@ window.appMap = null;
 
 const DB = {
   data: { processos: [], fornecedores: [], atds_avulsas: [], insumos: [], escopos: [] },
+  
   init: async () => {
     try {
-      const savedLocal = localStorage.getItem('grp_ai_db');
-      if (savedLocal) { DB.data = JSON.parse(savedLocal); }
+      // 1. Tenta carregar das novas coleções (gavetas)
+      const colecoes = ['processos', 'fornecedores', 'atds_avulsas', 'insumos', 'escopos'];
+      let encontrouDadosNasColecoes = false;
       
-      if (!DB.data.processos) DB.data.processos = [];
-      if (!DB.data.fornecedores) DB.data.fornecedores = [];
-      if (!DB.data.atds_avulsas) DB.data.atds_avulsas = [];
-      if (!DB.data.insumos) DB.data.insumos = [];
-      if (!DB.data.escopos) DB.data.escopos = [];
-
-      try {
-        const docRef = doc(db, "sistema", "suprimentos_db");
-        const docSnap = await getDoc(docRef);
-        if (!savedLocal && docSnap.exists()) {
-          DB.data = docSnap.data();
-          if (!DB.data.processos) DB.data.processos = [];
-          if (!DB.data.fornecedores) DB.data.fornecedores = [];
-          if (!DB.data.atds_avulsas) DB.data.atds_avulsas = [];
-          if (!DB.data.insumos) DB.data.insumos = [];
-        }
-      } catch (err) {
-        console.warn("Modo offline: Falha ao ler Firebase.");
+      for (let colName of colecoes) {
+         try {
+             const querySnapshot = await getDocs(collection(db, colName));
+             DB.data[colName] = [];
+             querySnapshot.forEach((docItem) => {
+                 DB.data[colName].push(docItem.data());
+                 encontrouDadosNasColecoes = true;
+             });
+         } catch (e) {
+             console.warn(`A coleção ${colName} ainda não existe ou está vazia.`);
+         }
       }
 
-     if (DB.data.fornecedores.length === 0) { DB.seed(); } 
-      else {
-        if (DB.data.fornecedores.some(f => ['f1','f2','f3','f4'].includes(f.id)) || !DB.data.fornecedores.some(f => f.nome === "VALLE METALÚRGICA")) {
-            DB.data.fornecedores = DB.data.fornecedores.filter(f => !['f1','f2','f3','f4'].includes(f.id));
-            if(!DB.data.fornecedores.some(f => f.nome === "VALLE METALÚRGICA")) {
-               fornecedoresReaisData.forEach(fReal => {
-                  if(!DB.data.fornecedores.some(f => f.nome === fReal.nome)) DB.data.fornecedores.push(fReal);
-               });
-            }
-        }
-        // AUTO-PATCH: Atualiza os fornecedores da sua memória cache com o campo "obra"
-        DB.data.fornecedores.forEach(f => {
-            if (f.obra === undefined || f.obra === '') {
-                const fReal = fornecedoresReaisData.find(x => x.nome === f.nome);
-                if (fReal) f.obra = fReal.obra || '';
-            }
-        });
-        // AUTO-PATCH: Corrige insumos antigos que ficaram com o código preso na descrição
-        DB.data.insumos.forEach(ins => {
-            if (ins.desc && ins.desc.includes('[')) {
-                const match = ins.desc.match(/^\[(.*?)\]\s*(.*)$/);
-                if (match) {
-                    ins.codigo = match[1];
-                    ins.desc = match[2].trim();
-                }
-            }
-            // Correção forçada para o MO-ELE-0001 caso o sistema tenha engolido como INS-000X
-            if (ins.codigo && ins.codigo.startsWith('INS-') && ins.desc.toLowerCase().includes('infraestrutura elétrica')) {
-                ins.codigo = 'MO-ELE-0001';
-            }
-        });
-        DB.save();
+      // 2. SISTEMA DE MIGRAÇÃO: Se as gavetas novas estiverem vazias, busca no arquivo antigo e migra!
+      if (!encontrouDadosNasColecoes) {
+          console.log("Iniciando migração dos dados antigos para a nova arquitetura...");
+          try {
+              const docSnap = await getDoc(doc(db, "sistema", "suprimentos_db"));
+              if (docSnap.exists()) {
+                  const dadosAntigos = docSnap.data();
+                  DB.data.processos = dadosAntigos.processos || [];
+                  DB.data.fornecedores = dadosAntigos.fornecedores || [];
+                  DB.data.insumos = dadosAntigos.insumos || [];
+                  DB.data.escopos = dadosAntigos.escopos || [];
+                  DB.data.atds_avulsas = dadosAntigos.atds_avulsas || [];
+
+                  // Pega os dados do arquivo velho e já salva um por um nas gavetas novas automaticamente
+                  DB.data.processos.forEach(p => DB.saveItem('processos', p));
+                  DB.data.fornecedores.forEach(f => DB.saveItem('fornecedores', f));
+                  DB.data.insumos.forEach(i => DB.saveItem('insumos', i));
+                  DB.data.escopos.forEach(e => DB.saveItem('escopos', e));
+                  DB.data.atds_avulsas.forEach(a => DB.saveItem('atds_avulsas', a));
+                  
+                  UI.toast("✅ Banco de dados atualizado para a nova versão!");
+              }
+          } catch (e) { 
+              console.error("Nenhum arquivo antigo encontrado ou erro de leitura.", e); 
+          }
       }
-    } catch (e) { DB.seed(); }
+
+      // 3. Salva um backup local para o app funcionar rápido
+      localStorage.setItem('grp_ai_db', JSON.stringify(DB.data));
+
+      if (DB.data.fornecedores.length === 0) { DB.seed(); }
+
+    } catch (err) {
+      console.warn("Modo offline detectado. Carregando último backup do navegador...", err);
+      const savedLocal = localStorage.getItem('grp_ai_db');
+      if (savedLocal) DB.data = JSON.parse(savedLocal);
+    }
   },
+
+  // NOVA FUNÇÃO: Salva apenas 1 documento específico na sua coleção correta
+  saveItem: async (colecao, obj) => {
+     try {
+        await setDoc(doc(db, colecao, obj.id), obj);
+        localStorage.setItem('grp_ai_db', JSON.stringify(DB.data)); // Atualiza cache
+     } catch(e) {
+        console.error(`Erro ao salvar na coleção ${colecao}:`, e);
+        alert(`🚨 ERRO: Não foi possível salvar na nuvem. Verifique o tamanho das imagens ou sua internet.`);
+     }
+  },
+
+  // NOVA FUNÇÃO: Exclui 1 documento específico da nuvem
+  deleteItem: async (colecao, id) => {
+     try {
+        await deleteDoc(doc(db, colecao, id));
+        localStorage.setItem('grp_ai_db', JSON.stringify(DB.data));
+     } catch(e) {
+        console.error("Erro ao deletar:", e);
+     }
+  },
+
+  // Mantemos o DB.save antigo apenas como fallback para não quebrar a tela enquanto você atualiza
   save: async () => {
-    try { localStorage.setItem('grp_ai_db', JSON.stringify(DB.data)); } catch(e){}
-    try { await setDoc(doc(db, "sistema", "suprimentos_db"), DB.data); } catch(e) {}
+     localStorage.setItem('grp_ai_db', JSON.stringify(DB.data));
   },
+  
   seed: () => { DB.data.fornecedores = JSON.parse(JSON.stringify(fornecedoresReaisData)); DB.data.processos = []; },
+  
   getProcess: (id) => {
       const p = DB.data.processos.find(x => x.id === id);
       if(p && !p.ocs) {
@@ -2037,13 +2060,7 @@ const DB = {
               p.ocs.push({
                   numero: p.oc?.numero || `OC-${p.id}-1`,
                   fornId: p.vencedorId,
-                  emissao: p.oc?.emissao || p.criadoEm,
-                  entrega: p.oc?.entrega || '',
-                  resp: p.oc?.resp || p.req?.resp || '',
-                  cond: p.oc?.cond || '',
-                  local: p.oc?.local || p.req?.local || '',
-                  obs: p.oc?.obs || '',
-                  frete: 0, imposto: 0,
+                  emissao: p.oc?.emissao || p.criadoEm, entrega: p.oc?.entrega || '', resp: p.oc?.resp || p.req?.resp || '', cond: p.oc?.cond || '', local: p.oc?.local || p.req?.local || '', obs: p.oc?.obs || '', frete: 0, imposto: 0,
                   itens: p.req.itens.map(i => {
                       const val = p.propostas.find(x=>x.fornId===p.vencedorId)?.itens[i.id] || 0;
                       return { id: i.id, desc: i.desc, qtd: i.qtd, unid: i.unid, preco: val };
@@ -2157,7 +2174,7 @@ const App = {
       historico: [{ data: Util.today(), txt: 'Processo criado' }]
     };
     DB.data.processos.push(p); 
-    DB.save();
+    DB.saveItem('processos', p); // Mudança aqui!
     
     // LINHA ADICIONADA: Força a atualização da lista visualmente no mesmo instante
     App.renderProcessos(); 
@@ -2767,7 +2784,7 @@ const App = {
   delForn: (id) => {
     if(confirm("Deseja realmente excluir este fornecedor?")) {
        DB.data.fornecedores = DB.data.fornecedores.filter(x => x.id !== id);
-       DB.save();
+       DB.deleteItem('fornecedores', id);
        App.updateFiltrosForn();
        App.renderForn();
        UI.toast("Fornecedor excluído!");
@@ -2778,8 +2795,8 @@ const App = {
     if(tela==='req-form') Req.load(p); if(tela==='mapa') MapaPrecos.load(p); if(tela==='oc') OC.load(p);
     App.nav(tela, true);
   },
-  del: (id) => { if(confirm("Excluir Processo?")) { DB.data.processos = DB.data.processos.filter(x=>x.id!==id); DB.save(); App.renderProcessos(); } },
-  logHistory: (pid, msg) => { const p = DB.getProcess(pid); if(p) { p.historico.push({data: Util.today(), txt: msg}); DB.save(); } },
+  del: (id) => { if(confirm("Excluir Processo?")) { DB.data.processos = DB.data.processos.filter(x=>x.id!==id); DB.deleteItem('processos', id); App.renderProcessos(); } },
+  logHistory: (pid, msg) => { const p = DB.getProcess(pid); if(p) { p.historico.push({data: Util.today(), txt: msg}); DB.saveItem('processos', p); } },
   
   initInbox: () => {
     const sel = document.getElementById('inbox-process-select');
@@ -2821,7 +2838,7 @@ const App = {
           }
         });
         if(p.propostas.length > 0 && p.propostas.every(x => x.status === 'recebida')) {
-          if(p.status !== 'analise') { p.status = 'analise'; DB.save(); }
+          if(p.status !== 'analise') { p.status = 'analise'; DB.saveItem('processos', p); }
           cont.innerHTML += `<div style="padding:20px; text-align:center;"><button class="btn btn-solid" onclick="App.abrir('${p.id}','mapa')">Ir para Mapa de Preços</button></div>`;
         }
       }
@@ -2841,7 +2858,7 @@ const ATD = {
       const p = DB.getProcess(pid);
       if (p) {
           p.atd = null; // Apaga a ATD fantasma do banco
-          DB.save();
+          DB.saveItem('processos', p);
           ATD.loadHistory(); // Atualiza a tela na hora
           UI.toast("ATD excluída com sucesso!");
       }
@@ -3007,7 +3024,7 @@ const ATD = {
           geradaEm: Util.today()
       };
       
-      DB.save();
+      DB.saveItem('processos', p);
       UI.closeModal('modal-atd');
       ATD.reprint(p.id);
   },
@@ -3300,7 +3317,7 @@ const Req = {
         return false;
     }
 
-    DB.save(); 
+    DB.saveItem('processos', p); // Mudança aqui!
     Insumos.updateDatalist(); 
     UI.toast("Requisição Salva!"); Req.load(p); 
     return true;
@@ -3385,7 +3402,7 @@ const Req = {
     });
     
     App.logHistory(p.id, "Cotação ativada com " + p.fornecedoresSelecionados.length + " fornecedores.");
-    DB.save(); 
+    DB.saveItem('processos', p); // Mudança aqui!
     UI.toast("Cotações iniciadas!"); 
     App.nav('processos'); 
   }
@@ -3436,7 +3453,7 @@ const AI = {
            p.fornecedoresSelecionados.push(c.value);
        }
     });
-    DB.save(); 
+    DB.saveItem('processos', p);
     UI.closeModal('modal-ia-forn'); 
     Req.load(p);
   }
@@ -3511,7 +3528,7 @@ const Email = {
     p.propostas.push(newProp);
     App.logHistory(p.id, `Proposta de ${parsed.fornecedor} extraída via Gemini e adicionada ao Mapa.`);
     
-    DB.save();
+    DB.saveItem('processos', p);
     UI.closeModal('modal-ia-email');
     UI.toast("Fornecedor adicionado ao Mapa!");
     App.abrir(p.id, 'mapa');
@@ -3734,7 +3751,7 @@ const OC = {
     const obsEl = document.getElementById('ocObs');
     if(obsEl) oc.obs = obsEl.value;
     
-    DB.save(); UI.toast("Ordem de Compra Salva!");
+    DB.saveItem('processos', p); UI.toast("Ordem de Compra Salva!");
   }
 };
 
@@ -3805,7 +3822,7 @@ const ATDLivre = {
     if(index > -1) DB.data.atds_avulsas[index] = obj;
     else DB.data.atds_avulsas.push(obj);
     
-    DB.save();
+    DB.saveItem('atds_avulsas', obj); // Mudança aqui!
     UI.toast("ATD Livre salva com sucesso!");
     ATD.loadHistory(); 
   },
@@ -4268,7 +4285,7 @@ const ATDLivre = {
   excluir: (id) => {
       if(!confirm("Tem certeza que deseja excluir esta ATD Avulsa?")) return;
       DB.data.atds_avulsas = DB.data.atds_avulsas.filter(x => x.id !== id);
-      DB.save();
+      DB.deleteItem('atds_avulsas', id); // Mudança aqui!
       ATD.loadHistory();
   }
 };
@@ -4325,13 +4342,13 @@ const Insumos = {
             </tr>`;
         });
     },
-    editData: (id) => {
+   editData: (id) => {
         const ins = DB.data.insumos.find(x => x.id === id);
         if(ins) {
             const novaData = prompt("Digite a nova data de cadastro (DD/MM/AAAA):", ins.criadoEm || Util.today());
             if(novaData && novaData.trim() !== "") {
                 ins.criadoEm = novaData.trim();
-                DB.save();
+                DB.saveItem('insumos', ins);
                 Insumos.render();
                 UI.toast("Data atualizada com sucesso!");
             }
@@ -4341,7 +4358,7 @@ const Insumos = {
         const ins = DB.data.insumos.find(x => x.id === id);
         if(ins) { 
             ins[field] = val; 
-            DB.save(); 
+            DB.saveItem('insumos', ins); 
             UI.toast("Insumo atualizado!"); 
             Insumos.updateDatalist(); 
         }
@@ -4349,7 +4366,7 @@ const Insumos = {
     delete: (id) => {
         if(confirm("Excluir este insumo do banco de dados?")) {
             DB.data.insumos = DB.data.insumos.filter(x => x.id !== id);
-            DB.save(); 
+            DB.deleteItem('insumos', id); 
             Insumos.render();
             Insumos.updateDatalist();
         }
@@ -4515,7 +4532,7 @@ window.salvarNovoFornecedor = () => {
       DB.data.fornecedores.push(f);
   }
   
-  DB.save();
+  DB.saveItem('fornecedores', f); // Mudança aqui!
   UI.closeModal('modal-add-forn');
   UI.toast(isEdit ? 'Fornecedor atualizado!' : 'Fornecedor cadastrado!');
   
@@ -4532,7 +4549,7 @@ window.editarRequisicao = () => {
   const p = DB.getProcess(currentPID);
   if(p) {
     p.status = 'rascunho';
-    DB.save();
+    DB.saveItem('processos', p);
     App.abrir(p.id, 'req-form');
   }
 };
@@ -4562,7 +4579,7 @@ window.confirmarAddFornMapa = () => {
     // Garante que ele faça parte da lista oficial do processo para não sumir
     if(!p.fornecedoresSelecionados.includes(f.id)) p.fornecedoresSelecionados.push(f.id);
     
-    DB.save();
+    DB.saveItem('processos', p);
     MapaPrecos.load(p);
     UI.closeModal('modal-add-forn-mapa');
     UI.toast('Fornecedor adicionado ao mapa!');
@@ -4586,7 +4603,8 @@ window.addFornecedorNovoNoMapa = () => {
       p.fornecedoresSelecionados.push(newId);
   }
   
-  DB.save();
+  DB.saveItem('fornecedores', novoFornGlobal); // Adicionado!
+  DB.saveItem('processos', p);
   MapaPrecos.load(p);
   editFornDetails(newId); // Abre os dados complementares automaticamente
   UI.toast("Fornecedor criado! Preencha os dados abaixo.");
@@ -4619,7 +4637,8 @@ window.salvarFornDoMapaNoBanco = () => {
   prop.email = f.email;
   
   // Salva no banco de dados e exibe o aviso verde na tela
-  DB.save();
+  DB.saveItem('fornecedores', f); // Adicionado!
+  DB.saveItem('processos', p);
   UI.toast('Fornecedor salvo com sucesso no Banco Geral!');
   
   // Atualiza a tabela do mapa de preços imediatamente para mostrar o novo nome digitado
@@ -4633,8 +4652,8 @@ window.enviarCotacaoAvulsa = async (propId) => {
   if (currentCompFornId === propId) {
       prop.nome = document.getElementById('cfNome').value || prop.nome;
       prop.email = document.getElementById('cfEmail').value || prop.email;
-      if (f) { f.nome = prop.nome; f.email = prop.email; }
-      DB.save(); 
+      if (f) { f.nome = prop.nome; f.email = prop.email; DB.saveItem('fornecedores', f); }
+      DB.saveItem('processos', p); 
   }
   
   const nomeDestino = prop.nome || (f ? f.nome : 'Fornecedor');
@@ -4696,10 +4715,10 @@ window.enviarCotacaoAvulsa = async (propId) => {
   }, 500);
 };
 
-window.removeFornecedorComp = (propId) => { if(!confirm('Remover fornecedor do Mapa?')) return; const p = DB.getProcess(currentPID); p.propostas = p.propostas.filter(x => x.fornId !== propId); if(p.vencedorId === propId) p.vencedorId = null; DB.save(); MapaPrecos.load(p); document.getElementById('comp-form-forn').style.display = 'none'; };
-window.updatePropFornNome = (propId, val) => { const p = DB.getProcess(currentPID); const prop = p.propostas.find(x => x.fornId === propId); if(prop) prop.nome = val; DB.save(); if(currentCompFornId === propId) document.getElementById('comp-form-title').textContent = `- ${val}`; };
-window.updatePropPreco = (propId, itemId, valStr) => { const p = DB.getProcess(currentPID); const prop = p.propostas.find(x => x.fornId === propId); if(prop) { prop.itens[itemId] = Util.unmaskCur(valStr); prop.status = 'recebida'; } DB.save(); MapaPrecos.load(p); };
-window.updatePropFreco = (propId, valStr) => { const p = DB.getProcess(currentPID); const prop = p.propostas.find(x => x.fornId === propId); if(prop) prop.frete = Util.unmaskCur(valStr); DB.save(); MapaPrecos.load(p); };
+window.removeFornecedorComp = (propId) => { if(!confirm('Remover fornecedor do Mapa?')) return; const p = DB.getProcess(currentPID); p.propostas = p.propostas.filter(x => x.fornId !== propId); if(p.vencedorId === propId) p.vencedorId = null; DB.saveItem('processos', p); MapaPrecos.load(p); document.getElementById('comp-form-forn').style.display = 'none'; };
+window.updatePropFornNome = (propId, val) => { const p = DB.getProcess(currentPID); const prop = p.propostas.find(x => x.fornId === propId); if(prop) prop.nome = val; DB.saveItem('processos', p); if(currentCompFornId === propId) document.getElementById('comp-form-title').textContent = `- ${val}`; };
+window.updatePropPreco = (propId, itemId, valStr) => { const p = DB.getProcess(currentPID); const prop = p.propostas.find(x => x.fornId === propId); if(prop) { prop.itens[itemId] = Util.unmaskCur(valStr); prop.status = 'recebida'; } DB.saveItem('processos', p); MapaPrecos.load(p); };
+window.updatePropFreco = (propId, valStr) => { const p = DB.getProcess(currentPID); const prop = p.propostas.find(x => x.fornId === propId); if(prop) prop.frete = Util.unmaskCur(valStr); DB.saveItem('processos', p); MapaPrecos.load(p); };
 window.editFornDetails = (propId) => { currentCompFornId = propId; const p = DB.getProcess(currentPID); const prop = p.propostas.find(x => x.fornId === propId); const f = DB.data.fornecedores.find(x => x.id === propId) || prop; document.getElementById('comp-form-forn').style.display = 'block'; document.getElementById('comp-form-title').textContent = `- ${f.nome||'Novo'}`; document.getElementById('cfNome').value = f.nome || ''; document.getElementById('cfDoc').value = f.cnpj || f.doc || ''; document.getElementById('cfTel').value = f.tel || ''; document.getElementById('cfEmail').value = f.email || f.contato || ''; document.getElementById('cfCond').value = prop.cond || ''; document.getElementById('cfPrazo').value = prop.prazo || ''; document.getElementById('cfObra').value = f.obra || ''; };
 window.updateFornData = (field, val) => { 
     if(!currentCompFornId) return; 
@@ -4717,7 +4736,8 @@ window.updateFornData = (field, val) => {
         if (field === 'obra') f.obra = val;
     }
     
-    DB.save(); 
+   DB.saveItem('fornecedores', f);
+    DB.saveItem('processos', p); // Adicionado!
     
     if(field === 'nome') {
         document.getElementById('comp-form-title').textContent = `- ${val}`;
@@ -4730,7 +4750,7 @@ window.updateFornData = (field, val) => {
     } 
 };
 
-window.salvarCompObs = () => { const p = DB.getProcess(currentPID); const obsEl = document.getElementById('compObs'); if(p && obsEl) { p.compObs = obsEl.value; DB.save(); } };
+window.salvarCompObs = () => { const p = DB.getProcess(currentPID); const obsEl = document.getElementById('compObs'); if(p && obsEl) { p.compObs = obsEl.value; DB.saveItem('processos', p); } };
 
 window.salvarMapaManual = () => {
     const p = DB.getProcess(currentPID);
@@ -4741,7 +4761,7 @@ window.salvarMapaManual = () => {
     if (obsEl) p.compObs = obsEl.value;
 
     // Força o Firebase a engolir os dados e te dá um aviso visual de tranquilidade
-    DB.save();
+    DB.saveItem('processos', p);
     UI.toast("✅ Mapa e Fornecedores salvos com sucesso!");
 };
 
@@ -4807,7 +4827,7 @@ window.confirmarGerarOC = () => {
     });
     p.economia = (maxTot > 0 && minTot !== Infinity) ? (maxTot - minTot) : 0;
 
-    DB.save();
+    DB.saveItem('processos', p);
     UI.closeModal('modal-gerar-oc');
     UI.toast('Ordem de Compra gerada com sucesso!');
     MapaPrecos.load(p);
@@ -4820,7 +4840,7 @@ window.excluirOC = (idx) => {
     const p = DB.getProcess(currentPID);
     p.ocs.splice(idx, 1);
     if(p.ocs.length === 0) p.status = 'analise'; 
-    DB.save();
+    DB.saveItem('processos', p);
     MapaPrecos.load(p);
 };
 
@@ -5020,14 +5040,14 @@ const Escopo = {
       if(idx > -1) DB.data.escopos[idx] = obj;
       else DB.data.escopos.push(obj);
 
-      DB.save();
+      DB.saveItem('escopos', obj); // Mudança aqui!
       UI.toast("Escopo salvo com sucesso!");
    },
 
    excluir: (id) => {
       if(!confirm("Deseja realmente excluir este escopo permanentemente?")) return;
       DB.data.escopos = DB.data.escopos.filter(x => x.id !== id);
-      DB.save();
+      DB.deleteItem('escopos', id); // Mudança aqui!
       Escopo.listar();
    },
 
@@ -5169,9 +5189,28 @@ const Escopo = {
       if(file) {
          const reader = new FileReader();
          reader.onload = (e) => { 
-            const img = document.getElementById(imgId);
-            img.src = e.target.result; 
-            img.setAttribute('src', e.target.result);
+            const img = new Image();
+            img.onload = () => {
+                // Comprime e redimensiona a imagem para não estourar o banco de dados
+                const canvas = document.createElement('canvas');
+                const MAX_WIDTH = 800;
+                let width = img.width;
+                let height = img.height;
+                if (width > MAX_WIDTH) { 
+                    height *= MAX_WIDTH / width; 
+                    width = MAX_WIDTH; 
+                }
+                canvas.width = width; canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
+                // Converte para JPEG com 60% de qualidade
+                const dataUrl = canvas.toDataURL('image/jpeg', 0.6);
+                
+                const el = document.getElementById(imgId);
+                el.src = dataUrl; 
+                el.setAttribute('src', dataUrl);
+            };
+            img.src = e.target.result;
          };
          reader.readAsDataURL(file);
       }
