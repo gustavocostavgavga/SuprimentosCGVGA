@@ -650,11 +650,32 @@
       </div>
 
       <div class="atd-canvas" id="atd-livre-canvas">
-          <!-- Títulos Fixos -->
-          <input type="text" id="atd-livre-titulo" class="atd-title-input" placeholder="DIGITE O TÍTULO DESTA ATD AQUI..." value="ANÁLISE PARA TOMADA DE DECISÃO AVULSA">
-          <input type="text" id="atd-livre-subtitulo" class="atd-title-input" style="font-size: 14px; font-weight: 600; color: var(--muted); margin-top: -10px; border-bottom: 1px dashed var(--line);" placeholder="EMPREENDIMENTO / OBRA DESTINO" value="">
+          <!-- Títulos Fixos com Logotipos -->
+          <div style="display: flex; justify-content: center; align-items: center; position: relative; margin-bottom: 10px; min-height: 90px; width: 100%;">
+              <img src="LogoGRP.png" style="height:60px; object-fit:contain; position:absolute; left:0; top:50%; transform:translateY(-50%);">
+              <div style="text-align:center; flex:1; padding: 0 80px;">
+                  <input type="text" id="atd-livre-titulo" class="atd-title-input" style="text-align:center; font-size:20px;" placeholder="DIGITE O TÍTULO DESTA ATD AQUI..." value="ANÁLISE PARA TOMADA DE DECISÃO AVULSA">
+                  <select id="atd-livre-obra" class="atd-title-input" style="font-size: 14px; font-weight: 600; color: var(--muted); margin-top: 5px; border-bottom: 1px dashed var(--line); cursor:pointer; text-align:center;" onchange="
+                      const val = this.value;
+                      const img = document.getElementById('atd-livre-logo-img');
+                      if(val === 'Mirante da Lagoa') { img.src = 'LogoMiranteLagoa.png'; img.style.display='block'; }
+                      else if(val === 'Joaquim Leme') { img.src = 'LogoJoaquimLeme.png'; img.style.display='block'; }
+                      else if(val === 'Parque das Nações') { img.src = 'LogoPqNações.png'; img.style.display='block'; }
+                      else if(val === 'Cidade Nova') { img.src = 'LogoCidadeNova.png'; img.style.display='block'; }
+                      else { img.style.display='none'; }
+                      this.setAttribute('data-selected', val);
+                  ">
+                     <option value="">Selecione a Obra para carregar a Logo...</option>
+                     <option value="Mirante da Lagoa">Mirante da Lagoa (Bocaiuva)</option>
+                     <option value="Joaquim Leme">Joaquim Leme (JLEME)</option>
+                     <option value="Parque das Nações">Parque das Nações (MIFE)</option>
+                     <option value="Cidade Nova">Cidade Nova (Lotear Nazareno)</option>
+                  </select>
+              </div>
+              <img id="atd-livre-logo-img" src="" style="height:60px; display:none; object-fit:contain; position:absolute; right:0; top:50%; transform:translateY(-50%);">
+          </div>
           
-          <div style="font-size:12px; color:var(--muted); text-align:right; width:100%; margin-top:10px; margin-bottom: 20px;">
+          <div style="font-size:12px; color:var(--muted); text-align:right; width:100%; margin-bottom: 20px;">
               Data: <span id="atd-livre-data"></span> | Autor: <span contenteditable="true" id="atd-livre-autor" style="width:auto; min-width:100px;">Nome do Responsável</span>
           </div>
           
@@ -3832,7 +3853,12 @@ const ATDLivre = {
   abrirNova: () => {
     currentAtdLivreId = Util.genId();
     document.getElementById('atd-livre-titulo').value = "NOVA ANÁLISE PARA TOMADA DE DECISÃO";
-    document.getElementById('atd-livre-subtitulo').value = "";
+    const selObraNova = document.getElementById('atd-livre-obra');
+    if(selObraNova) {
+        selObraNova.value = "";
+        selObraNova.setAttribute('data-selected', '');
+        document.getElementById('atd-livre-logo-img').style.display = 'none';
+    }
     document.getElementById('atd-livre-data').textContent = Util.today();
     document.getElementById('atd-livre-autor').textContent = "Nome do Responsável";
     document.getElementById('atd-drag-area').innerHTML = '';
@@ -3852,7 +3878,18 @@ const ATDLivre = {
     if(!atd) return;
     currentAtdLivreId = atd.id;
     document.getElementById('atd-livre-titulo').value = atd.titulo;
-    document.getElementById('atd-livre-subtitulo').value = atd.subtitulo || "";
+    const selObraCarga = document.getElementById('atd-livre-obra');
+    if(selObraCarga) {
+        selObraCarga.value = atd.subtitulo || "";
+        selObraCarga.setAttribute('data-selected', atd.subtitulo || "");
+        const imgLogo = document.getElementById('atd-livre-logo-img');
+        const valObra = atd.subtitulo;
+        if(valObra === 'Mirante da Lagoa') { imgLogo.src = 'LogoMiranteLagoa.png'; imgLogo.style.display='block'; }
+        else if(valObra === 'Joaquim Leme') { imgLogo.src = 'LogoJoaquimLeme.png'; imgLogo.style.display='block'; }
+        else if(valObra === 'Parque das Nações') { imgLogo.src = 'LogoPqNações.png'; imgLogo.style.display='block'; }
+        else if(valObra === 'Cidade Nova') { imgLogo.src = 'LogoCidadeNova.png'; imgLogo.style.display='block'; }
+        else { imgLogo.style.display='none'; }
+    }
     document.getElementById('atd-livre-data').textContent = atd.data;
     document.getElementById('atd-livre-autor').textContent = atd.autor;
     document.getElementById('atd-drag-area').innerHTML = atd.htmlContent;
@@ -3868,7 +3905,7 @@ const ATDLivre = {
 
   salvar: () => {
     const titulo = document.getElementById('atd-livre-titulo').value;
-    const subtitulo = document.getElementById('atd-livre-subtitulo').value;
+    const subtitulo = document.getElementById('atd-livre-obra') ? document.getElementById('atd-livre-obra').value : "";
     const autor = document.getElementById('atd-livre-autor').textContent;
     const htmlContent = document.getElementById('atd-drag-area').innerHTML;
     
