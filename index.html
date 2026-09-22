@@ -1967,12 +1967,10 @@ const DB = {
   
   init: async () => {
     try {
-      // 0. LÊ A MEMÓRIA DO NAVEGADOR (Onde os dados de ontem ficaram presos)
+      // 0. LÊ A MEMÓRIA DO NAVEGADOR
       const cacheLocal = localStorage.getItem('grp_ai_db');
       let dadosLocais = null;
-      if (cacheLocal) {
-          dadosLocais = JSON.parse(cacheLocal);
-      }
+      if (cacheLocal) { dadosLocais = JSON.parse(cacheLocal); }
 
       // 1. Verifica as novas coleções ilimitadas da nuvem
       const colecoes = ['processos', 'fornecedores', 'atds_avulsas', 'insumos', 'escopos'];
@@ -1986,36 +1984,32 @@ const DB = {
                  DB.data[colName].push(docItem.data());
                  encontrouDadosNasColecoes = true;
              });
-         } catch (e) {
-             console.warn(`A coleção ${colName} ainda não existe ou está vazia.`);
-         }
+         } catch (e) {}
       }
 
-      // 2. RESGATE DE EMERGÊNCIA: Se o navegador tiver mais dados que a nuvem nova, ele faz o upload forçado!
+      // 2. RESGATE: Sobe forçado para a Nuvem sem travar a tela
       const totalLocal = dadosLocais ? ((dadosLocais.escopos?.length || 0) + (dadosLocais.processos?.length || 0) + (dadosLocais.atds_avulsas?.length || 0)) : 0;
       const totalNuvemNova = DB.data.escopos.length + DB.data.processos.length + DB.data.atds_avulsas.length;
 
       if (totalLocal > totalNuvemNova) {
-          console.log("Resgatando dados do navegador e forçando upload para a Nuvem...");
-          
           DB.data.processos = dadosLocais.processos || [];
           DB.data.fornecedores = dadosLocais.fornecedores || [];
           DB.data.insumos = dadosLocais.insumos || [];
           DB.data.escopos = dadosLocais.escopos || [];
           DB.data.atds_avulsas = dadosLocais.atds_avulsas || [];
 
-          // Força o salvamento de TUDO nas gavetas novas do Firebase
-          DB.data.processos.forEach(p => DB.saveItem('processos', p));
-          DB.data.fornecedores.forEach(f => DB.saveItem('fornecedores', f));
-          DB.data.insumos.forEach(i => DB.saveItem('insumos', i));
-          DB.data.escopos.forEach(e => DB.saveItem('escopos', e));
-          DB.data.atds_avulsas.forEach(a => DB.saveItem('atds_avulsas', a));
+          // Envia silenciosamente para o Firebase sem emitir nenhum Pop-up de erro se a internet oscilar
+          DB.data.processos.forEach(p => setDoc(doc(db, 'processos', p.id), p).catch(e=>console.log(e)));
+          DB.data.fornecedores.forEach(f => setDoc(doc(db, 'fornecedores', f.id), f).catch(e=>console.log(e)));
+          DB.data.insumos.forEach(i => setDoc(doc(db, 'insumos', i.id), i).catch(e=>console.log(e)));
+          DB.data.escopos.forEach(e => setDoc(doc(db, 'escopos', e.id), e).catch(e=>console.log(e)));
+          DB.data.atds_avulsas.forEach(a => setDoc(doc(db, 'atds_avulsas', a.id), a).catch(e=>console.log(e)));
           
-          UI.toast("✅ Dados de ontem resgatados do navegador e salvos na nuvem!");
+          UI.toast("✅ Dados resgatados e salvos na nuvem!");
           encontrouDadosNasColecoes = true;
       }
 
-      // 3. (Fallback) Se a nuvem nova estiver vazia e o navegador também, tenta o arquivo velho da nuvem
+      // 3. Fallback: Arquivo antigo
       if (!encontrouDadosNasColecoes) {
           try {
               const docSnap = await getDoc(doc(db, "sistema", "suprimentos_db"));
@@ -2027,52 +2021,49 @@ const DB = {
                   DB.data.escopos = dadosAntigos.escopos || [];
                   DB.data.atds_avulsas = dadosAntigos.atds_avulsas || [];
 
-                  DB.data.processos.forEach(p => DB.saveItem('processos', p));
-                  DB.data.fornecedores.forEach(f => DB.saveItem('fornecedores', f));
-                  DB.data.insumos.forEach(i => DB.saveItem('insumos', i));
-                  DB.data.escopos.forEach(e => DB.saveItem('escopos', e));
-                  DB.data.atds_avulsas.forEach(a => DB.saveItem('atds_avulsas', a));
-                  
-                  UI.toast("✅ Arquivo antigo migrado com sucesso!");
+                  DB.data.processos.forEach(p => setDoc(doc(db, 'processos', p.id), p).catch(e=>console.log(e)));
+                  DB.data.fornecedores.forEach(f => setDoc(doc(db, 'fornecedores', f.id), f).catch(e=>console.log(e)));
+                  DB.data.insumos.forEach(i => setDoc(doc(db, 'insumos', i.id), i).catch(e=>console.log(e)));
+                  DB.data.escopos.forEach(e => setDoc(doc(db, 'escopos', e.id), e).catch(e=>console.log(e)));
+                  DB.data.atds_avulsas.forEach(a => setDoc(doc(db, 'atds_avulsas', a.id), a).catch(e=>console.log(e)));
               }
           } catch (e) {}
       }
 
-      // 4. Atualiza o backup local com o sucesso
-      localStorage.setItem('grp_ai_db', JSON.stringify(DB.data));
+      try { localStorage.setItem('grp_ai_db', JSON.stringify(DB.data)); } catch(e){}
       if (DB.data.fornecedores.length === 0) { DB.seed(); }
 
     } catch (err) {
-      console.warn("Modo offline detectado.", err);
       const savedLocal = localStorage.getItem('grp_ai_db');
       if (savedLocal) DB.data = JSON.parse(savedLocal);
     }
   },
 
-  // NOVA FUNÇÃO: Salva apenas 1 documento específico na sua coleção correta
   saveItem: async (colecao, obj) => {
+     // 1. Salva na nuvem Firebase de forma independente e isolada
      try {
         await setDoc(doc(db, colecao, obj.id), obj);
-        localStorage.setItem('grp_ai_db', JSON.stringify(DB.data)); // Atualiza cache
      } catch(e) {
-        console.error(`Erro ao salvar na coleção ${colecao}:`, e);
-        alert(`🚨 ERRO: Não foi possível salvar na nuvem. Verifique o tamanho das imagens ou sua internet.`);
+        console.error("Nuvem recusou o arquivo:", e);
+        alert("Atenção: A nuvem recusou este salvamento. Pode ser falha de internet ou o Escopo tem fotos que não foram comprimidas corretamente.");
      }
-  },
-
-  // NOVA FUNÇÃO: Exclui 1 documento específico da nuvem
-  deleteItem: async (colecao, id) => {
+     
+     // 2. Salva no cache do navegador de forma separada
+     // Se a memória do seu navegador estiver estourada, o erro "morre" aqui sem te encher de notificações.
      try {
-        await deleteDoc(doc(db, colecao, id));
         localStorage.setItem('grp_ai_db', JSON.stringify(DB.data));
      } catch(e) {
-        console.error("Erro ao deletar:", e);
+        console.warn("Aviso: Memória local do navegador esgotada. Os dados foram para a nuvem, mas o backup offline falhou.");
      }
   },
 
-  // Mantemos o DB.save antigo apenas como fallback para não quebrar a tela enquanto você atualiza
+  deleteItem: async (colecao, id) => {
+     try { await deleteDoc(doc(db, colecao, id)); } catch(e) {}
+     try { localStorage.setItem('grp_ai_db', JSON.stringify(DB.data)); } catch(e) {}
+  },
+
   save: async () => {
-     localStorage.setItem('grp_ai_db', JSON.stringify(DB.data));
+     try { localStorage.setItem('grp_ai_db', JSON.stringify(DB.data)); } catch(e) {}
   },
   
   seed: () => { DB.data.fornecedores = JSON.parse(JSON.stringify(fornecedoresReaisData)); DB.data.processos = []; },
@@ -3537,9 +3528,9 @@ const Email = {
     
     const propId = Util.genId();
     const newProp = {
-      fornId: propId, nome: parsed.fornecedor, doc: parsed.cnpj, tel: '', email: '',
+      fornId: propId, nome: parsed.fornecedor || 'Desconhecido', doc: parsed.cnpj || '', tel: '', email: '',
       status: 'recebida', itens: {}, frete: parsed.frete || 0, imposto: parsed.imposto || 0,
-      prazo: parsed.prazo, cond: parsed.condicao
+      prazo: parsed.prazo || '', cond: parsed.condicao || ''
     };
 
     if(parsed.itens && parsed.itens.length > 0) {
@@ -4598,8 +4589,8 @@ window.confirmarAddFornMapa = () => {
   const f = DB.data.fornecedores.find(x => x.id === fid);
   if(f && p) {
     p.propostas.push({ 
-      fornId: f.id, nome: f.nome, doc: f.cnpj, tel: f.tel||'', email: f.email||f.contato||'', 
-      status: 'pendente', itens: {}, frete: 0, imposto: 0, prazo: f.prazo||'', cond: '' 
+      fornId: f.id, nome: f.nome || '', doc: f.cnpj || f.doc || '', tel: f.tel || '', email: f.email || f.contato || '', 
+      status: 'pendente', itens: {}, frete: 0, imposto: 0, prazo: f.prazo || '', cond: '' 
     });
     // Garante que ele faça parte da lista oficial do processo para não sumir
     if(!p.fornecedoresSelecionados.includes(f.id)) p.fornecedoresSelecionados.push(f.id);
