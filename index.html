@@ -4073,7 +4073,14 @@ const ATDLivre = {
           <div style="background: var(--highlight); padding: 10px; border-radius: 4px; margin-bottom: 15px; text-align:center; border: 1px solid var(--navy-2);">
               <div style="font-size: 10px; color: var(--navy-2); font-weight: bold; text-transform: uppercase;">Total Projetado (Preencha)</div>
               <input type="text" class="cenario-total-input" style="font-size: 20px; font-weight: 800; color: var(--navy); text-align:center; border:none; background:transparent; width:100%; outline:none;" placeholder="R$ 0,00" value="R$ 0,00" oninput="Util.maskCur(this); this.setAttribute('value', this.value); ATDLivre.calcCenarios(this)">
-              <div class="cenario-economia" style="font-size: 11px; font-weight: bold; margin-top: 4px;">-</div>
+              
+              <div style="position:relative; margin-top:8px;">
+                 <div class="no-print" style="position:absolute; left:0; top:0; display:flex; gap:4px; z-index:10;">
+                    <button style="border:none; background:transparent; cursor:pointer; font-size:12px;" onclick="this.parentElement.nextElementSibling.style.color='var(--success)'; ATDLivre.saveHistory(true);" title="Colorir de Verde (Positivo)">🟢</button>
+                    <button style="border:none; background:transparent; cursor:pointer; font-size:12px;" onclick="this.parentElement.nextElementSibling.style.color='var(--danger)'; ATDLivre.saveHistory(true);" title="Colorir de Vermelho (Negativo)">🔴</button>
+                 </div>
+                 <div class="cenario-economia" contenteditable="true" style="font-size: 11px; font-weight: bold; color:var(--muted); outline:none; text-align:center; padding: 0 40px; min-height:16px;" placeholder="Ex: Economia de 10%..." onblur="this.setAttribute('value', this.innerHTML)"></div>
+              </div>
           </div>
           
           <div class="cenario-imagens-container" style="display:flex; flex-direction:column; gap:10px; margin-top:auto;"></div>
@@ -4090,27 +4097,12 @@ const ATDLivre = {
       const wrapper = el.classList && el.classList.contains('atd-cenarios-wrapper') ? el : el.closest('.atd-cenarios-wrapper');
       if(!wrapper) return;
       
-      let maxTot = 0;
       const cards = wrapper.querySelectorAll('.atd-cenario-card');
-      
       cards.forEach(card => {
           const inputTot = card.querySelector('.cenario-total-input');
-          const tot = Util.unmaskCur(inputTot.value) || 0;
-          card.dataset.tot = tot;
-          if(tot > maxTot) maxTot = tot;
-      });
-      
-      cards.forEach(card => {
-          const tot = parseFloat(card.dataset.tot) || 0;
-          const ecoEl = card.querySelector('.cenario-economia');
-          if(tot === 0) {
-              ecoEl.innerHTML = '-';
-          } else if(tot === maxTot) {
-              ecoEl.innerHTML = `<span style="color:var(--danger)">CENÁRIO MAIS CARO (BASE)</span>`;
-          } else {
-              const diff = maxTot - tot;
-              const perc = (diff / maxTot) * 100;
-              ecoEl.innerHTML = `<span style="color:var(--success)">ECONOMIA: ${Util.formatBRL(diff)} (${perc.toFixed(1)}%)</span>`;
+          if(inputTot) {
+              const tot = Util.unmaskCur(inputTot.value) || 0;
+              card.dataset.tot = tot;
           }
       });
       ATDLivre.saveHistory(false);
