@@ -392,7 +392,7 @@
   /* REGRAS DO EDITOR RICO E MAPA */
   .esc-editor-rico ol { list-style-type: upper-roman; padding-left: 20px; }
   .esc-editor-rico ul { padding-left: 20px; }
-  .esc-editor-rico[contenteditable="true"]:empty:before { content: attr(placeholder); color: var(--muted); pointer-events: none; display: block; }
+  [contenteditable="true"]:empty:before { content: attr(placeholder); color: var(--muted); pointer-events: none; display: block; }
 
   .escopo-print-area::after {
       content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
@@ -603,15 +603,11 @@
         </div>
       </div>
       <section class="block">
-        <h2>ATD's de Processos (Sistema)</h2>
-        <table class="items" style="margin-bottom: 30px;">
-          <thead>
-            <tr><th>Processo Vinculado</th><th>Data da ATD</th><th>Indicação</th><th>Target</th><th>Desvio Obtid o</th><th style="text-align:right">Ação</th></tr>
-          </thead>
-          <tbody id="atd-list-body"></tbody>
-        </table>
+        <div style="display:none;">
+            <table class="items"><tbody id="atd-list-body"></tbody></table>
+        </div>
 
-        <h2>ATD's Livres (Avulsas)</h2>
+        <h2>Lista de ATD's Criadas</h2>
         <table class="items">
           <thead>
             <tr><th>Título da ATD</th><th>Data de Criação</th><th>Autor/Responsável</th><th style="text-align:right">Ações</th></tr>
@@ -938,8 +934,7 @@
        <div class="header-actions">
           <button class="btn btn-outline" onclick="editarRequisicao()">← Editar Requisição de Compra</button>
           <button class="btn btn-solid" style="background-color: var(--navy-2);" onclick="salvarMapaManual()">💾 Salvar Mapa</button>
-          <button class="btn btn-solid" id="btn-ver-oc-header" style="display:none;" onclick="abrirOC(0)">📄 Ver Ordem de Compra</button>
-          <button class="btn btn-ai" style="padding:10px 20px; font-size:13px;" onclick="ATD.openModal()">📊 Montar ATD</button>
+          <button class="btn btn-solid" id="btn-ver-oc-header" style="display:none;" onclick="abrirOC(0)">📄 Ver Ordem de Compra</button>       
         </div>
       </div>
 
@@ -1659,11 +1654,11 @@
           <table class="items">
             <thead>
               <tr>
-                <th class="sortable" onclick="Escopo.ordenar('numero')" style="width:10%">Nº Registro ↕</th>
-                <th class="sortable" onclick="Escopo.ordenar('data')" style="width:15%">Data Registro ↕</th>
-                <th class="sortable" onclick="Escopo.ordenar('obra')" style="width:25%">Obra ↕</th>
+                <th class="sortable" onclick="Escopo.ordenar('numero')" style="width:10%; text-align:center;">Nº Registro ↕</th>
+                <th class="sortable" onclick="Escopo.ordenar('data')" style="width:15%; text-align:center;">Data Registro ↕</th>
+                <th class="sortable" onclick="Escopo.ordenar('obra')" style="width:25%; text-align:center;">Obra ↕</th>
                 <th style="width:35%">Objeto de Manutenção / Construção</th>
-                <th style="width:15%; text-align:right">Ações</th>
+                <th style="width:15%; text-align:center;">Ações</th>
               </tr>
             </thead>
             <tbody id="lista-escopos-body"></tbody>
@@ -3376,7 +3371,9 @@ const Req = {
       
       // PREVENÇÃO DE ERRO MAXIMA: Varredura protegida com "(x.desc || '')"
       if (!DB.data.insumos.find(x => (x.desc || '').toLowerCase() === descEl.toLowerCase())) {
-          DB.data.insumos.push({ id: Util.genId(), codigo: codEl, desc: descEl, unid: unid, criadoEm: Util.today() });
+          const novoInsumo = { id: Util.genId(), codigo: codEl, desc: descEl, unid: unid, criadoEm: Util.today() };
+          DB.data.insumos.push(novoInsumo);
+          DB.saveItem('insumos', novoInsumo); // ✅ Envia o insumo novo para a nuvem
       }
     });
 
@@ -3621,11 +3618,11 @@ const MapaPrecos = {
         const tbody = document.getElementById('map-body');
         const tfoot = document.getElementById('map-foot');
     
-    let thHtml = `<tr><th>Item</th><th>Qtd</th><th>Unid</th>`;
+    let thHtml = `<tr><th style="text-align:center; min-width:300px;">Item</th><th style="text-align:center;">Qtd</th><th style="text-align:center;">Unid</th>`;
     p.propostas.forEach(prop => {
       const f = DB.data.fornecedores.find(x=>x.id===prop.fornId) || prop;
       const hasOC = p.ocs && p.ocs.some(oc => oc.fornId === prop.fornId);
-      thHtml += `<th colspan="2">
+      thHtml += `<th colspan="2" style="min-width: 250px;">
         <input type="text" class="comp-forn-input" value="${f.nome || ''}" placeholder="Fornecedor" onchange="updatePropFornNome('${prop.fornId}', this.value)" onclick="editFornDetails('${prop.fornId}')">
         <div style="display:flex; justify-content:center; align-items:center; gap:6px; margin-top:6px;">
           <small style="font-weight:500; cursor:pointer;" onclick="editFornDetails('${prop.fornId}')">(Editar)</small>
@@ -4043,10 +4040,10 @@ const ATDLivre = {
       const tbody = btn.previousElementSibling.querySelector('tbody');
       const tr = document.createElement('tr');
       tr.innerHTML = `
-          <td style="padding:4px; border-bottom:1px solid var(--line);"><textarea class="c-textarea" placeholder="Cód..." rows="1" oninput="this.style.height='auto'; this.style.height=(this.scrollHeight)+'px'; this.textContent=this.value;" style="min-height:18px;"></textarea></td>
-          <td style="padding:4px; border-bottom:1px solid var(--line);"><textarea class="c-textarea" placeholder="Descrição do serviço..." rows="1" oninput="this.style.height='auto'; this.style.height=(this.scrollHeight)+'px'; this.textContent=this.value;" style="min-height:18px;"></textarea></td>
-          <td style="padding:4px; border-bottom:1px solid var(--line);"><input type="text" class="c-input c-unit" placeholder="R$ 0,00" oninput="Util.maskCur(this); this.setAttribute('value', this.value); ATDLivre.calcCenarios(this)" style="text-align:right;"></td>
-          <td style="padding:4px; border-bottom:1px solid var(--line); text-align:right; font-weight:bold; font-size:11px; color:var(--navy);" class="c-row-tot">R$ 0,00</td>
+          <td style="padding:4px; border-bottom:1px solid var(--line); vertical-align:top;"><textarea class="c-textarea" placeholder="Cód..." rows="1" oninput="this.style.height='auto'; this.style.height=(this.scrollHeight)+'px'; this.textContent=this.value;" style="min-height:18px;"></textarea></td>
+          <td style="padding:4px; border-bottom:1px solid var(--line); vertical-align:top;">
+             <div class="c-textarea" contenteditable="true" placeholder="Detalhe as premissas deste cenário..." style="min-height:40px; padding:4px; outline:none;" onblur="this.setAttribute('value', this.innerHTML)"></div>
+          </td>
           <td style="padding:4px; border-bottom:1px solid var(--line); text-align:center; vertical-align:top;"><button class="btn-remove-kpi btn-remove-row" onclick="const p = this.closest('.atd-cenarios-wrapper'); this.closest('tr').remove(); ATDLivre.calcCenarios(p);" style="position:static; opacity:1;">×</button></td>
       `;
       tbody.appendChild(tr);
@@ -4062,25 +4059,26 @@ const ATDLivre = {
       card.innerHTML = `
           <button class="btn-remove-kpi btn-remover-cenario" onclick="const p = this.closest('.atd-cenarios-wrapper'); this.closest('.atd-cenario-card').remove(); ATDLivre.calcCenarios(p);" title="Remover cenário" style="position:absolute; top:5px; right:5px; opacity:1;">×</button>
           <h4 contenteditable="true" style="margin:0 0 10px 0; color:var(--navy); text-align:center; text-transform:uppercase;">CENÁRIO ${count}: TÍTULO</h4>
+          <div style="font-size:10px; color:var(--muted); text-align:center; margin-bottom:8px;">Dica: Selecione o texto e use Ctrl+B (Negrito), Ctrl+I (Itálico) ou Ctrl+U (Sublinhado)</div>
           <table class="items" style="width: 100%; margin-bottom: 10px; border-collapse:collapse; table-layout: auto;">
               <thead><tr>
-                 <th style="width:15%; padding:4px; font-size:9px; resize:horizontal; overflow:hidden;">Cód</th>
-                 <th style="width:40%; padding:4px; font-size:9px; resize:horizontal; overflow:hidden;">Descrição</th>
-                 <th style="width:25%; padding:4px; font-size:9px; text-align:right; resize:horizontal; overflow:hidden;">R$ Ref. Unit.</th>
-                 <th style="width:20%; padding:4px; font-size:9px; text-align:right;">R$ Total</th>
+                 <th style="width:20%; padding:4px; font-size:9px; resize:horizontal; overflow:hidden;">Cód</th>
+                 <th style="width:75%; padding:4px; font-size:9px; resize:horizontal; overflow:hidden;">Descrição / Detalhamento</th>
                  <th style="width:5%; padding:4px;"></th>
               </tr></thead>
               <tbody></tbody>
           </table>
           <button class="btn btn-outline btn-add-row" style="width: 100%; font-size: 9px; padding: 6px; margin-bottom: 15px;" onclick="ATDLivre.addCenarioRow(this)">+ Adicionar Item</button>
+          
           <div style="background: var(--highlight); padding: 10px; border-radius: 4px; margin-bottom: 15px; text-align:center; border: 1px solid var(--navy-2);">
-              <div style="font-size: 10px; color: var(--navy-2); font-weight: bold; text-transform: uppercase;">Total Projetado</div>
-              <div class="cenario-total" style="font-size: 20px; font-weight: 800; color: var(--navy);">R$ 0,00</div>
+              <div style="font-size: 10px; color: var(--navy-2); font-weight: bold; text-transform: uppercase;">Total Projetado (Preencha)</div>
+              <input type="text" class="cenario-total-input" style="font-size: 20px; font-weight: 800; color: var(--navy); text-align:center; border:none; background:transparent; width:100%; outline:none;" placeholder="R$ 0,00" value="R$ 0,00" oninput="Util.maskCur(this); this.setAttribute('value', this.value); ATDLivre.calcCenarios(this)">
               <div class="cenario-economia" style="font-size: 11px; font-weight: bold; margin-top: 4px;">-</div>
           </div>
-          <div style="border:2px dashed var(--line); padding: 15px; text-align: center; border-radius: 4px; cursor: pointer; font-size: 10px; color: var(--muted); margin-top: auto;" onclick="ATDLivre.inserirImagem(this)">
-              📷 Representação (Clique p/ Imagem)
-          </div>
+          
+          <div class="cenario-imagens-container" style="display:flex; flex-direction:column; gap:10px; margin-top:auto;"></div>
+          <button class="btn btn-outline no-print" style="width:100%; font-size:9px; padding:6px; margin-top:10px; border-style:dashed;" onclick="this.nextElementSibling.click()">📷 Adicionar Imagem Local</button>
+          <input type="file" accept="image/*" multiple style="display:none;" onchange="ATDLivre.handleCenarioImages(event, this)">
       `;
       wrapper.insertBefore(card, btn);
       ATDLivre.addCenarioRow(card.querySelector('.btn-add-row'));
@@ -4096,14 +4094,9 @@ const ATDLivre = {
       const cards = wrapper.querySelectorAll('.atd-cenario-card');
       
       cards.forEach(card => {
-          let tot = 0;
-          card.querySelectorAll('tbody tr').forEach(tr => {
-              const rowTot = Util.unmaskCur(tr.querySelector('.c-unit').value) || 0;
-              tr.querySelector('.c-row-tot').textContent = Util.formatBRL(rowTot);
-              tot += rowTot;
-          });
+          const inputTot = card.querySelector('.cenario-total-input');
+          const tot = Util.unmaskCur(inputTot.value) || 0;
           card.dataset.tot = tot;
-          card.querySelector('.cenario-total').textContent = Util.formatBRL(tot);
           if(tot > maxTot) maxTot = tot;
       });
       
@@ -4191,9 +4184,10 @@ const ATDLivre = {
         content = `
           <div style="width:100%;">
             <h3 contenteditable="true" style="margin:0 0 10px 0; color:var(--navy); font-size:14px; text-transform:uppercase;">ANEXO / IMAGEM</h3>
-            <div style="border:2px dashed var(--line); border-radius:6px; padding:30px; text-align:center; color:var(--muted); font-size:12px; cursor:pointer;" onclick="ATDLivre.inserirImagem(this)">
-               Clique aqui para colar a URL de uma imagem. (Na impressão esta borda some).
+            <div style="border:2px dashed var(--line); border-radius:6px; padding:30px; text-align:center; color:var(--muted); font-size:12px; cursor:pointer;" onclick="this.nextElementSibling.click()">
+               📷 Clique aqui para fazer o upload de uma imagem do seu computador.
             </div>
+            <input type="file" accept="image/*" style="display:none;" onchange="ATDLivre.inserirImagemLocal(event, this)">
           </div>
         `;
     } else if (tipo === 'icone-texto') {
@@ -4225,14 +4219,67 @@ const ATDLivre = {
     ATDLivre.saveHistory(true);
   },
 
-  inserirImagem: (div) => {
-     const url = prompt("Cole o link (URL) da imagem desejada:");
-     if(url) {
-         div.innerHTML = `<img src="${url}" style="max-width:100%; max-height:400px; object-fit:contain; border-radius:6px;">`;
-         div.style.border = 'none';
-         div.style.padding = '0';
-         ATDLivre.saveHistory(true);
-     }
+  inserirImagemLocal: (event, input) => {
+      const file = event.target.files[0];
+      if(!file) return;
+      const reader = new FileReader();
+      reader.onload = (e) => {
+          const img = new Image();
+          img.onload = () => {
+              const canvas = document.createElement('canvas');
+              const MAX_WIDTH = 800;
+              let width = img.width; let height = img.height;
+              if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; }
+              canvas.width = width; canvas.height = height;
+              const ctx = canvas.getContext('2d');
+              ctx.drawImage(img, 0, 0, width, height);
+              const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+              
+              const divBorder = input.previousElementSibling;
+              divBorder.innerHTML = `<img src="${dataUrl}" style="max-width:100%; max-height:400px; object-fit:contain; border-radius:6px; display:block; margin: 0 auto;">`;
+              divBorder.style.border = 'none';
+              divBorder.style.padding = '0';
+              divBorder.onclick = null;
+              ATDLivre.saveHistory(true);
+          };
+          img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+  },
+
+  handleCenarioImages: (event, input) => {
+      const files = event.target.files;
+      const container = input.previousElementSibling.previousElementSibling; 
+      if(!files || files.length === 0) return;
+      
+      Array.from(files).forEach(file => {
+          const reader = new FileReader();
+          reader.onload = (e) => {
+              const img = new Image();
+              img.onload = () => {
+                  const canvas = document.createElement('canvas');
+                  const MAX_WIDTH = 500;
+                  let width = img.width; let height = img.height;
+                  if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; }
+                  canvas.width = width; canvas.height = height;
+                  const ctx = canvas.getContext('2d');
+                  ctx.drawImage(img, 0, 0, width, height);
+                  const dataUrl = canvas.toDataURL('image/jpeg', 0.6);
+                  
+                  const div = document.createElement('div');
+                  div.style.cssText = "border:1px solid var(--line); border-radius:6px; padding:10px; background:var(--paper); position:relative;";
+                  div.innerHTML = `
+                      <button class="btn-remove-kpi no-print" onclick="this.parentElement.remove(); ATDLivre.saveHistory(true);" style="position:absolute; top:2px; right:2px; opacity:1;">×</button>
+                      <img src="${dataUrl}" style="width:100%; border-radius:4px; object-fit:contain; max-height:200px; display:block; margin-bottom:8px;">
+                      <div contenteditable="true" placeholder="Digite uma legenda... (Use Ctrl+B, Ctrl+U)" style="font-size:10px; color:var(--ink); text-align:center; outline:none; min-height:15px;"></div>
+                  `;
+                  container.appendChild(div);
+                  ATDLivre.saveHistory(true);
+              };
+              img.src = e.target.result;
+          };
+          reader.readAsDataURL(file);
+      });
   },
 
   abrirModalImportarMapa: () => {
@@ -5079,11 +5126,11 @@ const Escopo = {
 
       filtrados.forEach(e => {
           tb.innerHTML += `<tr>
-              <td><strong style="color:var(--navy)">${e.numero || 'S/N'}</strong></td>
-              <td>${e.data || '-'}</td>
-              <td style="font-weight:600;">${e.obra || '-'}</td>
+              <td style="text-align:center;"><strong style="color:var(--navy)">${e.numero || 'S/N'}</strong></td>
+              <td style="text-align:center;">${e.data || '-'}</td>
+              <td style="text-align:center; font-weight:600;">${e.obra || '-'}</td>
               <td>${e.objeto || '-'}</td>
-              <td style="text-align:right; white-space:nowrap;">
+              <td style="text-align:center; white-space:nowrap;">
                   <button class="btn btn-outline" style="padding: 4px 8px; font-size:10px;" onclick="Escopo.carregar('${e.id}')">✏️ Abrir</button>
                   <button class="del-btn" style="font-size:16px; margin-left:4px;" onclick="Escopo.excluir('${e.id}')" title="Excluir">×</button>
               </td>
