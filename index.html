@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -3086,8 +3087,8 @@ const ATD = {
           headerContainer.style.position = 'relative'; /* Para flutuar as logos */
           headerContainer.style.minHeight = '90px'; /* Espaço seguro para as imagens */
           
-          let imgRightHtml = logoUrl ? `<img src="${logoUrl}" style="height:60px; object-fit:contain; position:absolute; right:0; top:50%; transform:translateY(-50%);">` : '';
-          let imgLeftHtml = `<img src="LogoGRP.png" style="height:60px; object-fit:contain; position:absolute; left:0; top:50%; transform:translateY(-50%);">`;
+          let imgRightHtml = logoUrl ? `<img src="${logoUrl}" style="max-width:120px; max-height:60px; width:auto; height:auto; position:absolute; right:0; top:50%; transform:translateY(-50%);">` : '';
+          let imgLeftHtml = `<img src="LogoGRP.png" style="max-width:120px; max-height:60px; width:auto; height:auto; position:absolute; left:0; top:50%; transform:translateY(-50%);">`;
           
           headerContainer.innerHTML = `
               ${imgLeftHtml}
@@ -5520,19 +5521,22 @@ const Escopo = {
 
    templateOriginal: () => {
       return `
-         <div style="border: 2px solid var(--navy); border-radius: 4px; display: flex; margin-bottom: 20px; min-height: 70px; overflow: hidden; background: transparent;">
-            <div style="border-right: 2px solid var(--navy); width: 120px; display: flex; justify-content: center; align-items: center; padding: 10px; flex-shrink: 0;">
-                <img src="LogoGRP.png" style="height: 45px; width: auto; display: block;" />
-            </div>
-            <div style="flex: 1; display: flex; justify-content: center; align-items: center; padding: 10px; text-align: center;">
-                <h1 id="esc-titulo-wrapper" style="color: var(--navy); font-size: 17px; margin: 0; font-weight: 800; display: flex; justify-content: center; align-items: center; gap: 4px; text-transform: uppercase;">
-                   ESCOPO DE OBRAS E SERVIÇOS N° <input type="text" id="esc-registro" placeholder="XXXX" class="escopo-input" style="font-weight: 800; width: 60px; text-align: center; font-size: 17px; color: var(--navy); border-bottom: 1px dashed var(--line); padding: 0;">
-                </h1>
-            </div>
-            <div style="border-left: 2px solid var(--navy); width: 120px; display: flex; justify-content: center; align-items: center; padding: 10px; flex-shrink: 0;">
-                <img id="esc-logo-img" src="" style="height: 45px; width: auto; display: none;" />
-            </div>
-         </div>
+         <table style="width: 100%; border: 2px solid var(--navy); border-radius: 4px; border-collapse: separate; border-spacing: 0; margin-bottom: 20px; min-height: 70px; background: transparent;">
+            <tr>
+               <td style="border-right: 2px solid var(--navy); width: 120px; text-align: center; vertical-align: middle; padding: 10px;">
+                   <!-- max-width e max-height com auto protegem a proporção contra distorções do PDF -->
+                   <img src="LogoGRP.png" style="max-width: 100px; max-height: 45px; width: auto; height: auto; display: block; margin: 0 auto;" />
+               </td>
+               <td style="text-align: center; vertical-align: middle; padding: 10px;">
+                   <h1 id="esc-titulo-wrapper" style="color: var(--navy); font-size: 17px; margin: 0; font-weight: 800; display: inline-flex; justify-content: center; align-items: center; gap: 4px; text-transform: uppercase;">
+                      ESCOPO DE OBRAS E SERVIÇOS N° <input type="text" id="esc-registro" placeholder="XXXX" class="escopo-input" style="font-weight: 800; width: 60px; text-align: center; font-size: 17px; color: var(--navy); border-bottom: 1px dashed var(--line); padding: 0; margin: 0;">
+                   </h1>
+               </td>
+               <td style="border-left: 2px solid var(--navy); width: 120px; text-align: center; vertical-align: middle; padding: 10px;">
+                   <img id="esc-logo-img" src="" style="max-width: 100px; max-height: 45px; width: auto; height: auto; display: none; margin: 0 auto;" />
+               </td>
+            </tr>
+         </table>
          <div style="font-size: 11px; color: var(--muted); text-align: right; margin-bottom: 20px; font-weight: 600;">Data de Registro: <span id="esc-data-registro" style="font-weight: 800; color: var(--ink);"></span></div>
          
          <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 15px;">
