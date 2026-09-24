@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -934,17 +935,19 @@
        <div class="header-actions">
           <button class="btn btn-outline" onclick="editarRequisicao()">← Editar Requisição de Compra</button>
           <button class="btn btn-solid" style="background-color: var(--navy-2);" onclick="salvarMapaManual()">💾 Salvar Mapa</button>
-          <button class="btn btn-solid" id="btn-ver-oc-header" style="display:none;" onclick="abrirOC(0)">📄 Ver Ordem de Compra</button>       
+          <button class="btn btn-solid" id="btn-ver-oc-header" style="display:none;" onclick="abrirOC(0)">📄 Ver Ordem de Compra</button>
         </div>
       </div>
 
       <section class="block">
         <h2 style="display:flex; justify-content:space-between; align-items:center;">
           <span>Mapa Comparativo</span>
-          <div>
+          <div style="display:flex; align-items:center;">
              <button class="btn btn-outline" style="font-size:10px; padding:4px 10px; border-color:var(--success); color:var(--success);" onclick="MapaPrecos.markBest()">Marcar melhores</button>
              <button class="btn btn-success" style="font-size:10px; padding:4px 10px; margin-left:8px;" onclick="abrirModalAddFornMapa()">+ Add Fornecedor Existente</button>
              <button class="btn btn-success" style="font-size:10px; padding:4px 10px; margin-left:8px;" onclick="addFornecedorNovoNoMapa()">+ Add Fornecedor Novo</button>
+             <!-- BOTÃO DE DOWNLOAD AQUI! -->
+             <button class="btn" style="color: var(--muted); border: 1px dashed var(--line); font-size: 14px; padding: 3px 8px; background: transparent; transition: 0.2s; margin-left:8px;" onmouseover="this.style.color='var(--navy)'; this.style.borderColor='var(--navy)';" onmouseout="this.style.color='var(--muted)'; this.style.borderColor='var(--line)';" onclick="MapaPrecos.baixarPDF()" title="Baixar Mapa de Preços (PDF)"><i class="fa-solid fa-download"></i></button>
           </div>
         </h2>
         <div style="overflow-x:auto;">
@@ -3741,6 +3744,7 @@ const MapaPrecos = {
 
     const tl = document.getElementById('proc-timeline'); tl.innerHTML = '';
     [...p.historico].reverse().forEach(h => { tl.innerHTML += `<div class="tl-item"><div class="tl-date">${h.data}</div><div class="tl-content">${h.txt}</div></div>`; });
+
   },
 
   markBest: () => {
@@ -3767,6 +3771,97 @@ const MapaPrecos = {
         }
       });
     });
+  },
+
+ baixarPDF: () => {
+      const p = DB.getProcess(currentPID);
+      if(!p) return;
+
+      const elementoOriginal = document.getElementById('map-table');
+      if(!elementoOriginal) return;
+
+      const containerMapa = elementoOriginal.parentElement; // A div com overflow-x:auto
+
+      // 1. Mostrar o Loader Escuro (que esconde a tela enquanto modificamos a tabela real)
+      const loader = document.getElementById('db-loader');
+      loader.style.display = 'flex';
+      loader.style.opacity = '1';
+      loader.children[1].textContent = 'GERANDO MAPA EM PDF...';
+
+      // 2. Modificar a tabela original
+      const originalOverflow = containerMapa.style.overflowX;
+      containerMapa.style.overflowX = 'visible'; // Libera a barra de rolagem (deixa tudo visível)
+      containerMapa.style.width = 'max-content'; // Estica a div
+      
+      // Adiciona título temporário no topo da tabela
+      const divHeader = document.createElement('div');
+      divHeader.className = 'temp-pdf-header';
+      divHeader.innerHTML = `
+          <div style="text-align:center; margin-bottom:20px; font-family:'Montserrat', sans-serif;">
+              <h2 style="margin:0; color:#0d3b1f; font-size:18px; font-weight:800; text-transform:uppercase;">MAPA DE PREÇOS E EQUALIZAÇÃO</h2>
+              <p style="margin:5px 0 0 0; font-size:12px; color:#555; font-weight:700;">PROCESSO: ${p.id} - ${p.req.cat || 'GERAL'}</p>
+          </div>
+      `;
+      containerMapa.insertBefore(divHeader, elementoOriginal);
+
+      // Esconder botões e elementos indesejados (lápis, botões de ação)
+      const elementosParaEsconder = elementoOriginal.querySelectorAll('button, small');
+      elementosParaEsconder.forEach(el => el.style.display = 'none');
+
+      // Substituir Inputs por Textos Reais (Spans)
+      const inputs = elementoOriginal.querySelectorAll('input');
+      const spansTemporarios = [];
+      inputs.forEach(inp => {
+          const span = document.createElement('span');
+          span.className = 'temp-pdf-span';
+          span.textContent = inp.value || '-';
+          span.style.fontFamily = "'Montserrat', sans-serif";
+          
+          if(inp.classList.contains('best-price')) {
+              span.style.color = '#24783d';
+              span.style.fontWeight = '800';
+          } else {
+              span.style.color = '#000000';
+              span.style.fontWeight = inp.style.fontWeight || '600';
+          }
+          inp.style.display = 'none';
+          inp.parentNode.insertBefore(span, inp.nextSibling);
+          spansTemporarios.push(span);
+      });
+
+      // 3. Configuração do PDF
+      const opt = {
+          margin:       [10, 10, 10, 10],
+          filename:     `Mapa_Precos_${p.id}.pdf`,
+          image:        { type: 'jpeg', quality: 1 },
+          html2canvas:  { scale: 2, useCORS: true },
+          // Formato A3 Paisagem para garantir que o mapa inteiro caiba!
+          jsPDF:        { unit: 'mm', format: 'a3', orientation: 'landscape' }
+      };
+
+      // 4. Dá 300ms para o navegador "desenhar" as alterações atrás do loader, gera o PDF e Desfaz.
+      setTimeout(() => {
+          html2pdf().set(opt).from(containerMapa).save().then(() => {
+              
+              // RESTAURAR TUDO AO ESTADO ORIGINAL
+              containerMapa.style.overflowX = originalOverflow;
+              containerMapa.style.width = 'auto';
+              
+              const tempHeader = containerMapa.querySelector('.temp-pdf-header');
+              if(tempHeader) tempHeader.remove();
+
+              spansTemporarios.forEach(span => span.remove());
+              inputs.forEach(inp => inp.style.display = '');
+              elementosParaEsconder.forEach(el => el.style.display = '');
+
+              // Ocultar Loader
+              loader.style.opacity = '0';
+              setTimeout(()=> {
+                  loader.style.display = 'none';
+                  loader.children[1].textContent = 'Conectando ao Firebase...';
+              }, 500);
+          });
+      }, 300);
   }
 };
 
@@ -4295,15 +4390,21 @@ const ATDLivre = {
       const p = DB.getProcess(pid);
       if(!p) return;
 
-      let html = `<div style="width:100%;"><h3 contenteditable="true" style="margin:0 0 10px 0; color:var(--navy); font-size:14px; text-transform:uppercase;">MAPA DE PREÇOS (IMPORTADO DO ${p.id})</h3>`;
+      let html = `<div style="width:100%; overflow-x:auto;"><h3 contenteditable="true" style="margin:0 0 10px 0; color:var(--navy); font-size:14px; text-transform:uppercase;">MAPA DE PREÇOS (IMPORTADO DO ${p.id})</h3>`;
       html += `<table class="items table-comp" style="width:100%; border-collapse:collapse; margin-bottom:15px; background:var(--paper);">`;
 
-      html += `<thead><tr><th style="border:1px solid var(--line); padding:8px; text-align:left; font-size:11px; background:var(--highlight); color:var(--navy);">Item</th><th style="border:1px solid var(--line); padding:8px; text-align:center; font-size:11px; background:var(--highlight); color:var(--navy);">Qtd</th><th style="border:1px solid var(--line); padding:8px; text-align:center; font-size:11px; background:var(--highlight); color:var(--navy);">Unid</th>`;
+      html += `<thead><tr><th style="border:1px solid var(--line); padding:8px; text-align:left; font-size:11px; background:var(--highlight); color:var(--navy); min-width:180px;">Item</th><th style="border:1px solid var(--line); padding:8px; text-align:center; font-size:11px; background:var(--highlight); color:var(--navy);">Qtd</th><th style="border:1px solid var(--line); padding:8px; text-align:center; font-size:11px; background:var(--highlight); color:var(--navy);">Unid</th>`;
       p.propostas.forEach(prop => {
           const isW = p.vencedorId === prop.fornId;
           const f = DB.data.fornecedores.find(x=>x.id===prop.fornId) || prop;
-          const bg = isW ? 'background:var(--highlight); border: 2px solid var(--success); color:var(--navy);' : 'border:1px solid var(--line); background:var(--highlight); color:var(--navy);';
-          html += `<th style="padding:8px; text-align:center; font-size:11px; ${bg}"><span style="font-weight:bold">${f.nome || ''}</span></th>`;
+          const bg = isW ? 'background:var(--highlight); border: 2px solid var(--success); border-bottom: none; color:var(--navy);' : 'border:1px solid var(--line); border-bottom: none; background:var(--highlight); color:var(--navy);';
+          html += `<th colspan="2" style="padding:8px; text-align:center; font-size:11px; ${bg}">
+            <span style="font-weight:bold">${f.nome || ''}</span>
+            <div style="display:flex; justify-content:space-between; margin-top:6px; border-top:1px dashed var(--line); padding-top:4px; font-size:9px; color:var(--muted); font-weight:normal;">
+               <span style="flex:1; text-align:center;">R$ Unitário</span>
+               <span style="flex:1; text-align:center; border-left:1px dashed var(--line);">R$ Total</span>
+            </div>
+          </th>`;
       });
       html += `</tr></thead><tbody>`;
 
@@ -4316,10 +4417,14 @@ const ATDLivre = {
           p.propostas.forEach(prop => {
               const isW = p.vencedorId === prop.fornId;
               const val = prop.itens[i.id] || 0;
+              const valTotal = val * i.qtd;
               const isBest = (val > 0 && val === min);
               const vs = val > 0 ? Util.formatBRL(val) : '-';
+              const vsTotal = valTotal > 0 ? Util.formatBRL(valTotal) : '-';
 
-              let cellBg = isW ? 'background:var(--highlight); border: 2px solid var(--success);' : 'border:1px solid var(--line);';
+              let cellBg = isW ? 'background:var(--highlight); border-top: 2px solid var(--success); border-bottom: 2px solid var(--success);' : 'border:1px solid var(--line);';
+              let cellBgLeft = isW ? 'border-left: 2px solid var(--success);' : '';
+              let cellBgRight = isW ? 'border-right: 2px solid var(--success);' : '';
               let bestStyle = isBest ? 'background:var(--highlight); font-weight:800; color:var(--success);' : 'color:var(--ink);';
 
               let diffHtml = '';
@@ -4328,7 +4433,8 @@ const ATDLivre = {
                   diffHtml = `<br><span style="color:var(--danger); font-size:10px; font-weight:800;">▲ +${perc.toFixed(1)}%</span>`;
               }
 
-              html += `<td style="padding:8px; text-align:center; font-size:11px; ${cellBg} ${bestStyle}">${vs}${diffHtml}</td>`;
+              html += `<td style="padding:8px; text-align:center; font-size:11px; white-space:nowrap; border-right:none; ${cellBg} ${cellBgLeft} ${bestStyle}">${vs}${diffHtml}</td>`;
+              html += `<td style="padding:8px; text-align:center; font-size:11px; white-space:nowrap; font-weight:700; border-left:none; ${cellBg} ${cellBgRight} ${isBest ? 'background:var(--highlight); color:var(--success);' : 'color:var(--ink);'}">${vsTotal}</td>`;
           });
           html += `</tr>`;
       });
@@ -4337,7 +4443,7 @@ const ATDLivre = {
       p.propostas.forEach(prop => {
           const isW = p.vencedorId === prop.fornId;
           const cellBg = isW ? 'background:var(--highlight); border: 2px solid var(--success);' : 'border:1px solid var(--line);';
-          html += `<td style="padding:8px; text-align:center; font-size:11px; color:var(--ink); ${cellBg}">${prop.frete>0?Util.formatBRL(prop.frete):'-'}</td>`;
+          html += `<td colspan="2" style="padding:8px; text-align:center; font-size:11px; color:var(--ink); white-space:nowrap; ${cellBg}">${prop.frete>0?Util.formatBRL(prop.frete):'-'}</td>`;
       });
       html += `</tr></tbody>`;
 
@@ -4363,7 +4469,7 @@ const ATDLivre = {
               diffHtml = `<br><span style="color:var(--danger); font-size:10px; font-weight:800;">▲ +${perc.toFixed(1)}%</span>`;
           }
 
-          html += `<td style="padding:15px 8px; text-align:center; font-size:13px; font-weight:bold; color:var(--navy); ${cellBg}">${t>0 ? Util.formatBRL(t) : '-'}${diffHtml}</td>`;
+          html += `<td colspan="2" style="padding:15px 8px; text-align:center; font-size:13px; font-weight:bold; color:var(--navy); white-space:nowrap; ${cellBg}">${t>0 ? Util.formatBRL(t) : '-'}${diffHtml}</td>`;
       });
       html += `</tr></tfoot></table></div>`;
 
