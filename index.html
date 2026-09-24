@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -319,7 +320,8 @@
   /* ====== PRINT STYLES ====== */
   @media print {
     @page { size: A4 portrait; margin: 15mm; }
-    body { background: #fff !important; color: #000 !important; font-size: 11px !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    /* REMOVIDA A TRAVA DE COR PRETA (#000). AS CORES ORIGINAIS SERÃO MANTIDAS */
+    body { background: #fff !important; font-size: 11px !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
     #login-screen, #db-loader, .sidebar, .header-actions, .add-row-btn, .del-btn, .toast, .nav-group, .sidebar-foot, .modal-overlay, button.btn { display: none !important; }
     .app { display: block !important; }
     main { padding: 0 !important; margin: 0 !important; max-width: 100% !important; }
@@ -5328,7 +5330,7 @@ const Escopo = {
       // 1. Esconde botões de ação temporários
       document.querySelectorAll('#escopo-content-area .no-print').forEach(el => el.style.display = 'none');
       
-      // 2. Converte campos de edição para texto estático
+      // 2. Converte campos de edição para texto estático mantendo as cores
       const textareas = elemento.querySelectorAll('.escopo-textarea');
       textareas.forEach(ta => {
          const div = document.createElement('div');
@@ -5337,7 +5339,7 @@ const Escopo = {
          div.style.wordWrap = 'break-word';
          div.style.textAlign = 'justify'; 
          div.style.fontSize = '12px';
-         div.style.color = '#000';
+         div.style.color = 'var(--ink)'; /* MANTÉM A COR ORIGINAL */
          div.style.lineHeight = '1.6';
          div.textContent = ta.value || ' ';
          ta.style.display = 'none';
@@ -5359,7 +5361,7 @@ const Escopo = {
          span.className = 'temp-pdf-input';
          span.style.fontWeight = inp.style.fontWeight || 'normal';
          span.style.fontSize = inp.style.fontSize || '12px';
-         span.style.color = '#000';
+         span.style.color = 'var(--ink)'; /* MANTÉM A COR ORIGINAL */
          span.style.display = 'inline-block';
          span.style.textAlign = inp.style.textAlign || 'left';
          
@@ -5367,7 +5369,7 @@ const Escopo = {
             span.textContent = inp.value ? inp.value : '';
             span.style.fontSize = '17px';
             span.style.fontWeight = '800';
-            span.style.color = 'var(--ink)';
+            span.style.color = 'var(--navy)'; /* MANTÉM O VERDE ESCURO DO NÚMERO */
          } else if(inp.tagName === 'SELECT') {
             span.textContent = inp.options && inp.selectedIndex >= 0 ? inp.options[inp.selectedIndex].text : '';
          } else {
