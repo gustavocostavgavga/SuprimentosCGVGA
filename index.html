@@ -5350,6 +5350,15 @@ const Escopo = {
 
       const inputs = elemento.querySelectorAll('.escopo-input');
       inputs.forEach(inp => {
+         if(inp.tagName === 'DIV') {
+             // É o Editor Rico! Não convertemos em span, apenas tiramos a borda para impressão
+             inp.dataset.oldBorder = inp.style.border;
+             inp.dataset.oldPadding = inp.style.padding;
+             inp.style.border = 'none';
+             inp.style.padding = '0';
+             return;
+         }
+
          const span = document.createElement('span');
          span.className = 'temp-pdf-input';
          span.style.fontWeight = inp.style.fontWeight || 'normal';
@@ -5363,6 +5372,9 @@ const Escopo = {
             span.style.fontSize = '18px';
             span.style.fontWeight = '800';
             span.style.color = 'var(--ink)';
+         } else if(inp.tagName === 'SELECT') {
+            // Se for um menu dropdown, pegamos o texto selecionado
+            span.textContent = inp.options && inp.selectedIndex >= 0 ? inp.options[inp.selectedIndex].text : '';
          } else {
             span.textContent = inp.value || ' ';
          }
@@ -5385,7 +5397,8 @@ const Escopo = {
       const numeroEscopo = document.getElementById('esc-registro').value || 'Sem_Numero';
       
       const opt = {
-         margin:       [15, 15, 20, 15], // Topo, Direita, Fundo, Esquerda (Espaço para Paginação)
+         // Margens reduzidas (Topo 12, Direita 12, Fundo 18, Esquerda 12) para puxar o título para cima
+         margin:       [12, 12, 18, 12], 
          filename:     `Escopo_Obras_${numeroEscopo}.pdf`,
          image:        { type: 'jpeg', quality: 0.98 },
          html2canvas:  { scale: 2, useCORS: true },
@@ -5393,19 +5406,34 @@ const Escopo = {
          pagebreak:    { mode: ['css', 'legacy'], avoid: ['.esc-img-block', 'tr'] } 
       };
 
-      // Geração do PDF com Injeção de Numeração de Página
+      // Geração do PDF com Injeção de Numeração de Página E MOLDURA DE PÁGINA
       html2pdf().set(opt).from(elemento).toPdf().get('pdf').then(function (pdf) {
          var totalPages = pdf.internal.getNumberOfPages();
          for (let i = 1; i <= totalPages; i++) {
              pdf.setPage(i);
+             
+             // Configuração da Paginação
              pdf.setFontSize(8);
              pdf.setTextColor(150);
-             pdf.text('Página ' + i + ' de ' + totalPages, pdf.internal.pageSize.getWidth() - 15, pdf.internal.pageSize.getHeight() - 10, {align: 'right'});
+             pdf.text('Página ' + i + ' de ' + totalPages, pdf.internal.pageSize.getWidth() - 12, pdf.internal.pageSize.getHeight() - 8, {align: 'right'});
+             
+             // INJEÇÃO DA MOLDURA ELEGANTE EM CADA PÁGINA
+             pdf.setDrawColor(13, 59, 31); // Cor verde escuro (var--navy)
+             pdf.setLineWidth(0.5);
+             // rect(x, y, largura, altura) - Cria margem de 6mm de borda em todos os cantos
+             pdf.rect(6, 6, pdf.internal.pageSize.getWidth() - 12, pdf.internal.pageSize.getHeight() - 12);
          }
       }).save().then(() => {
          document.querySelectorAll('.temp-pdf-text, .temp-pdf-input').forEach(el => el.remove());
          textareas.forEach(ta => ta.style.display = '');
-         inputs.forEach(inp => inp.style.display = '');
+         inputs.forEach(inp => {
+             if(inp.tagName === 'DIV') {
+                 inp.style.border = inp.dataset.oldBorder;
+                 inp.style.padding = inp.dataset.oldPadding;
+             } else {
+                 inp.style.display = '';
+             }
+         });
          document.querySelectorAll('#escopo-content-area .no-print').forEach(el => el.style.display = '');
          
          espacos.forEach(d => { d.style.marginBottom = d.dataset.origMb; });
@@ -5493,12 +5521,18 @@ const Escopo = {
 
    templateOriginal: () => {
       return `
-         <div style="border: 2px solid var(--navy); padding: 15px; border-radius: 4px; display: flex; justify-content: center; align-items: center; position: relative; margin-bottom: 20px; min-height: 80px;">
-            <img src="LogoGRP.png" style="height:50px; object-fit:contain; position:absolute; left:15px;" />
-            <h1 id="esc-titulo-wrapper" style="color: var(--navy); font-size: 18px; margin: 0; font-weight: 800; display: flex; justify-content: center; align-items: center; gap: 4px; text-transform: uppercase;">
-               ESCOPO DE OBRAS E SERVIÇOS N° <input type="text" id="esc-registro" placeholder="XXXX" class="escopo-input" style="font-weight: 800; width: 60px; text-align: center; font-size: 18px; color: var(--navy); border-bottom: 1px dashed var(--line); padding: 0;">
-            </h1>
-            <img id="esc-logo-img" src="" style="height:50px; display:none; object-fit:contain; position:absolute; right:15px;" />
+         <div style="border: 2px solid var(--navy); border-radius: 4px; display: grid; grid-template-columns: 100px 1fr 100px; align-items: stretch; margin-bottom: 20px; min-height: 70px; overflow: hidden; background: transparent;">
+            <div style="border-right: 2px solid var(--navy); display: flex; justify-content: center; align-items: center; padding: 10px;">
+                <img src="LogoGRP.png" style="height: 40px; width: 100%; object-fit: contain;" />
+            </div>
+            <div style="display: flex; justify-content: center; align-items: center; padding: 10px; text-align: center;">
+                <h1 id="esc-titulo-wrapper" style="color: var(--navy); font-size: 17px; margin: 0; font-weight: 800; display: flex; justify-content: center; align-items: center; gap: 4px; text-transform: uppercase;">
+                   ESCOPO DE OBRAS E SERVIÇOS N° <input type="text" id="esc-registro" placeholder="XXXX" class="escopo-input" style="font-weight: 800; width: 60px; text-align: center; font-size: 17px; color: var(--navy); border-bottom: 1px dashed var(--line); padding: 0;">
+                </h1>
+            </div>
+            <div style="border-left: 2px solid var(--navy); display: flex; justify-content: center; align-items: center; padding: 10px;">
+                <img id="esc-logo-img" src="" style="height: 40px; width: 100%; display: none; object-fit: contain;" />
+            </div>
          </div>
          <div style="font-size: 11px; color: var(--muted); text-align: right; margin-bottom: 20px; font-weight: 600;">Data de Registro: <span id="esc-data-registro" style="font-weight: 800; color: var(--ink);"></span></div>
          
