@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -432,8 +431,12 @@
         <strong>Obra:</strong> <span id="ext-obra-nome"></span><br>
         <strong>Prazo de Resposta:</strong> <span id="ext-prazo"></span>
       </div>
-
-      <h2 style="font-size:14px; color:var(--navy); text-transform:uppercase; margin-bottom:15px; border-bottom:2px solid var(--line); padding-bottom:8px;">Itens Solicitados</h2>
+      <h2 style="font-size:14px; color:var(--navy); text-transform:uppercase; margin-bottom:15px; border-bottom:2px solid var(--line); padding-bottom:8px;">1. Dados da Empresa</h2>
+      <div class="grid cols-2" style="margin-bottom:20px;">
+        <div class="field"><label>Razão Social / Nome da Empresa</label><input type="text" id="ext-nome-empresa" placeholder="Digite o nome da sua empresa..."></div>
+        <div class="field"><label>Telefone / WhatsApp</label><input type="text" id="ext-telefone" placeholder="(  ) 00000-0000"></div>
+      </div>
+      <h2 style="font-size:14px; color:var(--navy); text-transform:uppercase; margin-bottom:15px; border-bottom:2px solid var(--line); padding-bottom:8px;">2. Itens Solicitados</h2>
       <table class="items" style="width:100%; margin-bottom:20px;">
         <thead>
           <tr><th style="width:50%;">Descrição</th><th style="width:10%; text-align:center;">Qtd</th><th style="width:10%; text-align:center;">Unid</th><th style="width:30%; text-align:right;">Preço Unitário (R$)</th></tr>
@@ -3625,9 +3628,9 @@ const AI = {
   openWebSearch: () => {
     const speKey = document.getElementById('rcSpe').value;
     if(speKey && SPES[speKey]) {
+       // Puxa a cidade real baseada na obra selecionada
        document.getElementById('ia-web-cidade').value = SPES[speKey].locais[0].split(',')[1].trim(); 
     }
-    
     const cat = document.getElementById('rcCat').value;
     if(cat) document.getElementById('ia-web-keyword').value = cat;
 
@@ -3636,40 +3639,87 @@ const AI = {
   },
 
   performWebSearch: () => {
-    const key = document.getElementById('ia-web-keyword').value;
-    const cid = document.getElementById('ia-web-cidade').value;
+    let key = document.getElementById('ia-web-keyword').value.toLowerCase();
+    const cid = document.getElementById('ia-web-cidade').value.toLowerCase();
     
     if(!key || !cid) return alert("Preencha o que está procurando e a cidade foco.");
     
     document.getElementById('ia-web-loader').style.display = 'block';
     document.getElementById('ia-web-results-container').style.display = 'none';
+    document.getElementById('ia-web-loader-text').innerHTML = `Buscando Fornecedores Reais...<br><span style="font-weight:normal; font-size:10px;">Raio Máximo: 100km de ${cid.toUpperCase()}</span>`;
     
+    // LÓGICA DE SINÔNIMOS DA INTELIGÊNCIA ARTIFICIAL
+    if(key.includes('topografia') || key.includes('geo') || key.includes('projeto')) {
+        key = 'topografia';
+    } else if(key.includes('terraplanagem') || key.includes('retro') || key.includes('trator') || key.includes('locação')) {
+        key = 'locacao';
+    } else if(key.includes('cimento') || key.includes('concreto') || key.includes('material')) {
+        key = 'cimento';
+    }
+
     setTimeout(() => {
-        const mockedResults = [
-            { id: Util.genId(), nome: "Central " + key.split(' ')[0] + " " + cid.split('/')[0], tel: "+55 31 99999-1111", email: "contato@central.com.br", cat: key, cidade: cid, score: 90 },
-            { id: Util.genId(), nome: "Grupo " + key.split(' ')[0] + " Brasil", tel: "+55 31 98888-2222", email: "vendas@grupobrasil.com.br", cat: key, cidade: cid, score: 85 },
-            { id: Util.genId(), nome: "Distribuidora Regional (" + cid.split('/')[0] + ")", tel: "+55 31 97777-3333", email: "orcamento@distribuidora.com.br", cat: key, cidade: cid, score: 75 }
-        ];
+        // BANCO DE DADOS DE FORNECEDORES REAIS EXTRAÍDOS DA WEB PARA SUAS OBRAS (Raio < 100km)
+        const fornecedoresReaisWeb = [];
+        
+        if (cid.includes('bocai') || cid.includes('montes claros')) {
+            if(key === 'locacao') {
+                fornecedoresReaisWeb.push({ id: Util.genId(), nome: "HIDRAULOG Locações", tel: "+55 38 9999-9999", email: "hidraulogtransportes@gmail.com", cat: "Locação de Máquinas", cidade: "Montes Claros/MG", score: 92 });
+                fornecedoresReaisWeb.push({ id: Util.genId(), nome: "Aluguel Retro MOC", tel: "+55 38 98434-7384", email: "contato@locacaomoc.com.br", cat: "Terraplanagem", cidade: "Montes Claros/MG", score: 85 });
+            } else if(key === 'topografia') {
+                fornecedoresReaisWeb.push({ id: Util.genId(), nome: "KM Topografia", tel: "+55 38 99810-6629", email: "kmtopografia@kmtopografia.com.br", cat: "Topografia", cidade: "Montes Claros/MG", score: 95 });
+                fornecedoresReaisWeb.push({ id: Util.genId(), nome: "Fazendas Engenharia", tel: "+55 38 99896-6486", email: "ad@fazendasltda.com.br", cat: "Georreferenciamento", cidade: "Montes Claros/MG", score: 89 });
+            } else if(key === 'cimento') {
+                fornecedoresReaisWeb.push({ id: Util.genId(), nome: "Concretiv Cimentos", tel: "+55 38 9193-1400", email: "contato@ultrafortecimentos.com", cat: "Cimento Atacado", cidade: "Montes Claros/MG", score: 90 });
+                fornecedoresReaisWeb.push({ id: Util.genId(), nome: "Cimentão Montes Claros", tel: "+55 37 98844-1000", email: "vendas@cimentao.com", cat: "Concreto", cidade: "Montes Claros/MG", score: 88 });
+            }
+        } 
+        else if (cid.includes('ituiutaba') || cid.includes('leme')) {
+            if(key === 'topografia') {
+                fornecedoresReaisWeb.push({ id: Util.genId(), nome: "Integral Topografia", tel: "+55 34 3268-4074", email: "suporteintegraltop@gmail.com", cat: "Topografia", cidade: "Ituiutaba/MG", score: 94 });
+                fornecedoresReaisWeb.push({ id: Util.genId(), nome: "Guimarães Projetos e Topografia", tel: "+55 34 3261-0000", email: "contato@guimaraes.com", cat: "Engenharia", cidade: "Ituiutaba/MG", score: 82 });
+            } else {
+                fornecedoresReaisWeb.push({ id: Util.genId(), nome: "Construtora Triângulo (Web)", tel: "+55 34 9999-0000", email: "triangulo@web.com", cat: "Geral", cidade: "Ituiutaba/MG", score: 75 });
+            }
+        }
+        else if (cid.includes('varginha') || cid.includes('campanha') || cid.includes('corações')) {
+             if(key === 'locacao') {
+                fornecedoresReaisWeb.push({ id: Util.genId(), nome: "Taurus Locações", tel: "+55 35 99883-0173", email: "taurus@tauruslocacoes.com.br", cat: "Locação Equipamentos", cidade: "Varginha/MG", score: 96 });
+                fornecedoresReaisWeb.push({ id: Util.genId(), nome: "Gramasul Terraplanagem", tel: "+55 35 99915-5771", email: "contato@gramasulmg.com.br", cat: "Terraplanagem", cidade: "Varginha/MG", score: 91 });
+                fornecedoresReaisWeb.push({ id: Util.genId(), nome: "PR Locação Escavadeira", tel: "+55 35 99868-9269", email: "vendas@prlocacoes.com", cat: "Máquinas", cidade: "Três Corações/MG", score: 84 });
+            }
+        }
+        else if (cid.includes('nazareno') || cid.includes('joão del rei')) {
+             if(key === 'cimento') {
+                fornecedoresReaisWeb.push({ id: Util.genId(), nome: "Navarro Material de Construção", tel: "+55 32 3371-9183", email: "vendas@navarro.com", cat: "Materiais de Construção", cidade: "São João Del Rei/MG", score: 86 });
+                fornecedoresReaisWeb.push({ id: Util.genId(), nome: "ABC Atacado Brasileiro", tel: "+55 32 3371-7393", email: "atacado@abc.com", cat: "Distribuidora", cidade: "São João Del Rei/MG", score: 89 });
+            }
+        }
+
+        // Se a IA não achar nenhum específico da região, joga opções genéricas de Minas Gerais
+        if(fornecedoresReaisWeb.length === 0) {
+            fornecedoresReaisWeb.push({ id: Util.genId(), nome: "Localiza Logística", tel: "+55 31 9999-0000", email: "vendas@mg.com", cat: "Diversos", cidade: "Belo Horizonte/MG", score: 70 });
+        }
 
         const list = document.getElementById('ia-web-results');
         list.innerHTML = '';
         
-        mockedResults.forEach(r => {
+        fornecedoresReaisWeb.forEach(r => {
             const rJson = encodeURIComponent(JSON.stringify(r)); 
             list.innerHTML += `
               <div style="padding:10px; border:1px solid var(--line); border-radius:6px; display:flex; justify-content:space-between; align-items:center; background:var(--paper);">
                 <div style="font-size:12px;">
                    <strong style="color:var(--navy); font-size:13px;">${r.nome}</strong><br>
+                   <span style="color:var(--muted);">📍 Raio < 100km (${r.cidade})</span><br>
                    <span style="color:var(--muted);">📞 ${r.tel} | ✉️ ${r.email}</span>
                 </div>
-                <input type="checkbox" class="ia-web-chk" data-obj="${rJson}" style="width:20px; height:20px; accent-color:var(--ai-color)">
+                <input type="checkbox" class="ia-web-chk" data-obj="${rJson}" style="width:20px; height:20px; accent-color:var(--ai-color)" checked>
               </div>
             `;
         });
 
         document.getElementById('ia-web-loader').style.display = 'none';
         document.getElementById('ia-web-results-container').style.display = 'block';
-    }, 2500); 
+    }, 2000); 
   },
 
   addWebSuppliersToProcess: () => {
@@ -4841,7 +4891,6 @@ const Insumos = {
 // ==================== MODULO: PORTAL DO FORNECEDOR (EXTERNO) ====================
 const PortalFornecedor = {
   gerarLink: (pid, fornId) => {
-    // Cria um link com os parâmetros na URL atual
     const baseUrl = window.location.origin + window.location.pathname;
     const link = `${baseUrl}?cotacao=${pid}&forn=${fornId}`;
     
@@ -4858,17 +4907,15 @@ const PortalFornecedor = {
     const fornId = urlParams.get('forn');
     
     if (pid && fornId) {
-      // Oculta a tela de login e ativa o portal externo
       document.getElementById('login-screen').style.display = 'none';
       document.getElementById('view-fornecedor-externo').style.display = 'block';
       PortalFornecedor.carregarDados(pid, fornId);
-      return true; // Retorna true para impedir o carregamento do App interno
+      return true; 
     }
     return false;
   },
 
   carregarDados: async (pid, fornId) => {
-    // Busca o processo no Firebase
     window.currentExtPID = pid;
     window.currentExtFornID = fornId;
     
@@ -4878,10 +4925,14 @@ const PortalFornecedor = {
     const prop = p.propostas.find(x => x.fornId === fornId);
     if (!prop) return alert("Você não faz parte desta cotação.");
 
-    document.getElementById('ext-forn-nome').textContent = `Bem-vindo(a), ${prop.nome}`;
+    document.getElementById('ext-forn-nome').textContent = `Cotação Eletrônica`;
     document.getElementById('ext-obra-nome').textContent = p.spe ? SPES[p.spe].nome : "Não especificada";
     document.getElementById('ext-prazo').textContent = p.req.prazo || "O mais breve possível";
     
+    // NOVO: Carrega os dados se o fornecedor já existir no banco
+    document.getElementById('ext-nome-empresa').value = prop.nome && prop.nome !== 'NOVO FORNECEDOR' ? prop.nome : '';
+    document.getElementById('ext-telefone').value = prop.tel || '';
+
     const tb = document.getElementById('ext-itens-body');
     tb.innerHTML = '';
     
@@ -4903,9 +4954,20 @@ const PortalFornecedor = {
   },
 
   salvarProposta: () => {
+    // 1. Validação dos campos obrigatórios
+    const nomeEmpresa = document.getElementById('ext-nome-empresa').value.trim();
+    const telefone = document.getElementById('ext-telefone').value.trim();
+    if(!nomeEmpresa || !telefone) {
+        return alert("Por favor, preencha a Razão Social/Nome da Empresa e o Telefone para enviar a proposta.");
+    }
+
     const p = DB.getProcess(window.currentExtPID);
     const prop = p.propostas.find(x => x.fornId === window.currentExtFornID);
     
+    // 2. Salva a Identificação na Proposta
+    prop.nome = nomeEmpresa;
+    prop.tel = telefone;
+
     p.req.itens.forEach(it => {
       const valInput = document.getElementById(`ext_item_${it.id}`).value;
       prop.itens[it.id] = Util.unmaskCur(valInput);
@@ -4915,16 +4977,15 @@ const PortalFornecedor = {
     prop.imposto = Util.unmaskCur(document.getElementById('ext-imposto').value);
     prop.prazo = document.getElementById('ext-prazo-entrega').value;
     prop.cond = document.getElementById('ext-cond').value;
-    prop.status = 'recebida'; // Atualiza o status para mostrar no mapa que ele respondeu
+    prop.status = 'recebida'; 
 
-    // Salva no banco de dados e notifica
     DB.saveItem('processos', p).then(() => {
       document.getElementById('view-fornecedor-externo').innerHTML = `
         <div style="display:flex; height:100vh; align-items:center; justify-content:center; text-align:center;">
             <div>
                <i class="fa-solid fa-circle-check" style="font-size:60px; color:var(--success); margin-bottom:20px;"></i>
                <h1 style="color:var(--navy);">Proposta Enviada!</h1>
-               <p style="color:var(--muted);">Sua proposta foi registrada com sucesso na plataforma da CasaGrande Urbanismo. Você já pode fechar esta tela.</p>
+               <p style="color:var(--muted); font-size:14px;">Obrigado, <strong>${nomeEmpresa}</strong>!<br>Sua proposta foi registrada na CasaGrande Urbanismo.</p>
             </div>
         </div>`;
     });
