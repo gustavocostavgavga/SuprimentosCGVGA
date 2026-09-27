@@ -727,42 +727,43 @@
           <div id="atd-drag-area" style="display:flex; flex-direction:column; gap:10px;"></div>
       </div>
     </div>
-    
-    <!-- MODAL: IMPORTAR MAPA PARA ATD LIVRE --
-<!-- MODAL: IA BUSCA NA WEB -->
+   
+<!-- MODAL: IA BUSCA NA WEB (REAL) -->
 <div class="modal-overlay" id="modal-ia-web-search">
   <div class="modal" style="max-width:700px;">
     <div class="modal-header">
-      <span>🌐 Busca Ativa de Fornecedores por IA</span>
+      <span>✨ Busca Ativa de Fornecedores via Gemini</span>
       <button class="del-btn" onclick="UI.closeModal('modal-ia-web-search')" style="font-size:24px;">&times;</button>
     </div>
     
     <div style="font-size:12px; color:var(--muted); margin-bottom:16px;">
-      A Inteligência Artificial vai vasculhar a web e bancos de dados públicos por empresas que forneçam o serviço desejado próximo à cidade selecionada.
+      A Inteligência Artificial do Google Gemini fará uma varredura para encontrar fornecedores reais na região solicitada.
     </div>
     
-    <div class="grid cols-2" style="margin-bottom:15px;">
-      <div class="field full">
-        <label>O que você está procurando?</label>
-        <input type="text" id="ia-web-keyword" placeholder="Ex: Locação de Retroescavadeira, Cimento, Topografia...">
-      </div>
-      <div class="field">
+    <div class="grid cols-3" style="margin-bottom:15px;">
+      <div class="field" style="grid-column: span 2;">
         <label>Cidade Foco</label>
         <input type="text" id="ia-web-cidade" placeholder="Ex: Bocaiúva/MG">
       </div>
       <div class="field">
-        <label>&nbsp;</label>
-        <button class="btn btn-ai" style="width:100%; height:38px; padding:0;" onclick="AI.performWebSearch()">Pesquisar na Web</button>
+        <label>DDD</label>
+        <input type="text" id="ia-web-ddd" placeholder="Ex: 38">
+      </div>
+      <div class="field" style="grid-column: span 3;">
+        <label>Palavras-Chave / Escopo (Seja detalhista)</label>
+        <textarea id="ia-web-keyword" rows="2" placeholder="Ex: Locação de retroescavadeira, escavadeira hidráulica, terraplanagem, trator de esteira..."></textarea>
       </div>
     </div>
+    
+    <button class="btn btn-ai" style="width:100%; height:45px; font-size:14px;" onclick="AI.performWebSearch()">Pesquisar na Web com Gemini</button>
 
     <div id="ia-web-loader" style="display:none; text-align:center; padding:20px;">
        <div class="spinner" style="border-color:var(--navy); border-top-color:transparent"></div>
-       <div style="margin-top:10px; font-size:12px; color:var(--navy); font-weight:bold;" id="ia-web-loader-text">Vasculhando a internet...</div>
+       <div style="margin-top:10px; font-size:12px; color:var(--navy); font-weight:bold;" id="ia-web-loader-text">A Gemini está pesquisando...<br><span style="font-size:10px; font-weight:normal;">Isso pode levar de 10 a 20 segundos.</span></div>
     </div>
 
-    <div id="ia-web-results-container" style="display:none;">
-      <h3 style="font-size:11px; margin-bottom:8px; border-bottom:1px solid var(--line); padding-bottom:4px; color:var(--navy);">Fornecedores Encontrados:</h3>
+    <div id="ia-web-results-container" style="display:none; margin-top:20px;">
+      <h3 style="font-size:11px; margin-bottom:8px; border-bottom:1px solid var(--line); padding-bottom:4px; color:var(--navy);">Fornecedores Encontrados pela IA:</h3>
       <div id="ia-web-results" style="max-height:250px; overflow-y:auto; display:flex; flex-direction:column; gap:8px;"></div>
       <button class="btn btn-success" style="width:100%; margin-top:15px;" onclick="AI.addWebSuppliersToProcess()">Salvar Selecionados no Banco e Adicionar à Cotação</button>
     </div>
@@ -1025,6 +1026,7 @@
         <div class="doc-title">2. Mapa de Preços & Equalização<small id="map-subtitle">Processo</small></div>
        <div class="header-actions">
           <button class="btn btn-outline" onclick="editarRequisicao()">← Editar Requisição de Compra</button>
+          <button class="btn btn-outline" style="border-color:var(--ai-color); color:var(--navy);" onclick="App.recarregarMapa()" title="Atualizar respostas">🔄 Atualizar Respostas</button>
           <button class="btn btn-solid" style="background-color: var(--navy-2);" onclick="salvarMapaManual()">💾 Salvar Mapa</button>
           <button class="btn btn-solid" id="btn-ver-oc-header" style="display:none;" onclick="abrirOC(0)">📄 Ver Ordem de Compra</button>
         </div>
@@ -2299,6 +2301,21 @@ const App = {
     if(viewId === 'escopos-lista') Escopo.listar();
     if(viewId === 'escopo') { if(document.getElementById('esc-materiais-body').children.length === 0) Escopo.addMaterial(); }
   },
+
+  recarregarMapa: async () => {
+    document.getElementById('db-loader').style.display = 'flex';
+    document.getElementById('db-loader').style.opacity = '1';
+    document.getElementById('db-loader').children[1].textContent = 'BUSCANDO NOVAS RESPOSTAS...';
+    
+    await DB.init(); // Refaz a leitura do Firebase
+    const p = DB.getProcess(currentPID);
+    MapaPrecos.load(p); // Redesenha a tabela
+    
+    document.getElementById('db-loader').style.opacity = '0';
+    setTimeout(()=> document.getElementById('db-loader').style.display = 'none', 500);
+    UI.toast("✅ Respostas atualizadas!");
+  },
+
   novoProcesso: () => {
     const d = new Date();
     const prefix = `PC-${d.getFullYear()}${String(d.getDate()).padStart(2,'0')}${String(d.getMonth()+1).padStart(2,'0')}-`;
@@ -3628,7 +3645,6 @@ const AI = {
   openWebSearch: () => {
     const speKey = document.getElementById('rcSpe').value;
     if(speKey && SPES[speKey]) {
-       // Puxa a cidade real baseada na obra selecionada
        document.getElementById('ia-web-cidade').value = SPES[speKey].locais[0].split(',')[1].trim(); 
     }
     const cat = document.getElementById('rcCat').value;
@@ -3638,79 +3654,74 @@ const AI = {
     UI.openModal('modal-ia-web-search');
   },
 
-  performWebSearch: () => {
-    let key = document.getElementById('ia-web-keyword').value.toLowerCase();
-    const cid = document.getElementById('ia-web-cidade').value.toLowerCase();
+  performWebSearch: async () => {
+    const keys = document.getElementById('ia-web-keyword').value;
+    const cid = document.getElementById('ia-web-cidade').value;
+    const ddd = document.getElementById('ia-web-ddd').value;
     
-    if(!key || !cid) return alert("Preencha o que está procurando e a cidade foco.");
+    if(!keys || !cid) return alert("Preencha as palavras-chave e a cidade.");
     
     document.getElementById('ia-web-loader').style.display = 'block';
     document.getElementById('ia-web-results-container').style.display = 'none';
-    document.getElementById('ia-web-loader-text').innerHTML = `Buscando Fornecedores Reais...<br><span style="font-weight:normal; font-size:10px;">Raio Máximo: 100km de ${cid.toUpperCase()}</span>`;
     
-    // LÓGICA DE SINÔNIMOS DA INTELIGÊNCIA ARTIFICIAL
-    if(key.includes('topografia') || key.includes('geo') || key.includes('projeto')) {
-        key = 'topografia';
-    } else if(key.includes('terraplanagem') || key.includes('retro') || key.includes('trator') || key.includes('locação')) {
-        key = 'locacao';
-    } else if(key.includes('cimento') || key.includes('concreto') || key.includes('material')) {
-        key = 'cimento';
-    }
+    // ======== COLOQUE A SUA CHAVE DA API AQUI NAS ASPAS ========
+    const apiKey = "AQ.Ab8RN6KRXmHqHUgnlUEYijffZZkzYZtPb0I3-qazNLNCT9BDZw"; 
+    // ===========================================================
+    
+    // Este é o texto (prompt) que enviamos escondido para o Google Gemini
+    const promptIA = `Atue como um analista de suprimentos. Sua tarefa é buscar fornecedores REAIS na web.
+    Critérios de busca:
+    - Cidade/Região: ${cid} (Considere um raio de até 100km)
+    - DDD esperado: ${ddd || 'Não especificado, deduza pela cidade'}
+    - Palavras-chave / Serviços fornecidos: ${keys}
+    
+    Retorne uma lista com 3 a 5 fornecedores reais que atendam a esses critérios. 
+    VOCÊ DEVE RETORNAR APENAS UM ARQUIVO JSON VÁLIDO no formato de array de objetos. Não escreva nenhuma introdução, não use crases de formatação (\`\`\`json). O resultado deve começar com [ e terminar com ].
+    
+    Formato OBRIGATÓRIO:
+    [
+      { "nome": "Nome Real da Empresa", "tel": "Telefone com DDD", "email": "email se encontrar, senão vazio", "cidade": "Cidade da empresa", "cat": "Categoria resumida", "score": 90 }
+    ]`;
 
-    setTimeout(() => {
-        // BANCO DE DADOS DE FORNECEDORES REAIS EXTRAÍDOS DA WEB PARA SUAS OBRAS (Raio < 100km)
-        const fornecedoresReaisWeb = [];
+    try {
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                contents: [{ parts: [{ text: promptIA }] }],
+                generationConfig: { temperature: 0.2 } // Baixa temperatura faz a IA ser mais factual e não inventar nomes
+            })
+        });
+
+        const data = await response.json();
         
-        if (cid.includes('bocai') || cid.includes('montes claros')) {
-            if(key === 'locacao') {
-                fornecedoresReaisWeb.push({ id: Util.genId(), nome: "HIDRAULOG Locações", tel: "+55 38 9999-9999", email: "hidraulogtransportes@gmail.com", cat: "Locação de Máquinas", cidade: "Montes Claros/MG", score: 92 });
-                fornecedoresReaisWeb.push({ id: Util.genId(), nome: "Aluguel Retro MOC", tel: "+55 38 98434-7384", email: "contato@locacaomoc.com.br", cat: "Terraplanagem", cidade: "Montes Claros/MG", score: 85 });
-            } else if(key === 'topografia') {
-                fornecedoresReaisWeb.push({ id: Util.genId(), nome: "KM Topografia", tel: "+55 38 99810-6629", email: "kmtopografia@kmtopografia.com.br", cat: "Topografia", cidade: "Montes Claros/MG", score: 95 });
-                fornecedoresReaisWeb.push({ id: Util.genId(), nome: "Fazendas Engenharia", tel: "+55 38 99896-6486", email: "ad@fazendasltda.com.br", cat: "Georreferenciamento", cidade: "Montes Claros/MG", score: 89 });
-            } else if(key === 'cimento') {
-                fornecedoresReaisWeb.push({ id: Util.genId(), nome: "Concretiv Cimentos", tel: "+55 38 9193-1400", email: "contato@ultrafortecimentos.com", cat: "Cimento Atacado", cidade: "Montes Claros/MG", score: 90 });
-                fornecedoresReaisWeb.push({ id: Util.genId(), nome: "Cimentão Montes Claros", tel: "+55 37 98844-1000", email: "vendas@cimentao.com", cat: "Concreto", cidade: "Montes Claros/MG", score: 88 });
-            }
-        } 
-        else if (cid.includes('ituiutaba') || cid.includes('leme')) {
-            if(key === 'topografia') {
-                fornecedoresReaisWeb.push({ id: Util.genId(), nome: "Integral Topografia", tel: "+55 34 3268-4074", email: "suporteintegraltop@gmail.com", cat: "Topografia", cidade: "Ituiutaba/MG", score: 94 });
-                fornecedoresReaisWeb.push({ id: Util.genId(), nome: "Guimarães Projetos e Topografia", tel: "+55 34 3261-0000", email: "contato@guimaraes.com", cat: "Engenharia", cidade: "Ituiutaba/MG", score: 82 });
-            } else {
-                fornecedoresReaisWeb.push({ id: Util.genId(), nome: "Construtora Triângulo (Web)", tel: "+55 34 9999-0000", email: "triangulo@web.com", cat: "Geral", cidade: "Ituiutaba/MG", score: 75 });
-            }
-        }
-        else if (cid.includes('varginha') || cid.includes('campanha') || cid.includes('corações')) {
-             if(key === 'locacao') {
-                fornecedoresReaisWeb.push({ id: Util.genId(), nome: "Taurus Locações", tel: "+55 35 99883-0173", email: "taurus@tauruslocacoes.com.br", cat: "Locação Equipamentos", cidade: "Varginha/MG", score: 96 });
-                fornecedoresReaisWeb.push({ id: Util.genId(), nome: "Gramasul Terraplanagem", tel: "+55 35 99915-5771", email: "contato@gramasulmg.com.br", cat: "Terraplanagem", cidade: "Varginha/MG", score: 91 });
-                fornecedoresReaisWeb.push({ id: Util.genId(), nome: "PR Locação Escavadeira", tel: "+55 35 99868-9269", email: "vendas@prlocacoes.com", cat: "Máquinas", cidade: "Três Corações/MG", score: 84 });
-            }
-        }
-        else if (cid.includes('nazareno') || cid.includes('joão del rei')) {
-             if(key === 'cimento') {
-                fornecedoresReaisWeb.push({ id: Util.genId(), nome: "Navarro Material de Construção", tel: "+55 32 3371-9183", email: "vendas@navarro.com", cat: "Materiais de Construção", cidade: "São João Del Rei/MG", score: 86 });
-                fornecedoresReaisWeb.push({ id: Util.genId(), nome: "ABC Atacado Brasileiro", tel: "+55 32 3371-7393", email: "atacado@abc.com", cat: "Distribuidora", cidade: "São João Del Rei/MG", score: 89 });
-            }
+        if(data.error) {
+            throw new Error(data.error.message);
         }
 
-        // Se a IA não achar nenhum específico da região, joga opções genéricas de Minas Gerais
-        if(fornecedoresReaisWeb.length === 0) {
-            fornecedoresReaisWeb.push({ id: Util.genId(), nome: "Localiza Logística", tel: "+55 31 9999-0000", email: "vendas@mg.com", cat: "Diversos", cidade: "Belo Horizonte/MG", score: 70 });
-        }
-
+        let textoResposta = data.candidates[0].content.parts[0].text;
+        
+        // Limpeza de segurança caso a IA mande texto indesejado junto com os dados
+        textoResposta = textoResposta.replace(/```json/g, '').replace(/```/g, '').trim();
+        
+        const fornecedoresEncontrados = JSON.parse(textoResposta);
         const list = document.getElementById('ia-web-results');
         list.innerHTML = '';
         
-        fornecedoresReaisWeb.forEach(r => {
+        if(!Array.isArray(fornecedoresEncontrados) || fornecedoresEncontrados.length === 0) {
+            throw new Error("A IA não encontrou empresas ou falhou no formato.");
+        }
+
+        fornecedoresEncontrados.forEach(r => {
+            // Garante que tenha um ID único para cada um
+            r.id = Util.genId();
             const rJson = encodeURIComponent(JSON.stringify(r)); 
             list.innerHTML += `
               <div style="padding:10px; border:1px solid var(--line); border-radius:6px; display:flex; justify-content:space-between; align-items:center; background:var(--paper);">
                 <div style="font-size:12px;">
                    <strong style="color:var(--navy); font-size:13px;">${r.nome}</strong><br>
-                   <span style="color:var(--muted);">📍 Raio < 100km (${r.cidade})</span><br>
-                   <span style="color:var(--muted);">📞 ${r.tel} | ✉️ ${r.email}</span>
+                   <span style="color:var(--muted);">📍 ${r.cidade}</span><br>
+                   <span style="color:var(--muted);">📞 ${r.tel} | ✉️ ${r.email || 'Não divulgado'}</span>
                 </div>
                 <input type="checkbox" class="ia-web-chk" data-obj="${rJson}" style="width:20px; height:20px; accent-color:var(--ai-color)" checked>
               </div>
@@ -3719,7 +3730,12 @@ const AI = {
 
         document.getElementById('ia-web-loader').style.display = 'none';
         document.getElementById('ia-web-results-container').style.display = 'block';
-    }, 2000); 
+
+    } catch (err) {
+        console.error(err);
+        alert("Falha na busca pela Gemini. Verifique sua API Key ou tente detalhar mais as palavras-chave. Erro: " + err.message);
+        document.getElementById('ia-web-loader').style.display = 'none';
+    }
   },
 
   addWebSuppliersToProcess: () => {
@@ -3734,6 +3750,7 @@ const AI = {
     checks.forEach(chk => {
        const fData = JSON.parse(decodeURIComponent(chk.getAttribute('data-obj')));
        
+       // Formata o novo fornecedor para o padrão do Banco de Dados
        const novoForn = {
            id: fData.id,
            nome: fData.nome,
@@ -3746,9 +3763,11 @@ const AI = {
            cnpj: '', contato: '', prazo: '', precoHist: 'Novo (Adicionado via IA Web)', criadoEm: Util.today()
        };
 
+       // Adiciona no Banco de Dados Central
        DB.data.fornecedores.push(novoForn);
        DB.saveItem('fornecedores', novoForn);
 
+       // Adiciona no processo atual (na cotação)
        if(!p.fornecedoresSelecionados.includes(fData.id)) {
            p.fornecedoresSelecionados.push(fData.id);
        }
@@ -3757,7 +3776,7 @@ const AI = {
     DB.saveItem('processos', p);
     UI.closeModal('modal-ia-web-search'); 
     UI.toast(`${checks.length} fornecedores importados e adicionados!`);
-    Req.load(p); 
+    Req.load(p); // Atualiza a tela de requisição para exibir os nomes embaixo
   }
 };
 
