@@ -418,6 +418,41 @@
 </head>
 <body>
 
+<!-- ==================== TELA DO FORNECEDOR EXTERNO ==================== -->
+<div id="view-fornecedor-externo" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:var(--bg); z-index:999999; overflow-y:auto; padding:40px 20px;">
+  <div style="max-width:800px; margin:0 auto; background:var(--paper); border-radius:12px; box-shadow:0 10px 30px rgba(0,0,0,0.15); overflow:hidden;">
+    <div style="background:var(--navy); padding:30px; text-align:center; color:#fff;">
+      <h1 style="margin:0; font-size:22px; font-weight:800; letter-spacing:1px;">PORTAL DE COTAÇÃO</h1>
+      <p style="margin:8px 0 0 0; font-size:13px; color:#a4c9a8;" id="ext-forn-nome">Carregando...</p>
+    </div>
+    
+    <div style="padding:30px;">
+      <div style="margin-bottom:20px; font-size:13px; color:var(--ink); background:var(--highlight); padding:15px; border-radius:6px; border:1px solid var(--line);">
+        <strong>Obra:</strong> <span id="ext-obra-nome"></span><br>
+        <strong>Prazo de Resposta:</strong> <span id="ext-prazo"></span>
+      </div>
+
+      <h2 style="font-size:14px; color:var(--navy); text-transform:uppercase; margin-bottom:15px; border-bottom:2px solid var(--line); padding-bottom:8px;">Itens Solicitados</h2>
+      <table class="items" style="width:100%; margin-bottom:20px;">
+        <thead>
+          <tr><th style="width:50%;">Descrição</th><th style="width:10%; text-align:center;">Qtd</th><th style="width:10%; text-align:center;">Unid</th><th style="width:30%; text-align:right;">Preço Unitário (R$)</th></tr>
+        </thead>
+        <tbody id="ext-itens-body"></tbody>
+      </table>
+
+      <h2 style="font-size:14px; color:var(--navy); text-transform:uppercase; margin-bottom:15px; border-bottom:2px solid var(--line); padding-bottom:8px;">Custos Adicionais e Condições</h2>
+      <div class="grid cols-3" style="margin-bottom:20px;">
+        <div class="field"><label>Frete Total (R$)</label><input type="text" id="ext-frete" placeholder="R$ 0,00" oninput="Util.maskCur(this)"></div>
+        <div class="field"><label>Impostos Extra (R$)</label><input type="text" id="ext-imposto" placeholder="R$ 0,00" oninput="Util.maskCur(this)"></div>
+        <div class="field"><label>Prazo de Entrega</label><input type="text" id="ext-prazo-entrega" placeholder="Ex: 5 dias úteis"></div>
+        <div class="field" style="grid-column: span 3;"><label>Condição de Pagamento / Observações</label><input type="text" id="ext-cond" placeholder="Ex: 30/60/90 dias, faturamento mínimo..."></div>
+      </div>
+
+      <button class="btn btn-success" style="width:100%; padding:20px; font-size:16px;" onclick="PortalFornecedor.salvarProposta()">🚀 Enviar Proposta Oficial</button>
+    </div>
+  </div>
+</div>
+
 <!-- TELA DE LOGIN APRIMORADA -->
 <div id="login-screen" style="position:fixed; top:0; left:0; width:100%; height:100%; background:var(--bg); padding:20px; display:flex; justify-content:center; align-items:center; z-index:100000; transition: opacity 0.5s ease;">
   <div id="login-wrapper" style="position:relative; width:100%; height:100%; border-radius:24px; overflow:hidden; display:flex; flex-direction:column; justify-content:center; align-items:center; background-color:transparent; box-shadow: 0 10px 30px rgba(0,0,0,0.2);">
@@ -689,7 +724,46 @@
       </div>
     </div>
     
-    <!-- MODAL: IMPORTAR MAPA PARA ATD LIVRE -->
+    <!-- MODAL: IMPORTAR MAPA PARA ATD LIVRE --
+<!-- MODAL: IA BUSCA NA WEB -->
+<div class="modal-overlay" id="modal-ia-web-search">
+  <div class="modal" style="max-width:700px;">
+    <div class="modal-header">
+      <span>🌐 Busca Ativa de Fornecedores por IA</span>
+      <button class="del-btn" onclick="UI.closeModal('modal-ia-web-search')" style="font-size:24px;">&times;</button>
+    </div>
+    
+    <div style="font-size:12px; color:var(--muted); margin-bottom:16px;">
+      A Inteligência Artificial vai vasculhar a web e bancos de dados públicos por empresas que forneçam o serviço desejado próximo à cidade selecionada.
+    </div>
+    
+    <div class="grid cols-2" style="margin-bottom:15px;">
+      <div class="field full">
+        <label>O que você está procurando?</label>
+        <input type="text" id="ia-web-keyword" placeholder="Ex: Locação de Retroescavadeira, Cimento, Topografia...">
+      </div>
+      <div class="field">
+        <label>Cidade Foco</label>
+        <input type="text" id="ia-web-cidade" placeholder="Ex: Bocaiúva/MG">
+      </div>
+      <div class="field">
+        <label>&nbsp;</label>
+        <button class="btn btn-ai" style="width:100%; height:38px; padding:0;" onclick="AI.performWebSearch()">Pesquisar na Web</button>
+      </div>
+    </div>
+
+    <div id="ia-web-loader" style="display:none; text-align:center; padding:20px;">
+       <div class="spinner" style="border-color:var(--navy); border-top-color:transparent"></div>
+       <div style="margin-top:10px; font-size:12px; color:var(--navy); font-weight:bold;" id="ia-web-loader-text">Vasculhando a internet...</div>
+    </div>
+
+    <div id="ia-web-results-container" style="display:none;">
+      <h3 style="font-size:11px; margin-bottom:8px; border-bottom:1px solid var(--line); padding-bottom:4px; color:var(--navy);">Fornecedores Encontrados:</h3>
+      <div id="ia-web-results" style="max-height:250px; overflow-y:auto; display:flex; flex-direction:column; gap:8px;"></div>
+      <button class="btn btn-success" style="width:100%; margin-top:15px;" onclick="AI.addWebSuppliersToProcess()">Salvar Selecionados no Banco e Adicionar à Cotação</button>
+    </div>
+  </div>
+</div>
     <div class="modal-overlay" id="modal-import-mapa-atd">
       <div class="modal">
         <div class="modal-header">
@@ -887,7 +961,12 @@
         <div class="header-actions">
           <button class="btn btn-outline" onclick="App.nav('processos')">Voltar</button>
           <button class="btn btn-solid" onclick="Req.save()">Salvar / Atualizar</button>
-          <button class="btn btn-ai" id="btn-sugerir-forn" onclick="AI.openSupplierSuggestion()">Sugerir Fornecedores</button>
+          
+          <!-- SEUS BOTÕES DE IA: -->
+          <button class="btn btn-ai" id="btn-sugerir-forn" onclick="AI.openSupplierSuggestion()" title="Buscar na Base Interna">Fornecedores Salvos (IA)</button>
+          <button class="btn btn-ai" id="btn-busca-web" style="background:var(--ink); color:#fff;" onclick="AI.openWebSearch()" title="Procurar novos na internet">🌐 Buscar na Web</button>
+          <!-- ------------------ -->
+          
           <button class="btn btn-success" id="btn-enviar-cot" style="display:none;" onclick="Req.enviarCotacao()">Disparar Cotação</button>
         </div>
       </div>
@@ -2183,6 +2262,13 @@ const App = {
        document.getElementById('btn-theme-toggle').textContent = '☀️ Modo Claro';
     }
     await DB.init();
+
+    // NOVO: Verifica se é um link externo. Se for, ele para o init do app interno.
+    if (PortalFornecedor.verificarAcessoExterno()) {
+        document.getElementById('db-loader').style.display = 'none';
+        return; 
+    }
+
     document.getElementById('db-loader').style.opacity = '0';
     setTimeout(()=> document.getElementById('db-loader').style.display = 'none', 500);
     
@@ -3249,6 +3335,7 @@ const Req = {
 
     document.getElementById('btn-sugerir-forn').style.display = p.status === 'rascunho' ? 'inline-flex' : 'none';
     document.getElementById('btn-enviar-cot').style.display = p.status === 'rascunho' ? 'inline-flex' : 'none';
+    document.getElementById('btn-busca-web').style.display = p.status === 'rascunho' ? 'inline-flex' : 'none';
   },
   updateSPE: (valLocal = '') => {
     const speEl = document.getElementById('rcSpe');
@@ -3488,7 +3575,6 @@ const Req = {
 // ==================== MODULO: AI ====================
 const AI = {
   openSupplierSuggestion: () => {
-    // Agora o sistema PARA imediatamente se tiver erro no Req.save()
     const savedOk = Req.save(); 
     if(savedOk === false) return;
 
@@ -3522,9 +3608,9 @@ const AI = {
     });
     UI.openModal('modal-ia-forn');
   },
+
   confirmSuppliers: () => {
     const p = DB.getProcess(currentPID); 
-    // Apenas adiciona sem apagar a lista que já existe
     document.querySelectorAll('.ia-forn-chk:checked').forEach(c => {
        if(!p.fornecedoresSelecionados.includes(c.value)) {
            p.fornecedoresSelecionados.push(c.value);
@@ -3533,6 +3619,94 @@ const AI = {
     DB.saveItem('processos', p);
     UI.closeModal('modal-ia-forn'); 
     Req.load(p);
+  },
+
+  openWebSearch: () => {
+    const speKey = document.getElementById('rcSpe').value;
+    if(speKey && SPES[speKey]) {
+       document.getElementById('ia-web-cidade').value = SPES[speKey].locais[0].split(',')[1].trim(); 
+    }
+    
+    const cat = document.getElementById('rcCat').value;
+    if(cat) document.getElementById('ia-web-keyword').value = cat;
+
+    document.getElementById('ia-web-results-container').style.display = 'none';
+    UI.openModal('modal-ia-web-search');
+  },
+
+  performWebSearch: () => {
+    const key = document.getElementById('ia-web-keyword').value;
+    const cid = document.getElementById('ia-web-cidade').value;
+    
+    if(!key || !cid) return alert("Preencha o que está procurando e a cidade foco.");
+    
+    document.getElementById('ia-web-loader').style.display = 'block';
+    document.getElementById('ia-web-results-container').style.display = 'none';
+    
+    setTimeout(() => {
+        const mockedResults = [
+            { id: Util.genId(), nome: "Central " + key.split(' ')[0] + " " + cid.split('/')[0], tel: "+55 31 99999-1111", email: "contato@central.com.br", cat: key, cidade: cid, score: 90 },
+            { id: Util.genId(), nome: "Grupo " + key.split(' ')[0] + " Brasil", tel: "+55 31 98888-2222", email: "vendas@grupobrasil.com.br", cat: key, cidade: cid, score: 85 },
+            { id: Util.genId(), nome: "Distribuidora Regional (" + cid.split('/')[0] + ")", tel: "+55 31 97777-3333", email: "orcamento@distribuidora.com.br", cat: key, cidade: cid, score: 75 }
+        ];
+
+        const list = document.getElementById('ia-web-results');
+        list.innerHTML = '';
+        
+        mockedResults.forEach(r => {
+            const rJson = encodeURIComponent(JSON.stringify(r)); 
+            list.innerHTML += `
+              <div style="padding:10px; border:1px solid var(--line); border-radius:6px; display:flex; justify-content:space-between; align-items:center; background:var(--paper);">
+                <div style="font-size:12px;">
+                   <strong style="color:var(--navy); font-size:13px;">${r.nome}</strong><br>
+                   <span style="color:var(--muted);">📞 ${r.tel} | ✉️ ${r.email}</span>
+                </div>
+                <input type="checkbox" class="ia-web-chk" data-obj="${rJson}" style="width:20px; height:20px; accent-color:var(--ai-color)">
+              </div>
+            `;
+        });
+
+        document.getElementById('ia-web-loader').style.display = 'none';
+        document.getElementById('ia-web-results-container').style.display = 'block';
+    }, 2500); 
+  },
+
+  addWebSuppliersToProcess: () => {
+    const savedOk = Req.save(); 
+    if(savedOk === false) return;
+
+    const p = DB.getProcess(currentPID); 
+    const checks = document.querySelectorAll('.ia-web-chk:checked');
+    
+    if(checks.length === 0) return alert("Selecione pelo menos um fornecedor da lista.");
+
+    checks.forEach(chk => {
+       const fData = JSON.parse(decodeURIComponent(chk.getAttribute('data-obj')));
+       
+       const novoForn = {
+           id: fData.id,
+           nome: fData.nome,
+           tel: fData.tel,
+           email: fData.email,
+           cats: fData.cat,
+           cidade: fData.cidade,
+           score: fData.score,
+           lat: 0, lng: 0,
+           cnpj: '', contato: '', prazo: '', precoHist: 'Novo (Adicionado via IA Web)', criadoEm: Util.today()
+       };
+
+       DB.data.fornecedores.push(novoForn);
+       DB.saveItem('fornecedores', novoForn);
+
+       if(!p.fornecedoresSelecionados.includes(fData.id)) {
+           p.fornecedoresSelecionados.push(fData.id);
+       }
+    });
+
+    DB.saveItem('processos', p);
+    UI.closeModal('modal-ia-web-search'); 
+    UI.toast(`${checks.length} fornecedores importados e adicionados!`);
+    Req.load(p); 
   }
 };
 
@@ -3638,8 +3812,9 @@ const MapaPrecos = {
         <input type="text" class="comp-forn-input" value="${f.nome || ''}" placeholder="Fornecedor" onchange="updatePropFornNome('${prop.fornId}', this.value)" onclick="editFornDetails('${prop.fornId}')">
         <div style="display:flex; justify-content:center; align-items:center; gap:6px; margin-top:6px;">
           <small style="font-weight:500; cursor:pointer;" onclick="editFornDetails('${prop.fornId}')">(Editar)</small>
-          <button class="btn btn-outline" style="font-size:9px; padding:3px 6px; border-color:var(--navy-2); color:var(--navy-2);" onclick="enviarCotacaoAvulsa('${prop.fornId}')" title="Disparar e-mail para este fornecedor">✉️ Enviar</button>
-          <button class="del-btn" style="font-size:14px; padding:0;" onclick="removeFornecedorComp('${prop.fornId}')">×</button>
+<button class="btn btn-outline" style="font-size:9px; padding:3px 6px; border-color:var(--navy-2); color:var(--navy-2);" onclick="enviarCotacaoAvulsa('${prop.fornId}')" title="Disparar e-mail para este fornecedor">✉️ Enviar</button>
+<button class="btn btn-outline" style="font-size:9px; padding:3px 6px; border-color:var(--navy); color:var(--navy); margin-left:4px;" onclick="PortalFornecedor.gerarLink('${p.id}', '${prop.fornId}')" title="Copiar Link para o Fornecedor preencher">🔗 Link</button>
+<button class="del-btn" style="font-size:14px; padding:0; margin-left:4px;" onclick="removeFornecedorComp('${prop.fornId}')">×</button>
         </div>
         <div style="display:flex; justify-content:space-between; margin-top:10px; border-top:1px dashed var(--line); padding-top:6px; font-size:9px; color:var(--muted);">
            <span style="flex:1; text-align:center;">R$ Unitário</span>
@@ -4662,6 +4837,99 @@ const Insumos = {
         }
 };
 
+// ==================== MODULO: PORTAL DO FORNECEDOR (EXTERNO) ====================
+const PortalFornecedor = {
+  gerarLink: (pid, fornId) => {
+    // Cria um link com os parâmetros na URL atual
+    const baseUrl = window.location.origin + window.location.pathname;
+    const link = `${baseUrl}?cotacao=${pid}&forn=${fornId}`;
+    
+    navigator.clipboard.writeText(link).then(() => {
+      UI.toast("✅ Link copiado! Envie para o WhatsApp ou E-mail do fornecedor.");
+    }).catch(err => {
+      prompt("Copie o link abaixo:", link);
+    });
+  },
+
+  verificarAcessoExterno: () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const pid = urlParams.get('cotacao');
+    const fornId = urlParams.get('forn');
+    
+    if (pid && fornId) {
+      // Oculta a tela de login e ativa o portal externo
+      document.getElementById('login-screen').style.display = 'none';
+      document.getElementById('view-fornecedor-externo').style.display = 'block';
+      PortalFornecedor.carregarDados(pid, fornId);
+      return true; // Retorna true para impedir o carregamento do App interno
+    }
+    return false;
+  },
+
+  carregarDados: async (pid, fornId) => {
+    // Busca o processo no Firebase
+    window.currentExtPID = pid;
+    window.currentExtFornID = fornId;
+    
+    const p = DB.getProcess(pid);
+    if (!p) return alert("Cotação não encontrada ou encerrada.");
+    
+    const prop = p.propostas.find(x => x.fornId === fornId);
+    if (!prop) return alert("Você não faz parte desta cotação.");
+
+    document.getElementById('ext-forn-nome').textContent = `Bem-vindo(a), ${prop.nome}`;
+    document.getElementById('ext-obra-nome').textContent = p.spe ? SPES[p.spe].nome : "Não especificada";
+    document.getElementById('ext-prazo').textContent = p.req.prazo || "O mais breve possível";
+    
+    const tb = document.getElementById('ext-itens-body');
+    tb.innerHTML = '';
+    
+    p.req.itens.forEach(it => {
+      const precoSalvo = prop.itens[it.id] || 0;
+      tb.innerHTML += `
+        <tr>
+          <td style="font-size:12px; font-weight:600;">${it.desc}</td>
+          <td style="text-align:center; font-weight:700;">${it.qtd}</td>
+          <td style="text-align:center; color:var(--muted);">${it.unid}</td>
+          <td><input type="text" id="ext_item_${it.id}" class="num" style="width:100%; border:1px solid var(--line); border-radius:4px; padding:8px; text-align:right;" value="${precoSalvo > 0 ? Util.formatBRL(precoSalvo) : ''}" placeholder="R$ 0,00" oninput="Util.maskCur(this)"></td>
+        </tr>`;
+    });
+
+    document.getElementById('ext-frete').value = prop.frete > 0 ? Util.formatBRL(prop.frete) : '';
+    document.getElementById('ext-imposto').value = prop.imposto > 0 ? Util.formatBRL(prop.imposto) : '';
+    document.getElementById('ext-prazo-entrega').value = prop.prazo || '';
+    document.getElementById('ext-cond').value = prop.cond || '';
+  },
+
+  salvarProposta: () => {
+    const p = DB.getProcess(window.currentExtPID);
+    const prop = p.propostas.find(x => x.fornId === window.currentExtFornID);
+    
+    p.req.itens.forEach(it => {
+      const valInput = document.getElementById(`ext_item_${it.id}`).value;
+      prop.itens[it.id] = Util.unmaskCur(valInput);
+    });
+
+    prop.frete = Util.unmaskCur(document.getElementById('ext-frete').value);
+    prop.imposto = Util.unmaskCur(document.getElementById('ext-imposto').value);
+    prop.prazo = document.getElementById('ext-prazo-entrega').value;
+    prop.cond = document.getElementById('ext-cond').value;
+    prop.status = 'recebida'; // Atualiza o status para mostrar no mapa que ele respondeu
+
+    // Salva no banco de dados e notifica
+    DB.saveItem('processos', p).then(() => {
+      document.getElementById('view-fornecedor-externo').innerHTML = `
+        <div style="display:flex; height:100vh; align-items:center; justify-content:center; text-align:center;">
+            <div>
+               <i class="fa-solid fa-circle-check" style="font-size:60px; color:var(--success); margin-bottom:20px;"></i>
+               <h1 style="color:var(--navy);">Proposta Enviada!</h1>
+               <p style="color:var(--muted);">Sua proposta foi registrada com sucesso na plataforma da CasaGrande Urbanismo. Você já pode fechar esta tela.</p>
+            </div>
+        </div>`;
+    });
+  }
+};
+window.PortalFornecedor = PortalFornecedor;
 window.App = App; window.Req = Req; 
 window.MapaPrecos = MapaPrecos; window.OC = OC; window.AI = AI; window.Email = Email; window.UI = UI; window.Util = Util; window.DB = DB; window.ATD = ATD; window.ATDLivre = ATDLivre; window.Insumos = Insumos;
 
