@@ -10,7 +10,7 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Use o método POST.' });
 
   try {
-    const { fornecedores, rcData } = req.body;
+    const { fornecedores, rcData, anexos } = req.body;
 
     const transporter = nodemailer.createTransport({
       host: process.env.IMAP_HOST || 'email-ssl.com.br',
