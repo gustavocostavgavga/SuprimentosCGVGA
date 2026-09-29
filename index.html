@@ -4278,7 +4278,8 @@ const ATDLivre = {
 
   imprimir: () => { 
       const landscapeStyle = document.createElement('style');
-      landscapeStyle.innerHTML = '@media print { @page { size: A4 landscape !important; margin: 10mm; } }';
+      // A mágica: .no-print { display: none !important; } foi adicionado aqui para esconder botões e sliders na foto do PDF.
+      landscapeStyle.innerHTML = '@media print { @page { size: A4 landscape !important; margin: 10mm; } .no-print { display: none !important; } }';
       document.head.appendChild(landscapeStyle);
       
       setTimeout(() => {
@@ -4571,20 +4572,17 @@ const ATDLivre = {
           const img = new Image();
           img.onload = () => {
               const canvas = document.createElement('canvas');
-              // Aumentamos a resolução base para 1600px para não embaçar ao dar o zoom
               const MAX_WIDTH = 1600;
               let width = img.width; let height = img.height;
               if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; }
               canvas.width = width; canvas.height = height;
               const ctx = canvas.getContext('2d');
               ctx.drawImage(img, 0, 0, width, height);
-              // Qualidade aumentada para 85%
               const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
               
               const id = Util.genId();
               const divBorder = input.previousElementSibling;
               
-              // Injeta a Imagem junto com o Slider turbinado (até 250% e com bloqueio de arrasto)
               divBorder.innerHTML = `
                 <div style="position:relative; width:100%; display:flex; flex-direction:column; align-items:center; overflow:hidden;">
                     <div class="no-print" style="margin-bottom:10px; background:var(--highlight); padding:8px 15px; border-radius:6px; border:1px dashed var(--navy-2); display:flex; align-items:center; gap:10px; z-index:10;">
@@ -4596,6 +4594,7 @@ const ATDLivre = {
                        oninput="document.getElementById('img_${id}').style.width = this.value + '%'; document.getElementById('val_${id}').textContent = this.value + '%'; ATDLivre.saveHistory(false);">
                     </div>
                     <img id="img_${id}" src="${dataUrl}" style="width:100%; max-width:none; max-height:none; object-fit:contain; border-radius:6px; display:block; margin: 0 auto; transition: width 0.1s ease;">
+                    <div contenteditable="true" placeholder="Digite uma legenda para esta imagem..." style="margin-top:10px; font-size:12px; color:var(--ink); font-weight:600; text-align:center; width:100%; outline:none; border-bottom:1px dashed transparent;" onfocus="this.style.borderBottom='1px dashed var(--navy)'" onblur="this.style.borderBottom='1px dashed transparent'; this.setAttribute('value', this.innerHTML)"></div>
                 </div>
               `;
               
