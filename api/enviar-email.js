@@ -1,5 +1,17 @@
 import nodemailer from 'nodemailer';
 
+// ===================================================================
+// ESTA É A CONFIGURAÇÃO MÁGICA QUE DESBLOQUEIA O LIMITE DE TAMANHO
+// Aumenta o limite de recebimento da Vercel de 1MB para 10MB
+// ===================================================================
+export const config = {
+  api: {
+    bodyParser: {
+      sizeLimit: '10mb',
+    },
+  },
+};
+
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Credentials', true);
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -10,6 +22,7 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Use o método POST.' });
 
   try {
+    // A variável 'anexos' já está sendo recebida aqui com suporte a múltiplos arquivos
     const { fornecedores, rcData, anexos } = req.body;
 
     const transporter = nodemailer.createTransport({
@@ -22,9 +35,10 @@ export default async function handler(req, res) {
       }
     });
 
+    // Monta a lista de itens formatada em HTML
     const itemsHtml = rcData.itens.map(i => `<li><b>${i.qtd} ${i.unid}</b> - ${i.desc}</li>`).join('');
 
-    // Agora é apenas a MENSAGEM / OBSERVAÇÕES, sem colar os dados do escopo no corpo do e-mail
+    // Prepara a mensagem adicional/escopo (se existir) mantendo as quebras de linha com white-space: pre-wrap
     const mensagemAdicionalHtml = rcData.mensagemAdicional ? `
       <div style="background: #e8f0e9; padding: 15px; border-left: 4px solid #24783d; border-radius: 4px; margin: 20px 0;">
         <strong style="color: #0d3b1f; font-size: 14px;">OBSERVAÇÕES DA COTAÇÃO:</strong>
@@ -68,6 +82,7 @@ export default async function handler(req, res) {
             <p>Atenciosamente,<br><strong>${rcData.respNome}</strong><br>Gestão de Suprimentos</p>
           </div>
         `,
+        // Anexa os múltiplos PDFs convertidos que vieram do navegador
         attachments: anexos && anexos.length > 0 ? anexos.map(anexo => ({
             filename: anexo.filename,
             content: Buffer.from(anexo.content, 'base64')
