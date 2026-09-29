@@ -1915,11 +1915,6 @@
        </select>
        <small style="color:var(--muted); font-size:10px;">Os dados do escopo serão extraídos e listados no corpo do e-mail.</small>
     </div>
-    <div class="field" style="margin-bottom:20px;">
-       <label>Anexar Projetos (PDF, JPG, etc.)</label>
-       <input type="file" id="cot-anexos-upload" multiple accept=".pdf, .jpg, .jpeg, .png, .dwg, .zip" style="padding: 5px; height: auto;">
-       <small style="color:var(--danger); font-size:10px;">Atenção: Para evitar bloqueios do provedor de e-mail (Locaweb/Google), evite ultrapassar 5MB em anexos no total.</small>
-    </div>
     <button class="btn btn-success" style="width:100%; padding:15px;" onclick="Req.confirmarEnvioCotacao()">Confirmar e Enviar E-mails</button>
   </div>
 </div>
@@ -3589,8 +3584,7 @@ const Req = {
         selEscopo.innerHTML += `<option value="${e.id}">${e.numero || 'S/N'} - ${e.obra || 'Obra não informada'}</option>`;
     });
 
-    document.getElementById('cot-anexos-upload').value = '';
-    document.getElementById('cot-msg-adicional').value = 'Escopo completo e projetos em anexo para análise e cotação.';
+    document.getElementById('cot-msg-adicional').value = 'Escopo completo da obra segue em anexo em formato PDF para análise e cotação.';
 
     UI.openModal('modal-envio-cotacao');
   },
@@ -3657,18 +3651,6 @@ const Req = {
                     encoding: 'base64'
                 });
             }
-        }
-
-        // 2. CONVERTER OS PROJETOS/PDFs DO PC EM BASE64
-        const files = document.getElementById('cot-anexos-upload').files;
-        for (let i = 0; i < files.length; i++) {
-            const file = files[i];
-            const base64 = await new Promise(resolve => {
-                const reader = new FileReader();
-                reader.onload = ev => resolve(ev.target.result.split(',')[1]);
-                reader.readAsDataURL(file);
-            });
-            anexosArray.push({ filename: file.name, content: base64, encoding: 'base64' });
         }
 
         loader.children[1].textContent = 'ENVIANDO E-MAILS EM LOTE. ISSO PODE LEVAR ALGUNS SEGUNDOS...';
@@ -5418,8 +5400,7 @@ window.enviarCotacaoAvulsa = (propId) => {
   
   // Prepara o Modal
   document.getElementById('cot-avulsa-propid').value = propId;
-  document.getElementById('cot-anexos-upload').value = '';
-  document.getElementById('cot-msg-adicional').value = 'Segue em anexo o escopo detalhado e os projetos complementares para análise e composição da proposta comercial.';
+  document.getElementById('cot-msg-adicional').value = 'Segue em anexo o PDF com o escopo executivo detalhado da obra para análise e composição da proposta comercial.';
 
   const selEscopo = document.getElementById('cot-escopo-select');
   selEscopo.innerHTML = '<option value="">Nenhum escopo...</option>';
@@ -5494,18 +5475,6 @@ window.confirmarEnvioAvulso = async () => {
                     encoding: 'base64'
                 });
             }
-        }
-
-        // 2. CONVERTER OS PROJETOS/PDFs SELECIONADOS NO PC EM BASE64
-        const files = document.getElementById('cot-anexos-upload').files;
-        for (let i = 0; i < files.length; i++) {
-            const file = files[i];
-            const base64 = await new Promise(resolve => {
-                const reader = new FileReader();
-                reader.onload = ev => resolve(ev.target.result.split(',')[1]);
-                reader.readAsDataURL(file);
-            });
-            anexosArray.push({ filename: file.name, content: base64, encoding: 'base64' });
         }
 
         // 3. ENVIAR PARA A VERCEL DISPARAR
