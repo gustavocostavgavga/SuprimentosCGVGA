@@ -1904,10 +1904,6 @@
       <span>✉️ Disparar Cotação</span>
       <button class="del-btn" onclick="UI.closeModal('modal-envio-cotacao')" style="font-size:24px;">&times;</button>
     </div>
-    <div class="field" style="margin-bottom:15px;">
-       <label>Mensagem Adicional do E-mail</label>
-       <textarea id="cot-msg-adicional" rows="3" style="font-family:'Montserrat'; padding:10px;">Escopo completo e projetos em anexo para análise e cotação.</textarea>
-    </div>
     <button class="btn btn-success" style="width:100%; padding:15px;" onclick="Req.confirmarEnvioCotacao()">Confirmar e Enviar E-mails</button>
   </div>
 </div>
@@ -1923,10 +1919,6 @@
     
     <div style="font-size:12px; color:var(--muted); margin-bottom:15px;">Os itens do mapa de preços serão enviados no corpo do e-mail. Adicione abaixo as informações complementares.</div>
     
-    <div class="field" style="margin-bottom:15px;">
-       <label>Mensagem Adicional no Corpo do E-mail</label>
-       <textarea id="cot-msg-adicional" rows="3" style="font-family:'Montserrat'; padding:10px;"></textarea>
-    </div>
     <div class="field" style="margin-bottom:20px;">
        <label>Anexar Projetos Adicionais (PDF, JPG, DWG, etc.)</label>
        <input type="file" id="cot-anexos-upload" multiple accept=".pdf, .jpg, .jpeg, .png, .dwg, .zip" style="padding: 5px; height: auto;">
@@ -3555,6 +3547,7 @@ const Req = {
       if(f) tb.innerHTML += `<tr><td><strong>${f.nome}</strong></td><td style="color:var(--success); font-weight:800">${f.score}</td><td>${f.precoHist}</td></tr>`;
     });
   },
+
   enviarCotacao: () => {
     const savedOk = Req.save(); 
     if(savedOk === false) return;
@@ -3563,8 +3556,6 @@ const Req = {
     if (p.fornecedoresSelecionados.length === 0) { 
         if(!confirm("Nenhum fornecedor selecionado. Deseja iniciar a cotação assim mesmo?")) return; 
     }
-
-    document.getElementById('cot-msg-adicional').value = 'Escopo completo da obra segue em anexo em formato PDF para análise e cotação.';
 
     UI.openModal('modal-envio-cotacao');
   },
@@ -3586,7 +3577,7 @@ const Req = {
         const respNome = selectResp.options[selectResp.selectedIndex].text;
         const speInfo = p.spe && SPES[p.spe] ? `${SPES[p.spe].nome} (CNPJ: ${SPES[p.spe].cnpj})` : "A confirmar";
         
-        const msgFinal = document.getElementById('cot-msg-adicional').value;
+        const msgFinal = "";
         const anexosArray = [];
 
         loader.children[1].textContent = 'ENVIANDO E-MAILS EM LOTE. ISSO PODE LEVAR ALGUNS SEGUNDOS...';
@@ -5336,8 +5327,7 @@ window.enviarCotacaoAvulsa = (propId) => {
   
   // Prepara o Modal
   document.getElementById('cot-avulsa-propid').value = propId;
-  document.getElementById('cot-msg-adicional').value = 'Segue em anexo o PDF com o escopo executivo detalhado da obra para análise e composição da proposta comercial.';
-
+ 
   UI.openModal('modal-envio-cotacao');
 };
 
@@ -5357,55 +5347,7 @@ window.confirmarEnvioAvulso = async () => {
 
     try {
         const anexosArray = [];
-        const msgFinal = document.getElementById('cot-msg-adicional').value;
-        
-
-        // 1. MÁGICA: GERAR O PDF DO ESCOPO NA MEMÓRIA SE ELE FOI SELECIONADO
-        if (escopoId) {
-            const e = DB.data.escopos.find(x => x.id === escopoId);
-            if (e) {
-                // Cria um conteiner invisível gigante para renderizar a foto perfeita do Escopo
-                const tempDiv = document.createElement('div');
-                tempDiv.style.position = 'absolute'; tempDiv.style.top = '-9999px'; tempDiv.style.left = '-9999px';
-                tempDiv.style.width = '210mm'; tempDiv.style.background = '#fff';
-                tempDiv.innerHTML = `<div style="padding:15px; font-family:'Montserrat', sans-serif;">${e.htmlContent}</div>`;
-                document.body.appendChild(tempDiv);
-
-                // Aplica as transformações idênticas ao "Baixar PDF" para os campos preenchidos aparecerem lisos
-                tempDiv.querySelectorAll('.no-print').forEach(el => el.style.display = 'none');
-                tempDiv.querySelectorAll('.escopo-textarea').forEach(ta => {
-                    const d = document.createElement('div');
-                    d.style.cssText = 'white-space:pre-wrap; word-wrap:break-word; text-align:justify; font-size:12px; color:var(--ink); line-height:1.6;';
-                    d.textContent = ta.value || ta.textContent || ' ';
-                    ta.style.display = 'none'; ta.parentNode.insertBefore(d, ta.nextSibling);
-                });
-                tempDiv.querySelectorAll('.escopo-input').forEach(inp => {
-                    if(inp.tagName === 'DIV') { inp.style.border = 'none'; inp.style.padding = '0'; return; }
-                    const span = document.createElement('span');
-                    span.style.cssText = `font-weight:${inp.style.fontWeight||'normal'}; font-size:${inp.style.fontSize||'12px'}; color:var(--ink); display:inline-block; text-align:${inp.style.textAlign||'left'};`;
-                    if(inp.id === 'esc-registro') { span.textContent = inp.getAttribute('value') || ''; span.style.color = 'var(--navy)'; span.style.fontWeight = '800'; span.style.fontSize = '17px'; }
-                    else if(inp.tagName === 'SELECT') { span.textContent = inp.getAttribute('data-selected') || ''; }
-                    else { span.textContent = inp.getAttribute('value') || ' '; }
-                    inp.style.display = 'none'; inp.parentNode.insertBefore(span, inp.nextSibling);
-                });
-
-                // Tira a foto usando html2pdf
-                const opt = {
-                    margin: [10, 10, 18, 10], filename: 'Escopo_Obras.pdf', image: { type: 'jpeg', quality: 0.98 },
-                    html2canvas: { scale: 2, useCORS: true }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-                };
-                
-                const pdfBase64 = await html2pdf().set(opt).from(tempDiv).outputPdf('datauristring');
-                document.body.removeChild(tempDiv);
-                
-                // Extrai apenas o código criptografado do arquivo para anexar
-                anexosArray.push({
-                    filename: `Escopo_${e.numero || 'Anexo'}_${e.obra || 'Obra'}.pdf`.replace(/ /g, '_'),
-                    content: pdfBase64.split(',')[1],
-                    encoding: 'base64'
-                });
-            }
-        }
+        const msgFinal = "";     
 
         // 3. ENVIAR PARA A VERCEL DISPARAR
         loader.children[1].textContent = 'ENVIANDO E-MAIL. ISSO PODE LEVAR ALGUNS SEGUNDOS...';
