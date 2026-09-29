@@ -70,11 +70,6 @@ export default async function handler(req, res) {
             <p><strong>Local de Entrega:</strong> ${rcData.local}</p>
             <p><strong>Condição de Pagamento Esperada:</strong> ${rcData.cond || 'A combinar'}</p>
             
-            <!-- AVISO DE ATENÇÃO AOS ANEXOS -->
-            <p style="color: #8A2E2E; font-weight: bold; margin-top: 25px; font-size: 14px; border: 1px dashed #8A2E2E; padding: 10px; border-radius: 4px; background: #fff3f3;">
-              ⚠️ IMPORTANTE: Caso existam arquivos em anexo a este e-mail (Projetos ou Escopo Executivo), é OBRIGATÓRIA a leitura e análise do detalhamento técnico antes da formulação da proposta.
-            </p>
-            
             <p style="color: #163b6b; font-weight: bold; margin-top: 20px;">
               Por favor, respondam a este e-mail anexando sua proposta comercial (PDF) ou informando os valores diretamente no corpo do texto.
             </p>
