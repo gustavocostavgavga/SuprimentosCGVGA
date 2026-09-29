@@ -4563,7 +4563,7 @@ const ATDLivre = {
     ATDLivre.saveHistory(true);
   },
 
-  inserirImagemLocal: (event, input) => {
+ inserirImagemLocal: (event, input) => {
       const file = event.target.files[0];
       if(!file) return;
       const reader = new FileReader();
@@ -4571,16 +4571,34 @@ const ATDLivre = {
           const img = new Image();
           img.onload = () => {
               const canvas = document.createElement('canvas');
-              const MAX_WIDTH = 800;
+              // Aumentamos a resolução base para 1600px para não embaçar ao dar o zoom
+              const MAX_WIDTH = 1600;
               let width = img.width; let height = img.height;
               if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; }
               canvas.width = width; canvas.height = height;
               const ctx = canvas.getContext('2d');
               ctx.drawImage(img, 0, 0, width, height);
-              const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+              // Qualidade aumentada para 85%
+              const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
               
+              const id = Util.genId();
               const divBorder = input.previousElementSibling;
-              divBorder.innerHTML = `<img src="${dataUrl}" style="max-width:100%; max-height:400px; object-fit:contain; border-radius:6px; display:block; margin: 0 auto;">`;
+              
+              // Injeta a Imagem junto com o Slider turbinado (até 250% e com bloqueio de arrasto)
+              divBorder.innerHTML = `
+                <div style="position:relative; width:100%; display:flex; flex-direction:column; align-items:center; overflow:hidden;">
+                    <div class="no-print" style="margin-bottom:10px; background:var(--highlight); padding:8px 15px; border-radius:6px; border:1px dashed var(--navy-2); display:flex; align-items:center; gap:10px; z-index:10;">
+                       <span style="font-size:10px; font-weight:800; color:var(--navy);">TAMANHO: <span id="val_${id}">100%</span></span>
+                       <input type="range" min="10" max="250" value="100" style="width:150px; cursor:pointer; accent-color:var(--navy);" 
+                       onmousedown="const b = this.closest('.atd-block'); if(b) b.draggable = false; event.stopPropagation();" 
+                       onmouseup="const b = this.closest('.atd-block'); if(b) b.draggable = true;" 
+                       onmouseleave="const b = this.closest('.atd-block'); if(b) b.draggable = true;" 
+                       oninput="document.getElementById('img_${id}').style.width = this.value + '%'; document.getElementById('val_${id}').textContent = this.value + '%'; ATDLivre.saveHistory(false);">
+                    </div>
+                    <img id="img_${id}" src="${dataUrl}" style="width:100%; max-width:none; max-height:none; object-fit:contain; border-radius:6px; display:block; margin: 0 auto; transition: width 0.1s ease;">
+                </div>
+              `;
+              
               divBorder.style.border = 'none';
               divBorder.style.padding = '0';
               divBorder.onclick = null;
@@ -4647,17 +4665,21 @@ const ATDLivre = {
       const p = DB.getProcess(pid);
       if(!p) return;
 
-      let html = `<div style="width:100%; overflow-x:auto;"><h3 contenteditable="true" style="margin:0 0 10px 0; color:var(--navy); font-size:14px; text-transform:uppercase;">MAPA DE PREÇOS (IMPORTADO DO ${p.id})</h3>`;
-      html += `<table class="items table-comp" style="width:100%; border-collapse:collapse; margin-bottom:15px; background:var(--paper);">`;
+      // REMOVIDO o overflow-x:auto; Agora a div é apenas 100% para caber na página A4 do PDF
+      let html = `<div style="width:100%;"><h3 contenteditable="true" style="margin:0 0 10px 0; color:var(--navy); font-size:14px; text-transform:uppercase;">MAPA DE PREÇOS (IMPORTADO DO ${p.id})</h3>`;
+      
+      // table-layout: auto para o navegador conseguir espremer as colunas livremente
+      html += `<table class="items table-comp" style="width:100%; border-collapse:collapse; margin-bottom:15px; background:var(--paper); table-layout: auto;">`;
 
-      html += `<thead><tr><th style="border:1px solid var(--line); padding:8px; text-align:left; font-size:11px; background:var(--highlight); color:var(--navy); min-width:180px;">Item</th><th style="border:1px solid var(--line); padding:8px; text-align:center; font-size:11px; background:var(--highlight); color:var(--navy);">Qtd</th><th style="border:1px solid var(--line); padding:8px; text-align:center; font-size:11px; background:var(--highlight); color:var(--navy);">Unid</th>`;
+      // Fonte de 11px reduzida para 9px, padding de 8px para 4px. Removido o min-width do Item.
+      html += `<thead><tr><th style="border:1px solid var(--line); padding:4px; text-align:left; font-size:9px; background:var(--highlight); color:var(--navy); width: 25%;">Item</th><th style="border:1px solid var(--line); padding:4px; text-align:center; font-size:9px; background:var(--highlight); color:var(--navy);">Qtd</th><th style="border:1px solid var(--line); padding:4px; text-align:center; font-size:9px; background:var(--highlight); color:var(--navy);">Unid</th>`;
       p.propostas.forEach(prop => {
           const isW = p.vencedorId === prop.fornId;
           const f = DB.data.fornecedores.find(x=>x.id===prop.fornId) || prop;
           const bg = isW ? 'background:var(--highlight); border: 2px solid var(--success); border-bottom: none; color:var(--navy);' : 'border:1px solid var(--line); border-bottom: none; background:var(--highlight); color:var(--navy);';
-          html += `<th colspan="2" style="padding:8px; text-align:center; font-size:11px; ${bg}">
+          html += `<th colspan="2" style="padding:4px; text-align:center; font-size:9px; ${bg}">
             <span style="font-weight:bold">${f.nome || ''}</span>
-            <div style="display:flex; justify-content:space-between; margin-top:6px; border-top:1px dashed var(--line); padding-top:4px; font-size:9px; color:var(--muted); font-weight:normal;">
+            <div style="display:flex; justify-content:space-between; margin-top:4px; border-top:1px dashed var(--line); padding-top:4px; font-size:8px; color:var(--muted); font-weight:normal;">
                <span style="flex:1; text-align:center;">R$ Unitário</span>
                <span style="flex:1; text-align:center; border-left:1px dashed var(--line);">R$ Total</span>
             </div>
@@ -4666,7 +4688,7 @@ const ATDLivre = {
       html += `</tr></thead><tbody>`;
 
       p.req.itens.forEach(i => {
-          html += `<tr><td style="border:1px solid var(--line); padding:8px; text-align:left; font-size:11px; color:var(--ink);">${i.desc}</td><td style="border:1px solid var(--line); padding:8px; text-align:center; font-size:11px; color:var(--ink);">${i.qtd}</td><td style="border:1px solid var(--line); padding:8px; text-align:center; font-size:11px; color:var(--ink);">${i.unid}</td>`;
+          html += `<tr><td style="border:1px solid var(--line); padding:4px; text-align:left; font-size:9px; color:var(--ink);">${i.desc}</td><td style="border:1px solid var(--line); padding:4px; text-align:center; font-size:9px; color:var(--ink);">${i.qtd}</td><td style="border:1px solid var(--line); padding:4px; text-align:center; font-size:9px; color:var(--ink);">${i.unid}</td>`;
 
           let min = Infinity;
           p.propostas.forEach(prop => { const val = prop.itens[i.id] || 0; if (val > 0 && val < min) min = val; });
@@ -4687,24 +4709,25 @@ const ATDLivre = {
               let diffHtml = '';
               if (val > 0 && !isBest && min !== Infinity) {
                   const perc = ((val - min) / min) * 100;
-                  diffHtml = `<br><span style="color:var(--danger); font-size:10px; font-weight:800;">▲ +${perc.toFixed(1)}%</span>`;
+                  diffHtml = `<br><span style="color:var(--danger); font-size:8px; font-weight:800;">▲ +${perc.toFixed(1)}%</span>`;
               }
 
-              html += `<td style="padding:8px; text-align:center; font-size:11px; white-space:nowrap; border-right:none; ${cellBg} ${cellBgLeft} ${bestStyle}">${vs}${diffHtml}</td>`;
-              html += `<td style="padding:8px; text-align:center; font-size:11px; white-space:nowrap; font-weight:700; border-left:none; ${cellBg} ${cellBgRight} ${isBest ? 'background:var(--highlight); color:var(--success);' : 'color:var(--ink);'}">${vsTotal}</td>`;
+              // REMOVIDO white-space:nowrap para permitir a quebra e o ajuste automático de largura
+              html += `<td style="padding:4px; text-align:center; font-size:9px; border-right:none; ${cellBg} ${cellBgLeft} ${bestStyle}">${vs}${diffHtml}</td>`;
+              html += `<td style="padding:4px; text-align:center; font-size:9px; font-weight:700; border-left:none; ${cellBg} ${cellBgRight} ${isBest ? 'background:var(--highlight); color:var(--success);' : 'color:var(--ink);'}">${vsTotal}</td>`;
           });
           html += `</tr>`;
       });
 
-      html += `<tr><td colspan="3" style="border:1px solid var(--line); padding:8px; text-align:right; font-size:11px; color:var(--ink);">Frete R$</td>`;
+      html += `<tr><td colspan="3" style="border:1px solid var(--line); padding:4px; text-align:right; font-size:9px; color:var(--ink);">Frete R$</td>`;
       p.propostas.forEach(prop => {
           const isW = p.vencedorId === prop.fornId;
           const cellBg = isW ? 'background:var(--highlight); border: 2px solid var(--success);' : 'border:1px solid var(--line);';
-          html += `<td colspan="2" style="padding:8px; text-align:center; font-size:11px; color:var(--ink); white-space:nowrap; ${cellBg}">${prop.frete>0?Util.formatBRL(prop.frete):'-'}</td>`;
+          html += `<td colspan="2" style="padding:4px; text-align:center; font-size:9px; color:var(--ink); ${cellBg}">${prop.frete>0?Util.formatBRL(prop.frete):'-'}</td>`;
       });
       html += `</tr></tbody>`;
 
-      html += `<tfoot><tr><td colspan="3" style="border:1px solid var(--line); padding:8px; text-align:right; font-size:12px; font-weight:bold; color:var(--navy);">CUSTO TOTAL POSTO NA OBRA</td>`;
+      html += `<tfoot><tr><td colspan="3" style="border:1px solid var(--line); padding:6px 4px; text-align:right; font-size:10px; font-weight:bold; color:var(--navy);">CUSTO TOTAL POSTO NA OBRA</td>`;
 
       let minTot = Infinity;
       p.propostas.forEach(prop => {
@@ -4723,10 +4746,10 @@ const ATDLivre = {
           let diffHtml = '';
           if (t > 0 && minTot > 0 && t > minTot) {
               const perc = ((t - minTot) / minTot) * 100;
-              diffHtml = `<br><span style="color:var(--danger); font-size:10px; font-weight:800;">▲ +${perc.toFixed(1)}%</span>`;
+              diffHtml = `<br><span style="color:var(--danger); font-size:8px; font-weight:800;">▲ +${perc.toFixed(1)}%</span>`;
           }
 
-          html += `<td colspan="2" style="padding:15px 8px; text-align:center; font-size:13px; font-weight:bold; color:var(--navy); white-space:nowrap; ${cellBg}">${t>0 ? Util.formatBRL(t) : '-'}${diffHtml}</td>`;
+          html += `<td colspan="2" style="padding:6px 4px; text-align:center; font-size:10px; font-weight:bold; color:var(--navy); ${cellBg}">${t>0 ? Util.formatBRL(t) : '-'}${diffHtml}</td>`;
       });
       html += `</tr></tfoot></table></div>`;
 
