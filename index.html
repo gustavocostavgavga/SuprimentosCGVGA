@@ -3557,7 +3557,8 @@ const Req = {
         if(!confirm("Nenhum fornecedor selecionado. Deseja iniciar a cotação assim mesmo?")) return; 
     }
 
-    UI.openModal('modal-envio-cotacao');
+    // Chama o envio direto sem abrir modal
+    Req.confirmarEnvioCotacao();
   },
 
   confirmarEnvioCotacao: async () => {
@@ -3566,30 +3567,25 @@ const Req = {
     
     if (fornecedoresData.length === 0) return UI.toast("Sem fornecedores para enviar.");
 
-    UI.toast("Gerando PDF do Escopo e processando anexos...");
     const loader = document.getElementById('db-loader');
     loader.style.display = 'flex';
     loader.style.opacity = '1';
-    loader.children[1].textContent = 'PROCESSANDO ARQUIVOS. AGUARDE...';
+    loader.children[1].textContent = 'ENVIANDO E-MAILS EM LOTE. AGUARDE...';
     
     try {
         const selectResp = document.getElementById('rcResp');
         const respNome = selectResp.options[selectResp.selectedIndex].text;
         const speInfo = p.spe && SPES[p.spe] ? `${SPES[p.spe].nome} (CNPJ: ${SPES[p.spe].cnpj})` : "A confirmar";
         
-        const msgFinal = "";
-        const anexosArray = [];
-
-        loader.children[1].textContent = 'ENVIANDO E-MAILS EM LOTE. ISSO PODE LEVAR ALGUNS SEGUNDOS...';
-
-        // 3. Montar Lista de E-mails
+        // Monta a Lista de E-mails
         const listaEnvio = fornecedoresData.map(f => ({ nome: f.nome, email: f.email || f.contato }));
         listaEnvio.push({ nome: "Cópia Suprimentos", email: "gustavocosta@casagrandeurbanismo.com.br" }); // SUA CÓPIA
         
+        // Payload super limpo e leve (Garante que não dê erro 413)
         const payload = { 
             fornecedores: listaEnvio, 
-            rcData: { ...p.req, respNome: respNome, speInfo: speInfo, mensagemAdicional: msgFinal },
-            anexos: anexosArray 
+            rcData: { ...p.req, respNome: respNome, speInfo: speInfo, mensagemAdicional: "" },
+            anexos: [] 
         };
 
         const resposta = await fetch('https://suprimentos-cgvga.vercel.app/api/enviar-email', { 
@@ -3605,7 +3601,7 @@ const Req = {
 
     } catch (err) { 
         console.error("Falha ao acionar API:", err);
-        alert("Erro no disparo. Se anexou arquivos pesados, eles podem ter excedido o limite (Erro 413). Detalhe: " + err.message);
+        alert("Erro no disparo: " + err.message);
         loader.style.opacity = '0';
         setTimeout(()=> loader.style.display = 'none', 500);
         return; 
@@ -3614,7 +3610,6 @@ const Req = {
     // Finalização e Atualização do Status
     loader.style.opacity = '0';
     setTimeout(()=> loader.style.display = 'none', 500);
-    UI.closeModal('modal-envio-cotacao');
     
     p.status = 'cotando'; 
     p.propostas = p.fornecedoresSelecionados.map(fid => {
@@ -3622,11 +3617,11 @@ const Req = {
         return { fornId: fid, nome: f ? f.nome : 'Fornecedor', doc: f ? (f.cnpj || f.doc || '') : '', tel: f ? (f.tel || '') : '', email: f ? (f.email || f.contato || '') : '', status: 'pendente', itens: {}, frete: 0, imposto: 0, prazo: f ? (f.prazo || '') : '', cond: '' };
     });
     
-    App.logHistory(p.id, "Cotação disparada com anexos/escopo para " + p.fornecedoresSelecionados.length + " fornecedores.");
+    App.logHistory(p.id, "Cotação disparada para " + p.fornecedoresSelecionados.length + " fornecedores.");
     DB.saveItem('processos', p);
     UI.toast("Cotações iniciadas com sucesso!"); 
     App.nav('processos'); 
-  },
+  }
 };
 
 // ==================== MODULO: AI ====================
@@ -5325,10 +5320,9 @@ window.enviarCotacaoAvulsa = (propId) => {
       return alert('O e-mail digitado não é válido. Preencha o e-mail em "Dados Complementares" antes de enviar.');
   }
   
-  // Prepara o Modal
+  // Salva no input oculto qual é o fornecedor e já dispara direto
   document.getElementById('cot-avulsa-propid').value = propId;
- 
-  UI.openModal('modal-envio-cotacao');
+  window.confirmarEnvioAvulso();
 };
 
 window.confirmarEnvioAvulso = async () => {
@@ -5339,19 +5333,12 @@ window.confirmarEnvioAvulso = async () => {
     const nomeDestino = prop.nome || f.nome || 'Fornecedor';
     const emailDestino = prop.email || f.email || f.contato;
 
-    UI.toast("Gerando PDF do Escopo e processando anexos...");
     const loader = document.getElementById('db-loader');
     loader.style.display = 'flex';
     loader.style.opacity = '1';
-    loader.children[1].textContent = 'PROCESSANDO ARQUIVOS. AGUARDE...';
+    loader.children[1].textContent = 'ENVIANDO E-MAIL. AGUARDE...';
 
     try {
-        const anexosArray = [];
-        const msgFinal = "";     
-
-        // 3. ENVIAR PARA A VERCEL DISPARAR
-        loader.children[1].textContent = 'ENVIANDO E-MAIL. ISSO PODE LEVAR ALGUNS SEGUNDOS...';
-        
         const speInfo = p.spe && SPES[p.spe] ? `${SPES[p.spe].nome} (CNPJ: ${SPES[p.spe].cnpj})` : "A confirmar";
         const selectResp = document.getElementById('rcResp');
         const respNome = selectResp && selectResp.options[selectResp.selectedIndex].value !== "" ? selectResp.options[selectResp.selectedIndex].text : (p.req.resp || "Gestão de Suprimentos");
@@ -5359,10 +5346,11 @@ window.confirmarEnvioAvulso = async () => {
         const listaEnvio = [{ nome: nomeDestino, email: emailDestino }];
         listaEnvio.push({ nome: "Cópia Suprimentos", email: "gustavocosta@casagrandeurbanismo.com.br" }); // SUA CÓPIA FIXA
 
+        // Payload leve
         const payload = { 
             fornecedores: listaEnvio, 
-            rcData: { ...p.req, respNome: respNome, speInfo: speInfo, mensagemAdicional: msgFinal },
-            anexos: anexosArray 
+            rcData: { ...p.req, respNome: respNome, speInfo: speInfo, mensagemAdicional: "" },
+            anexos: [] 
         };
 
         const resposta = await fetch('https://suprimentos-cgvga.vercel.app/api/enviar-email', { 
@@ -5374,17 +5362,16 @@ window.confirmarEnvioAvulso = async () => {
 
         if (!resposta.ok || dados.error || dados.success === false) throw new Error(dados.error || `Status HTTP ${resposta.status}`);
         
-        App.logHistory(p.id, `Cotação avulsa disparada com anexos para: ${nomeDestino}.`);
-        UI.toast("E-mail enviado com sucesso com todos os anexos!");
+        App.logHistory(p.id, `Cotação avulsa disparada para: ${nomeDestino}.`);
+        UI.toast("E-mail enviado com sucesso!");
 
     } catch (err) {
         console.error("Erro no envio:", err);
-        alert("Falha ao enviar e-mail. Se os arquivos forem muito pesados, o limite pode ter estourado. Detalhe: " + err.message);
+        alert("Falha ao enviar e-mail. Detalhe: " + err.message);
     }
     
     loader.style.opacity = '0';
     setTimeout(()=> { loader.style.display = 'none'; loader.children[1].textContent = 'Conectando ao Firebase...'; }, 500);
-    UI.closeModal('modal-envio-cotacao');
 };
 
 window.removeFornecedorComp = (propId) => { if(!confirm('Remover fornecedor do Mapa?')) return; const p = DB.getProcess(currentPID); p.propostas = p.propostas.filter(x => x.fornId !== propId); if(p.vencedorId === propId) p.vencedorId = null; DB.saveItem('processos', p); MapaPrecos.load(p); document.getElementById('comp-form-forn').style.display = 'none'; };
