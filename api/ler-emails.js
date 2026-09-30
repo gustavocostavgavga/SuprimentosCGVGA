@@ -1,6 +1,5 @@
 import imaps from 'imap-simple';
 import { simpleParser } from 'mailparser';
-import pdfParse from 'pdf-parse';
 
 export default async function handler(req, res) {
   // Permissões de segurança
@@ -45,22 +44,18 @@ export default async function handler(req, res) {
       
       // Inicia o texto com o corpo do e-mail
       let textoProposta = "--- CORPO DO E-MAIL ---\n" + (mail.text || '');
+      let pdfBase64 = null; // <- NOVA VARIÁVEL PARA O MODO AVANÇADO
 
-      // Extrai o texto dos anexos (PDF ou texto/csv)
+      // Extrai os anexos
       if (mail.attachments && mail.attachments.length > 0) {
         for (let att of mail.attachments) {
           if (att.contentType === 'application/pdf') {
-            try {
-              const pdfData = await pdfParse(att.content);
-              textoProposta += "\n\n--- TEXTO DO ANEXO (PDF) ---\n" + pdfData.text;
-            } catch (e) {
-              console.error("Erro ao ler PDF:", e);
-            }
+            // Em vez de usar o pdf-parse (que quebra tabelas), convertemos para Base64.
+            // Assim o Google Gemini lá na outra API vai conseguir ler a "imagem" do PDF com 100% de precisão!
+            pdfBase64 = att.content.toString('base64');
           } else if (att.contentType.includes('text/') || att.contentType.includes('csv')) {
             textoProposta += "\n\n--- TEXTO DO ANEXO (" + att.filename + ") ---\n" + att.content.toString('utf-8');
           }
-          // Nota: Planilhas nativas (.xlsx) são enviadas como binário. 
-          // O Gemini consegue deduzir a maioria pelo corpo do e-mail, mas se for crítico no futuro, podemos adicionar a biblioteca 'xlsx'.
         }
       }
 
@@ -68,6 +63,7 @@ export default async function handler(req, res) {
         remetente: mail.from?.text || 'Desconhecido',
         assunto: mail.subject || 'Sem Assunto',
         texto_proposta: textoProposta,
+        pdfBase64: pdfBase64, // <- ENVIANDO O CÓDIGO DO PDF PARA A TELA
         data: mail.date
       });
     }
