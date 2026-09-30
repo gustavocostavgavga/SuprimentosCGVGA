@@ -727,48 +727,7 @@
           <div id="atd-drag-area" style="display:flex; flex-direction:column; gap:10px;"></div>
       </div>
     </div>
-   
-<!-- MODAL: IA BUSCA NA WEB (REAL) -->
-<div class="modal-overlay" id="modal-ia-web-search">
-  <div class="modal" style="max-width:700px;">
-    <div class="modal-header">
-      <span>✨ Busca Ativa de Fornecedores via Gemini</span>
-      <button class="del-btn" onclick="UI.closeModal('modal-ia-web-search')" style="font-size:24px;">&times;</button>
-    </div>
-    
-    <div style="font-size:12px; color:var(--muted); margin-bottom:16px;">
-      A Inteligência Artificial do Google Gemini fará uma varredura para encontrar fornecedores reais na região solicitada.
-    </div>
-    
-    <div class="grid cols-3" style="margin-bottom:15px;">
-      <div class="field" style="grid-column: span 2;">
-        <label>Cidade Foco</label>
-        <input type="text" id="ia-web-cidade" placeholder="Ex: Bocaiúva/MG">
-      </div>
-      <div class="field">
-        <label>DDD</label>
-        <input type="text" id="ia-web-ddd" placeholder="Ex: 38">
-      </div>
-      <div class="field" style="grid-column: span 3;">
-        <label>Palavras-Chave / Escopo (Seja detalhista)</label>
-        <textarea id="ia-web-keyword" rows="2" placeholder="Ex: Locação de retroescavadeira, escavadeira hidráulica, terraplanagem, trator de esteira..."></textarea>
-      </div>
-    </div>
-    
-    <button class="btn btn-ai" style="width:100%; height:45px; font-size:14px;" onclick="AI.performWebSearch()">Pesquisar na Web com Gemini</button>
-
-    <div id="ia-web-loader" style="display:none; text-align:center; padding:20px;">
-       <div class="spinner" style="border-color:var(--navy); border-top-color:transparent"></div>
-       <div style="margin-top:10px; font-size:12px; color:var(--navy); font-weight:bold;" id="ia-web-loader-text">A Gemini está pesquisando...<br><span style="font-size:10px; font-weight:normal;">Isso pode levar de 10 a 20 segundos.</span></div>
-    </div>
-
-    <div id="ia-web-results-container" style="display:none; margin-top:20px;">
-      <h3 style="font-size:11px; margin-bottom:8px; border-bottom:1px solid var(--line); padding-bottom:4px; color:var(--navy);">Fornecedores Encontrados pela IA:</h3>
-      <div id="ia-web-results" style="max-height:250px; overflow-y:auto; display:flex; flex-direction:column; gap:8px;"></div>
-      <button class="btn btn-success" style="width:100%; margin-top:15px;" onclick="AI.addWebSuppliersToProcess()">Salvar Selecionados no Banco e Adicionar à Cotação</button>
-    </div>
-  </div>
-</div>
+ 
     <div class="modal-overlay" id="modal-import-mapa-atd">
       <div class="modal">
         <div class="modal-header">
@@ -968,8 +927,7 @@
           <button class="btn btn-solid" onclick="Req.save()">Salvar / Atualizar</button>
           
           <!-- SEUS BOTÕES DE IA: -->
-          <button class="btn btn-ai" id="btn-sugerir-forn" onclick="AI.openSupplierSuggestion()" title="Buscar na Base Interna">Fornecedores Salvos (IA)</button>
-          <button class="btn btn-ai" id="btn-busca-web" style="background:var(--ink); color:#fff;" onclick="AI.openWebSearch()" title="Procurar novos na internet">🌐 Buscar na Web</button>
+          <button class="btn btn-ai" id="btn-sugerir-forn" onclick="AI.openSupplierSuggestion()" title="Buscar na Base Interna">Sugerir fornecedores</button>
           <!-- ------------------ -->
           
           <button class="btn btn-success" id="btn-enviar-cot" style="display:none;" onclick="Req.enviarCotacao()">Disparar Cotação</button>
@@ -2135,28 +2093,6 @@ const DB = {
          } catch (e) {}
       }
 
-      // 2. RESGATE: Sobe forçado para a Nuvem sem travar a tela
-      const totalLocal = dadosLocais ? ((dadosLocais.escopos?.length || 0) + (dadosLocais.processos?.length || 0) + (dadosLocais.atds_avulsas?.length || 0)) : 0;
-      const totalNuvemNova = DB.data.escopos.length + DB.data.processos.length + DB.data.atds_avulsas.length;
-
-      if (totalLocal > totalNuvemNova) {
-          DB.data.processos = dadosLocais.processos || [];
-          DB.data.fornecedores = dadosLocais.fornecedores || [];
-          DB.data.insumos = dadosLocais.insumos || [];
-          DB.data.escopos = dadosLocais.escopos || [];
-          DB.data.atds_avulsas = dadosLocais.atds_avulsas || [];
-
-          // Envia silenciosamente para o Firebase sem emitir nenhum Pop-up de erro se a internet oscilar
-          DB.data.processos.forEach(p => setDoc(doc(db, 'processos', p.id), p).catch(e=>console.log(e)));
-          DB.data.fornecedores.forEach(f => setDoc(doc(db, 'fornecedores', f.id), f).catch(e=>console.log(e)));
-          DB.data.insumos.forEach(i => setDoc(doc(db, 'insumos', i.id), i).catch(e=>console.log(e)));
-          DB.data.escopos.forEach(e => setDoc(doc(db, 'escopos', e.id), e).catch(e=>console.log(e)));
-          DB.data.atds_avulsas.forEach(a => setDoc(doc(db, 'atds_avulsas', a.id), a).catch(e=>console.log(e)));
-          
-          UI.toast("✅ Dados resgatados e salvos na nuvem!");
-          encontrouDadosNasColecoes = true;
-      }
-
       // 3. Fallback: Arquivo antigo
       if (!encontrouDadosNasColecoes) {
           try {
@@ -2207,7 +2143,12 @@ const DB = {
 
   deleteItem: async (colecao, id) => {
      try { await deleteDoc(doc(db, colecao, id)); } catch(e) {}
-     try { localStorage.setItem('grp_ai_db', JSON.stringify(DB.data)); } catch(e) {}
+     try { 
+         localStorage.setItem('grp_ai_db', JSON.stringify(DB.data)); 
+     } catch(e) {
+         // Se a memória do navegador estiver cheia, limpa o cache para não travar a exclusão!
+         localStorage.removeItem('grp_ai_db'); 
+     }
   },
 
   save: async () => {
@@ -3386,7 +3327,6 @@ const Req = {
 
     document.getElementById('btn-sugerir-forn').style.display = p.status === 'rascunho' ? 'inline-flex' : 'none';
     document.getElementById('btn-enviar-cot').style.display = p.status === 'rascunho' ? 'inline-flex' : 'none';
-    document.getElementById('btn-busca-web').style.display = p.status === 'rascunho' ? 'inline-flex' : 'none';
   },
   updateSPE: (valLocal = '') => {
     const speEl = document.getElementById('rcSpe');
@@ -3671,146 +3611,6 @@ const AI = {
     DB.saveItem('processos', p);
     UI.closeModal('modal-ia-forn'); 
     Req.load(p);
-  },
-
-  openWebSearch: () => {
-    const speKey = document.getElementById('rcSpe').value;
-    if(speKey && SPES[speKey]) {
-       document.getElementById('ia-web-cidade').value = SPES[speKey].locais[0].split(',')[1].trim(); 
-    }
-    const cat = document.getElementById('rcCat').value;
-    if(cat) document.getElementById('ia-web-keyword').value = cat;
-
-    document.getElementById('ia-web-results-container').style.display = 'none';
-    UI.openModal('modal-ia-web-search');
-  },
-
-  performWebSearch: async () => {
-    const keys = document.getElementById('ia-web-keyword').value;
-    const cid = document.getElementById('ia-web-cidade').value;
-    const ddd = document.getElementById('ia-web-ddd').value;
-    
-    if(!keys || !cid) return alert("Preencha as palavras-chave e a cidade.");
-    
-    document.getElementById('ia-web-loader').style.display = 'block';
-    document.getElementById('ia-web-results-container').style.display = 'none';
-    
-    // ======== COLOQUE A SUA CHAVE DA API AQUI NAS ASPAS ========
-    const apiKey = "AQ.Ab8RN6Jyl4zoI_7eL8ml9Cy7PrPcESqUyDHo4tUHDg9lZCM7Fg"; 
-    // ===========================================================
-    
-    // Este é o texto (prompt) que enviamos escondido para o Google Gemini
-    const promptIA = `Atue como um analista de suprimentos. Sua tarefa é buscar fornecedores REAIS na web.
-    Critérios de busca:
-    - Cidade/Região: ${cid} (Considere um raio de até 100km)
-    - DDD esperado: ${ddd || 'Não especificado, deduza pela cidade'}
-    - Palavras-chave / Serviços fornecidos: ${keys}
-    
-    Retorne uma lista com 3 a 5 fornecedores reais que atendam a esses critérios. 
-    VOCÊ DEVE RETORNAR APENAS UM ARQUIVO JSON VÁLIDO no formato de array de objetos. Não escreva nenhuma introdução, não use crases de formatação (\`\`\`json). O resultado deve começar com [ e terminar com ].
-    
-    Formato OBRIGATÓRIO:
-    [
-      { "nome": "Nome Real da Empresa", "tel": "Telefone com DDD", "email": "email se encontrar, senão vazio", "cidade": "Cidade da empresa", "cat": "Categoria resumida", "score": 90 }
-    ]`;
-
-    try {
-        // Nova montagem do link, muito mais segura contra erros de cópia:
-        const urlDaGemini = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=" + apiKey;
-
-        const response = await fetch(urlDaGemini, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                contents: [{ parts: [{ text: promptIA }] }],
-                generationConfig: { temperature: 0.2 } 
-            })
-        });
-
-        const data = await response.json();
-        
-        if(data.error) {
-            throw new Error(data.error.message);
-        }
-
-        let textoResposta = data.candidates[0].content.parts[0].text;
-        
-        // Limpeza de segurança caso a IA mande texto indesejado junto com os dados
-        textoResposta = textoResposta.replace(/```json/g, '').replace(/```/g, '').trim();
-        
-        const fornecedoresEncontrados = JSON.parse(textoResposta);
-        const list = document.getElementById('ia-web-results');
-        list.innerHTML = '';
-        
-        if(!Array.isArray(fornecedoresEncontrados) || fornecedoresEncontrados.length === 0) {
-            throw new Error("A IA não encontrou empresas ou falhou no formato.");
-        }
-
-        fornecedoresEncontrados.forEach(r => {
-            // Garante que tenha um ID único para cada um
-            r.id = Util.genId();
-            const rJson = encodeURIComponent(JSON.stringify(r)); 
-            list.innerHTML += `
-              <div style="padding:10px; border:1px solid var(--line); border-radius:6px; display:flex; justify-content:space-between; align-items:center; background:var(--paper);">
-                <div style="font-size:12px;">
-                   <strong style="color:var(--navy); font-size:13px;">${r.nome}</strong><br>
-                   <span style="color:var(--muted);">📍 ${r.cidade}</span><br>
-                   <span style="color:var(--muted);">📞 ${r.tel} | ✉️ ${r.email || 'Não divulgado'}</span>
-                </div>
-                <input type="checkbox" class="ia-web-chk" data-obj="${rJson}" style="width:20px; height:20px; accent-color:var(--ai-color)" checked>
-              </div>
-            `;
-        });
-
-        document.getElementById('ia-web-loader').style.display = 'none';
-        document.getElementById('ia-web-results-container').style.display = 'block';
-
-    } catch (err) {
-        console.error(err);
-        alert("Falha na busca pela Gemini. Verifique sua API Key ou tente detalhar mais as palavras-chave. Erro: " + err.message);
-        document.getElementById('ia-web-loader').style.display = 'none';
-    }
-  },
-
-  addWebSuppliersToProcess: () => {
-    const savedOk = Req.save(); 
-    if(savedOk === false) return;
-
-    const p = DB.getProcess(currentPID); 
-    const checks = document.querySelectorAll('.ia-web-chk:checked');
-    
-    if(checks.length === 0) return alert("Selecione pelo menos um fornecedor da lista.");
-
-    checks.forEach(chk => {
-       const fData = JSON.parse(decodeURIComponent(chk.getAttribute('data-obj')));
-       
-       // Formata o novo fornecedor para o padrão do Banco de Dados
-       const novoForn = {
-           id: fData.id,
-           nome: fData.nome,
-           tel: fData.tel,
-           email: fData.email,
-           cats: fData.cat,
-           cidade: fData.cidade,
-           score: fData.score,
-           lat: 0, lng: 0,
-           cnpj: '', contato: '', prazo: '', precoHist: 'Novo (Adicionado via IA Web)', criadoEm: Util.today()
-       };
-
-       // Adiciona no Banco de Dados Central
-       DB.data.fornecedores.push(novoForn);
-       DB.saveItem('fornecedores', novoForn);
-
-       // Adiciona no processo atual (na cotação)
-       if(!p.fornecedoresSelecionados.includes(fData.id)) {
-           p.fornecedoresSelecionados.push(fData.id);
-       }
-    });
-
-    DB.saveItem('processos', p);
-    UI.closeModal('modal-ia-web-search'); 
-    UI.toast(`${checks.length} fornecedores importados e adicionados!`);
-    Req.load(p); // Atualiza a tela de requisição para exibir os nomes embaixo
   }
 };
 
@@ -5713,6 +5513,12 @@ const Escopo = {
 
       const idx = DB.data.escopos.findIndex(x => x.id === Escopo.currentId);
       const obj = { id: Escopo.currentId, numero: numero, obra: obra, objeto: objeto, data: dataReg, htmlContent: html };
+      
+      const pesoEstimado = new Blob([JSON.stringify(obj)]).size;
+      if(pesoEstimado > 900000) { // Limite do Firebase é 1.048.576 bytes
+          alert("⚠️ ATENÇÃO: Este escopo está com muitas imagens e excedeu o limite de segurança do banco de dados (1MB). Remova algumas fotos antes de tentar salvar.");
+          return; // Trava o salvamento para não dar erro invisível
+      }
 
       if(idx > -1) DB.data.escopos[idx] = obj;
       else DB.data.escopos.push(obj);
@@ -5883,9 +5689,9 @@ const Escopo = {
          reader.onload = (e) => { 
             const img = new Image();
             img.onload = () => {
-                // Comprime e redimensiona a imagem para não estourar o banco de dados
+                // Aumento agressivo de compressão para evitar bloqueio do Firebase (Limite de 1MB)
                 const canvas = document.createElement('canvas');
-                const MAX_WIDTH = 800;
+                const MAX_WIDTH = 600; // Reduzido de 800 para 600
                 let width = img.width;
                 let height = img.height;
                 if (width > MAX_WIDTH) { 
@@ -5895,8 +5701,8 @@ const Escopo = {
                 canvas.width = width; canvas.height = height;
                 const ctx = canvas.getContext('2d');
                 ctx.drawImage(img, 0, 0, width, height);
-                // Converte para JPEG com 60% de qualidade
-                const dataUrl = canvas.toDataURL('image/jpeg', 0.6);
+                // Converte para JPEG com 45% de qualidade (Reduzido de 0.6 para 0.45)
+                const dataUrl = canvas.toDataURL('image/jpeg', 0.45);
                 
                 const el = document.getElementById(imgId);
                 el.src = dataUrl; 
