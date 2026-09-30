@@ -806,8 +806,8 @@
                     <th>Lat</th>
                     <th>Lng</th>
                     <th class="sortable" onclick="App.sortForn('cidade')" title="Ordenar">Cidade/UF ↕</th>
-                    <th>Avaliação Geral</th>
-                    <th>Histórico</th>
+                    <th style="text-align:center;">Avaliação Geral</th>
+                    <th style="text-align:center;">Histórico</th>
                     <th style="white-space:nowrap; min-width:120px;">Telefone</th>
                     <th>Contato</th>
                     <th style="text-align:right">Ações</th>
@@ -2964,14 +2964,10 @@ const App = {
         document.getElementById('af_cnpj').value = f.cnpj || '';
         document.getElementById('af_email').value = f.email || '';
         document.getElementById('af_cat').value = f.cats || '';
-        document.getElementById('af_score').value = f.score || 0;
-        document.getElementById('af_prazo').value = f.prazo || '';
         document.getElementById('af_tel').value = f.tel || '';
         document.getElementById('af_contato').value = f.contato || '';
         document.getElementById('af_cidade').value = f.cidade || '';
-	document.getElementById('af_obra').value = f.obra || '';
-        document.getElementById('af_lat').value = f.lat || '';
-        document.getElementById('af_lng').value = f.lng || '';
+        document.getElementById('af_obra').value = f.obra || '';
         document.getElementById('af_lat').value = f.lat || '';
         document.getElementById('af_lng').value = f.lng || '';
         UI.openModal('modal-add-forn');
@@ -5150,7 +5146,7 @@ window.imprimirTela = () => {
 window.abrirModalNovoFornecedor = () => {
   document.getElementById('modal-add-forn-title').textContent = "🏢 Cadastrar Novo Fornecedor";
   document.getElementById('af_id').value = '';
-  ['nome','cnpj','email','cat','score','prazo','cidade','obra','lat','lng','tel','contato'].forEach(k => {
+  ['nome','cnpj','email','cat','prazo','cidade','obra','lat','lng','tel','contato'].forEach(k => {
      const el = document.getElementById('af_'+k);
      if(el) el.value = '';
   });
@@ -5162,6 +5158,8 @@ window.salvarNovoFornecedor = () => {
   const isEdit = !!idInput;
   const id = isEdit ? idInput : Util.genId();
 
+  const fExistente = isEdit ? DB.data.fornecedores.find(x => x.id === id) : null;
+
   const f = {
     id: id,
     nome: document.getElementById('af_nome').value || 'Novo Fornecedor',
@@ -5170,13 +5168,14 @@ window.salvarNovoFornecedor = () => {
     contato: document.getElementById('af_contato').value || '',
     tel: document.getElementById('af_tel').value || '',
     cats: document.getElementById('af_cat').value || '',
-    prazo: document.getElementById('af_prazo').value || '',
+    score: fExistente ? (fExistente.score || 0) : 0,
+    avaliacoes: fExistente ? (fExistente.avaliacoes || []) : [],
     cidade: document.getElementById('af_cidade').value || '',
     obra: document.getElementById('af_obra').value || '',
     lat: parseFloat(document.getElementById('af_lat').value) || 0,
     lng: parseFloat(document.getElementById('af_lng').value) || 0,
-    precoHist: isEdit ? (DB.data.fornecedores.find(x => x.id === id)?.precoHist || 'Sem histórico') : 'Sem histórico',
-    criadoEm: isEdit ? (DB.data.fornecedores.find(x => x.id === id)?.criadoEm || Util.today()) : Util.today()
+    precoHist: isEdit ? (fExistente?.precoHist || 'Sem histórico') : 'Sem histórico',
+    criadoEm: isEdit ? (fExistente?.criadoEm || Util.today()) : Util.today()
   };
 
   if (isEdit) {
@@ -5186,7 +5185,7 @@ window.salvarNovoFornecedor = () => {
       DB.data.fornecedores.push(f);
   }
   
-  DB.saveItem('fornecedores', f); // Mudança aqui!
+  DB.saveItem('fornecedores', f);
   UI.closeModal('modal-add-forn');
   UI.toast(isEdit ? 'Fornecedor atualizado!' : 'Fornecedor cadastrado!');
   
