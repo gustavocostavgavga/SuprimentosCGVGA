@@ -1,5 +1,17 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
+// ===================================================================
+// DESBLOQUEIO DE LIMITE DE MEMÓRIA DA VERCEL
+// Necessário para permitir que PDFs pesados cheguem até aqui (padrão é 1MB)
+// ===================================================================
+export const config = {
+  api: {
+    bodyParser: {
+      sizeLimit: '10mb',
+    },
+  },
+};
+
 export default async function handler(req, res) {
   // Configuração de segurança (CORS) para aceitar requisições do seu front-end
   res.setHeader('Access-Control-Allow-Credentials', true);
@@ -16,40 +28,66 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { textoProposta } = req.body;
+    // AGORA RECEBEMOS: O texto do e-mail, o PDF convertido e os itens da cotação
+    const { textoProposta, pdfBase64, itensSolicitados } = req.body;
 
-    if (!textoProposta) {
-      return res.status(400).json({ error: 'Nenhum texto fornecido para análise.' });
+    if (!textoProposta && !pdfBase64) {
+      return res.status(400).json({ error: 'Nenhum dado (texto ou PDF) fornecido para análise.' });
     }
 
-    // Chama o Google Gemini usando a chave secreta que escondemos na Vercel
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
     const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
 
-    // O Prompt Mestre que ensina a IA a agir como compradora
-    const prompt = `
-      Você é um assistente sênior de suprimentos. 
-      Analise o texto abaixo, que é uma proposta comercial/cotação recebida de um fornecedor.
-      Extraia as informações e me devolva ESTRITAMENTE um formato JSON válido, sem nenhuma outra palavra antes ou depois.
+    // O NOVO PROMPT MESTRE (Modo Avançado com Cruzamento Semântico)
+    const promptText = `
+      Você é um analista sênior de suprimentos e orçamento. Sua missão é extrair dados comerciais da proposta fornecida (no PDF em anexo e/ou no texto a seguir).
       
-      Formato esperado (use 0 se não achar o valor):
+      Texto da proposta no corpo do e-mail (caso o PDF não tenha todas as informações): 
+      "${textoProposta || 'Sem texto'}"
+
+      Abaixo está a lista exata de ITENS SOLICITADOS em formato JSON pelo sistema:
+      ${JSON.stringify(itensSolicitados)}
+
+      TAREFA:
+      1. Encontre a Razão Social do fornecedor, CNPJ, Frete Total (R$), Prazo de Entrega e Condição de Pagamento.
+      2. Extraia a tabela de preços.
+      3. MÁGICA DE SINÔNIMOS: O fornecedor quase nunca escreve o nome do insumo idêntico ao nosso sistema. Ex: Solicitamos "Cabo Flex 2,5mm", ele cotou "Fio Cobre 2.5mm BWF". 
+      Você DEVE cruzar semanticamente os itens da proposta com a lista de ITENS SOLICITADOS.
+
+      Você DEVE retornar APENAS um objeto JSON válido, sem crases, sem formatação markdown.
+      Estrutura OBRIGATÓRIA de resposta:
       {
-        "fornecedor": "Nome do fornecedor",
-        "cnpj": "CNPJ se houver",
-        "prazo": "Prazo de entrega (ex: 7 dias)",
-        "condicao": "Condição de pagamento",
+        "fornecedor": "Razao Social",
+        "cnpj": "XX.XXX.XXX/XXXX-XX",
         "frete": 150.00,
-        "imposto": 0.00,
+        "prazo": "10 dias",
+        "condicao": "30/60/90 dias",
+        "imposto": 0,
         "itens": [
-           { "descricao": "Nome do item", "preco_unitario": 12.50 }
+          {
+            "id": "COLOQUE_AQUI_O_ID_DO_ITEM_SOLICITADO_QUE_DEU_MATCH",
+            "descricaoFornecedor": "A descrição exata que o fornecedor usou na cotação",
+            "preco_unitario": 25.50
+          }
         ]
       }
-
-      Texto da Proposta:
-      ${textoProposta}
+      Seja preciso. Se um item solicitado não constar na proposta, não o inclua na resposta.
     `;
 
-    const result = await model.generateContent(prompt);
+    // ARRAY DE DADOS: Combina as instruções com o arquivo PDF (se ele existir)
+    const parts = [{ text: promptText }];
+    
+    if (pdfBase64) {
+        parts.push({
+            inlineData: {
+                data: pdfBase64,
+                mimeType: "application/pdf"
+            }
+        });
+    }
+
+    // Passamos o array "parts" inteiro para o Gemini (Textos + Arquivos)
+    const result = await model.generateContent(parts);
     const response = await result.response;
     let text = response.text();
 
@@ -61,6 +99,6 @@ export default async function handler(req, res) {
 
   } catch (error) {
     console.error("Erro na API da IA:", error);
-    res.status(500).json({ error: 'Erro ao processar a proposta com a Inteligência Artificial.' });
+    res.status(500).json({ error: 'Erro ao processar a proposta com a Inteligência Artificial.', detalhes: error.message });
   }
 }
