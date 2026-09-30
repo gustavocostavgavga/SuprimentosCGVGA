@@ -806,7 +806,7 @@
                     <th>Lat</th>
                     <th>Lng</th>
                     <th class="sortable" onclick="App.sortForn('cidade')" title="Ordenar">Cidade/UF ↕</th>
-                    <th>Score IA</th>
+                    <th>Avaliação Geral</th>
                     <th>Prazo Médio</th>
                     <th style="white-space:nowrap; min-width:120px;">Telefone</th>
                     <th>Contato</th>
@@ -835,7 +835,7 @@
                 <div style="height:250px; position:relative; width:100%; display:flex; justify-content:center;"><canvas id="chartObras"></canvas></div>
              </section>
              <section class="block" style="grid-column: span 2;">
-                <h2>Fornecedores Mais Bem Avaliados (Score IA)</h2>
+                <h2>Fornecedores Mais Bem Avaliados</h2>
                 <div style="height:300px; position:relative; width:100%;"><canvas id="chartAvaliacoes"></canvas></div>
              </section>
              <section class="block">
@@ -971,7 +971,7 @@
       <section class="block" id="req-forn-block" style="display:none; border-color:var(--ai-color);">
         <h2 style="color:var(--ai-color);">Fornecedores Selecionados para Cotação</h2>
         <table class="items">
-          <thead><tr><th>Fornecedor</th><th>Score IA</th><th>Histórico</th></tr></thead>
+          <thead><tr><th>Fornecedor</th><th>Avaliação Geral</th><th>Histórico</th></tr></thead>
           <tbody id="rcFornBody"></tbody>
         </table>
       </section>
@@ -1060,9 +1060,48 @@
               <tbody id="gerar-oc-itens"></tbody>
            </table>
         </div>
+        
+        <!-- NOVO: AVALIAÇÃO DE ESTRELAS -->
+        <div style="margin-bottom: 20px; text-align: center; border-top: 1px dashed var(--line); padding-top: 15px; background: var(--highlight); border-radius: 6px;">
+           <strong style="color:var(--navy); font-size:11px; display:block; margin-bottom:8px; text-transform:uppercase;">Classifique sua experiência com este fornecedor:</strong>
+           <div id="star-rating-container" style="display:flex; justify-content:center; gap:8px; font-size:28px; cursor:pointer; color:var(--line); user-select:none;">
+              <span class="star" onclick="UI.setRating(1)">★</span>
+              <span class="star" onclick="UI.setRating(2)">★</span>
+              <span class="star" onclick="UI.setRating(3)">★</span>
+              <span class="star" onclick="UI.setRating(4)">★</span>
+              <span class="star" onclick="UI.setRating(5)">★</span>
+           </div>
+           <input type="hidden" id="oc-forn-rating" value="0">
+        </div>
+
         <button class="btn btn-success" style="width:100%; padding:15px;" onclick="confirmarGerarOC()">Gerar Ordem de Compra</button>
       </div>
     </div>
+	
+    <!-- MODAL: HISTÓRICO DO FORNECEDOR -->
+<div class="modal-overlay" id="modal-historico-forn">
+  <div class="modal" style="max-width:400px; text-align:center;">
+    <div class="modal-header">
+      <span>📊 Histórico de Fechamentos</span>
+      <button class="del-btn" onclick="UI.closeModal('modal-historico-forn')" style="font-size:24px;">&times;</button>
+    </div>
+    <h3 id="hf-nome" style="color:var(--navy); margin-bottom:15px; font-size:16px;">Fornecedor</h3>
+    <div class="grid cols-2" style="gap:10px; margin-bottom:15px;">
+       <div style="background:var(--bg); padding:15px; border-radius:6px; border:1px solid var(--line);">
+          <div style="font-size:24px; font-weight:800; color:var(--navy);" id="hf-cotacoes">0</div>
+          <div style="font-size:10px; font-weight:700; color:var(--muted); text-transform:uppercase;">Cotações Realizadas</div>
+       </div>
+       <div style="background:var(--highlight); padding:15px; border-radius:6px; border:1px solid var(--navy-2);">
+          <div style="font-size:24px; font-weight:800; color:var(--success);" id="hf-ocs">0</div>
+          <div style="font-size:10px; font-weight:700; color:var(--muted); text-transform:uppercase;">OCs Ganhas (Fechamentos)</div>
+       </div>
+    </div>
+    <div style="background:var(--paper); padding:15px; border-radius:6px; border:1px solid var(--line);">
+       <div style="font-size:10px; font-weight:700; color:var(--muted); text-transform:uppercase; margin-bottom:5px;">Taxa de Conversão</div>
+       <div style="font-size:28px; font-weight:800; color:var(--navy);" id="hf-conversao">0%</div>
+    </div>
+  </div>
+</div>
 
     <!-- ==================== VIEW: ORDEM DE COMPRA ==================== -->
     <div id="view-oc" class="view">
@@ -1898,7 +1937,6 @@
       <div class="field"><label>CNPJ</label><input type="text" id="af_cnpj" placeholder="Apenas números"></div>
       <div class="field"><label>E-mail</label><input type="email" id="af_email" placeholder="contato@empresa.com"></div>
       <div class="field"><label>Categoria Principal</label><input type="text" id="af_cat" placeholder="Ex: Cimento, Elétrica"></div>
-      <div class="field"><label>Score IA</label><input type="number" id="af_score" placeholder="0 a 100" value="50"></div>
       <div class="field"><label>Prazo Médio</label><input type="text" id="af_prazo" placeholder="Ex: 5 dias"></div>
       <div class="field"><label>Telefone</label><input type="text" id="af_tel" placeholder="Telefone"></div>
       <div class="field"><label>Contato</label><input type="text" id="af_contato" placeholder="Nome do contato"></div>
@@ -2048,7 +2086,14 @@ const Util = {
 const UI = {
   toast: (msg) => { const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),3000); },
   openModal: (id) => document.getElementById(id).classList.add('show'),
-  closeModal: (id) => document.getElementById(id).classList.remove('show')
+  closeModal: (id) => document.getElementById(id).classList.remove('show'),
+  setRating: (val) => {
+      document.getElementById('oc-forn-rating').value = val;
+      const stars = document.querySelectorAll('#star-rating-container .star');
+      stars.forEach((s, idx) => {
+          s.style.color = idx < val ? '#F59E0B' : 'var(--line)'; // Laranja para preenchidas
+      });
+  }
 };
 
 // ==================== DATABASE ====================
@@ -2618,6 +2663,19 @@ const App = {
 
     filtered.forEach(f => { 
       const mailDisp = f.email ? f.email : f.contato;
+      
+      // Lógica das Estrelas
+      const media = parseFloat(f.score) || 0;
+      let starsHtml = '';
+      if(f.avaliacoes && f.avaliacoes.length > 0) {
+          for(let i=1; i<=5; i++) {
+             starsHtml += `<span style="color:${i <= Math.round(media) ? '#F59E0B' : 'var(--line)'}; font-size:14px;">★</span>`;
+          }
+          starsHtml = `<div title="Média: ${media.toFixed(1)}">${starsHtml}</div>`;
+      } else {
+          starsHtml = `<span style="color:var(--muted); font-size:10px;">Sem avaliações</span>`;
+      }
+
       tb.innerHTML += `<tr>
         <td><strong>${f.nome}</strong></td>
         <td>${f.email || '-'}</td>
@@ -2625,8 +2683,8 @@ const App = {
         <td>${f.lat || '-'}</td>
         <td>${f.lng || '-'}</td>
         <td>${f.cidade || '-'}</td>
-        <td><span style="color:var(--success); font-weight:800">${f.score || 0}/100</span></td>
-        <td>${f.prazo || '-'}</td>
+        <td style="text-align:center; white-space:nowrap;">${starsHtml}</td>
+        <td style="text-align:center;"><button class="btn btn-outline" style="font-size:9px; padding:4px 8px;" onclick="App.verHistoricoForn('${f.id}')">📊 Ver</button></td>
         <td style="white-space:nowrap;">${f.tel || '-'}</td>
         <td>${f.contato || '-'}</td>
         <td style="text-align:right; white-space:nowrap;">
@@ -2835,7 +2893,7 @@ const App = {
 
       const exportData = filtered.map(f => ({
           'Fornecedor': f.nome, 'E-mail': f.email, 'Categoria': f.cats, 
-          'Cidade/UF': f.cidade, 'Score IA': f.score, 'Prazo': f.prazo, 
+          'Cidade/UF': f.cidade, 'Avaliação Geral': f.score, 'Prazo': f.prazo, 
           'Telefone': f.tel, 'Contato': f.contato
       }));
 
@@ -2868,12 +2926,35 @@ const App = {
       ]);
 
       doc.autoTable({
-          head: [['Fornecedor', 'E-mail', 'Categoria', 'Cidade/UF', 'Score IA', 'Telefone']],
+          head: [['Fornecedor', 'E-mail', 'Categoria', 'Cidade/UF', 'Avaliação Geral', 'Telefone']],
           body: tableData,
           startY: 25,
           styles: { fontSize: 8 }
       });
       doc.save("Relatorio_Fornecedores.pdf");
+  },
+  verHistoricoForn: (fornId) => {
+      const f = DB.data.fornecedores.find(x => x.id === fornId);
+      if(!f) return;
+      
+      let cotacoes = 0;
+      let ocsGanhas = 0;
+      
+      DB.data.processos.forEach(p => {
+          if (p.propostas && p.propostas.find(x => x.fornId === fornId)) {
+              cotacoes++;
+              if (p.ocs && p.ocs.some(oc => oc.fornId === fornId)) ocsGanhas++;
+          }
+      });
+      
+      const tx = cotacoes > 0 ? ((ocsGanhas / cotacoes) * 100).toFixed(1) : 0;
+      
+      document.getElementById('hf-nome').textContent = f.nome || 'Fornecedor';
+      document.getElementById('hf-cotacoes').textContent = cotacoes;
+      document.getElementById('hf-ocs').textContent = ocsGanhas;
+      document.getElementById('hf-conversao').textContent = tx + '%';
+      
+      UI.openModal('modal-historico-forn');
   },
   editForn: (id) => {
     const f = DB.data.fornecedores.find(x => x.id === id);
@@ -5074,7 +5155,6 @@ window.abrirModalNovoFornecedor = () => {
      const el = document.getElementById('af_'+k);
      if(el) el.value = '';
   });
-  document.getElementById('af_score').value = '50';
   UI.openModal('modal-add-forn');
 };
 
@@ -5091,7 +5171,6 @@ window.salvarNovoFornecedor = () => {
     contato: document.getElementById('af_contato').value || '',
     tel: document.getElementById('af_tel').value || '',
     cats: document.getElementById('af_cat').value || '',
-    score: parseInt(document.getElementById('af_score').value) || 0,
     prazo: document.getElementById('af_prazo').value || '',
     cidade: document.getElementById('af_cidade').value || '',
     obra: document.getElementById('af_obra').value || '',
@@ -5334,6 +5413,7 @@ window.salvarMapaManual = () => {
 };
 
 window.selecionarVencedor = (propId) => { 
+    UI.setRating(0);
     currentCompFornId = propId;
     const p = DB.getProcess(currentPID);
     const prop = p.propostas.find(x => x.fornId === propId);
@@ -5394,6 +5474,19 @@ window.confirmarGerarOC = () => {
         if (t > 0) { if (t < minTot) minTot = t; if (t > maxTot) maxTot = t; }
     });
     p.economia = (maxTot > 0 && minTot !== Infinity) ? (maxTot - minTot) : 0;
+
+    // Captura e salva a avaliação em estrelas do fornecedor
+    const nota = parseInt(document.getElementById('oc-forn-rating').value) || 0;
+    if(nota > 0) {
+        const fornecDb = DB.data.fornecedores.find(x => x.id === currentCompFornId);
+        if(fornecDb) {
+            if(!fornecDb.avaliacoes) fornecDb.avaliacoes = [];
+            fornecDb.avaliacoes.push(nota);
+            const soma = fornecDb.avaliacoes.reduce((a,b) => a+b, 0);
+            fornecDb.score = (soma / fornecDb.avaliacoes.length).toFixed(1); // Guarda a média
+            DB.saveItem('fornecedores', fornecDb);
+        }
+    }    
 
     DB.saveItem('processos', p);
     UI.closeModal('modal-gerar-oc');
