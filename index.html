@@ -928,6 +928,7 @@
           
           <!-- SEUS BOTÕES DE IA: -->
           <button class="btn btn-ai" id="btn-sugerir-forn" onclick="AI.openSupplierSuggestion()" title="Buscar na Base Interna">Sugerir fornecedores</button>
+          <button class="btn btn-ai" id="btn-busca-web" style="background:var(--ink); color:#fff;" onclick="AI.openWebSearch()" title="Pesquisar na internet">🌐 Buscar na Web</button>
           <!-- ------------------ -->
           
           <button class="btn btn-success" id="btn-enviar-cot" style="display:none;" onclick="Req.enviarCotacao()">Disparar Cotação</button>
@@ -1809,6 +1810,26 @@
 </div>
 
 <!-- ====== MODALS ====== -->
+<!-- MODAL: BUSCA NO GOOGLE MAPS -->
+<div class="modal-overlay" id="modal-busca-google">
+  <div class="modal" style="max-width:550px;">
+    <div class="modal-header">
+      <span>🌐 Buscar Fornecedores na Web</span>
+      <button class="del-btn" onclick="UI.closeModal('modal-busca-google')" style="font-size:24px;">&times;</button>
+    </div>
+    
+    <div style="font-size:12px; color:var(--muted); margin-bottom:15px; line-height:1.5;">
+      O sistema montou uma sugestão de pesquisa com base na categoria e no local da obra. Você pode apagar, adicionar marcas ou especificar melhor os materiais antes de abrir o Google Maps.
+    </div>
+    
+    <div class="field" style="margin-bottom:20px;">
+       <label>Palavras-chave da Pesquisa:</label>
+       <input type="text" id="google-search-terms" style="font-size:14px; font-weight:700; color:var(--navy); padding:10px; height:auto;">
+    </div>
+    
+    <button class="btn btn-solid" style="width:100%; padding:15px; font-size:14px;" onclick="AI.executeGoogleSearch()">🔍 Pesquisar no Google Maps</button>
+  </div>
+</div>
 
 <!-- MODAL: ATD -->
 <div class="modal-overlay" id="modal-atd">
@@ -3327,6 +3348,7 @@ const Req = {
 
     document.getElementById('btn-sugerir-forn').style.display = p.status === 'rascunho' ? 'inline-flex' : 'none';
     document.getElementById('btn-enviar-cot').style.display = p.status === 'rascunho' ? 'inline-flex' : 'none';
+    document.getElementById('btn-busca-web').style.display = p.status === 'rascunho' ? 'inline-flex' : 'none';
   },
   updateSPE: (valLocal = '') => {
     const speEl = document.getElementById('rcSpe');
@@ -3611,6 +3633,54 @@ const AI = {
     DB.saveItem('processos', p);
     UI.closeModal('modal-ia-forn'); 
     Req.load(p);
+  },
+openWebSearch: () => {
+    // 1. Pega a obra selecionada
+    const speKey = document.getElementById('rcSpe').value;
+    let cidadeInfo = "";
+    if (speKey && SPES[speKey]) {
+       // Extrai inteligentemente a cidade do local da obra
+       const localText = SPES[speKey].locais[0] || '';
+       const partes = localText.split(',');
+       if (partes.length > 1) {
+           cidadeInfo = partes[1].replace('(Após a linha de trem)', '').trim();
+       }
+    }
+    
+    // 2. Pega a categoria da cotação
+    const cat = document.getElementById('rcCat').value || '';
+    
+    // 3. Pega os dois primeiros itens da lista para ajudar na busca
+    const itensDesc = [];
+    document.querySelectorAll('#rcItemsBody tr').forEach((tr, idx) => {
+        if (idx < 2) { 
+            const desc = tr.querySelector('.desc');
+            if(desc && desc.value) itensDesc.push(desc.value.trim().split(' ')[0]); // Pega só a primeira palavra do item
+        }
+    });
+
+    // 4. Monta a frase de sugestão perfeita
+    let sugestao = "Fornecedores de ";
+    if (cat) sugestao += cat + " ";
+    if (itensDesc.length > 0) sugestao += " " + itensDesc.join(", ") + " ";
+    if (cidadeInfo) sugestao += " em " + cidadeInfo;
+
+    // Preenche o modal e abre
+    document.getElementById('google-search-terms').value = sugestao.trim();
+    UI.openModal('modal-busca-google');
+  },
+
+  executeGoogleSearch: () => {
+    const termos = document.getElementById('google-search-terms').value.trim();
+    if (!termos) return alert("Digite algo para pesquisar.");
+    
+    // Cria o link universal do Google Maps com a pesquisa embutida
+    const url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(termos)}`;
+    
+    // Abre a pesquisa em uma nova aba do navegador
+    window.open(url, '_blank');
+    
+    UI.closeModal('modal-busca-google');
   }
 };
 
