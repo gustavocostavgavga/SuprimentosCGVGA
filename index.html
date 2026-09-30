@@ -192,8 +192,8 @@
   .sortable { cursor: pointer; user-select: none; transition: 0.2s; }
   .sortable:hover { background: var(--highlight) !important; color: var(--navy); }
 
-  .totals { display: flex; justify-content: flex-end; margin-top: 16px; padding-top: 14px; border-top: 2px solid var(--navy); }
-  .totals .box { text-align: right; }
+  .totals { display: flex; justify-content: flex-end; margin-top: 16px; padding-top: 16px; border-top: 2px solid var(--navy); }
+  .totals .box { text-align: right; background: var(--highlight); padding: 12px 24px; border-radius: 6px; border: 1px solid var(--navy-2); display: inline-block;}
   .totals .label { font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); font-weight: 700; }
   .totals .value { font-size: 22px; font-weight: 800; color: var(--navy); }
 
@@ -873,9 +873,16 @@
         <div class="doc-title">Banco de Insumos<small>Cadastro automático via Requisições de Compra</small></div>
       </div>
       <section class="block">
-        <div style="display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:16px;">
-           <div style="display:flex; gap:16px;">
-              <div class="field" style="width: 300px;">
+        <div style="display:flex; justify-content:center; align-items:flex-end; margin-bottom:20px; flex-wrap:wrap; gap:16px;">
+           <div class="field" style="flex:1; min-width:250px; max-width:400px;">
+              <label>🔍 Buscar Insumo</label>
+              <input type="text" id="insumo-search" placeholder="Digite para filtrar..." oninput="Insumos.render()">
+           </div>
+           <div class="field" style="flex:1; min-width:200px; max-width:300px;">
+              <label>📂 Filtrar Família (Código)</label>
+              <select id="insumo-code-filter" onchange="Insumos.render()"><option value="">Todas as Famílias</option></select>
+           </div>
+        </div>
                  <label>🔍 Buscar Insumo</label>
                  <input type="text" id="insumo-search" placeholder="Digite para filtrar..." oninput="Insumos.render()">
               </div>
@@ -1876,36 +1883,6 @@
   </div>
 </div>
 
-<!-- MODAL: ENVIAR COTAÇÃO COM ANEXOS -->
-<div class="modal-overlay" id="modal-envio-cotacao">
-  <div class="modal" style="max-width:500px;">
-    <div class="modal-header">
-      <span>✉️ Disparar Cotação</span>
-      <button class="del-btn" onclick="UI.closeModal('modal-envio-cotacao')" style="font-size:24px;">&times;</button>
-    </div>
-    <button class="btn btn-success" style="width:100%; padding:15px;" onclick="Req.confirmarEnvioCotacao()">Confirmar e Enviar E-mails</button>
-  </div>
-</div>
-<!-- MODAL: ENVIAR COTAÇÃO AVULSA COM ANEXOS/ESCOPO -->
-<div class="modal-overlay" id="modal-envio-cotacao">
-  <div class="modal" style="max-width:550px;">
-    <div class="modal-header">
-      <span>✉️ Enviar Cotação para Fornecedor</span>
-      <button class="del-btn" onclick="UI.closeModal('modal-envio-cotacao')" style="font-size:24px;">&times;</button>
-    </div>
-    
-    <input type="hidden" id="cot-avulsa-propid">
-    
-    <div style="font-size:12px; color:var(--muted); margin-bottom:15px;">Os itens do mapa de preços serão enviados no corpo do e-mail. Adicione abaixo as informações complementares.</div>
-    
-    <div class="field" style="margin-bottom:20px;">
-       <label>Anexar Projetos Adicionais (PDF, JPG, DWG, etc.)</label>
-       <input type="file" id="cot-anexos-upload" multiple accept=".pdf, .jpg, .jpeg, .png, .dwg, .zip" style="padding: 5px; height: auto;">
-       <small style="color:var(--danger); font-size:10px;">Para evitar bloqueios do provedor de e-mail (Locaweb/Google), evite ultrapassar 10MB no total.</small>
-    </div>
-    <button class="btn btn-success" style="width:100%; padding:15px;" onclick="window.confirmarEnvioAvulso()">Confirmar e Disparar E-mail</button>
-  </div>
-</div>
 <div class="modal-overlay" id="modal-ia-forn">
   <div class="modal">
     <div class="modal-header">
@@ -2970,13 +2947,23 @@ const App = {
       cont.innerHTML = '';
 
       if (data.emails && data.emails.length > 0) {
-        data.emails.forEach((mail) => {
+        // Salvamos os e-mails na janela para não quebrar o HTML com textos gigantes de PDF em Base64
+        window.currentInboxEmails = data.emails; 
+        
+        data.emails.forEach((mail, index) => {
+          // Identifica visualmente se o e-mail tem PDF
+          const temAnexo = mail.pdfBase64 ? '<span style="color:var(--danger); font-size:10px; font-weight:bold; margin-left:8px;">📎 PDF Anexado</span>' : '';
+          
           cont.innerHTML += `<div class="email-item" style="border-left:3px solid var(--ai-color)">
-            <div class="em-info"><span class="em-sender">${mail.remetente}</span><span class="em-subject">${mail.assunto}</span></div>
-            <div><button class="btn btn-ai" onclick="Email.readAI(null, null, \`${encodeURIComponent(mail.texto_proposta)}\`)">Extrair com Gemini</button></div>
+            <div class="em-info">
+                <span class="em-sender">${mail.remetente}</span>
+                <span class="em-subject">${mail.assunto} ${temAnexo}</span>
+            </div>
+            <div><button class="btn btn-ai" onclick="Email.readAI(${index})">Extrair com Gemini</button></div>
           </div>`;
         });
       } else {
+        // ... (Mantenha o seu código de else original aqui que exibe os status "recebida" ou "pendente")
         p.propostas.forEach(prop => {
           const f = DB.data.fornecedores.find(x => x.id === prop.fornId);
           if(prop.status === 'pendente') {
@@ -2993,7 +2980,7 @@ const App = {
     } catch (err) {
       cont.innerHTML = `<div style="padding:20px; text-align:center; color:var(--danger); font-size:12px;">Erro ao acessar Locaweb.</div>`;
     }
-  }
+  },
 };
 
 // ==================== MODULO: ATD ====================
@@ -3686,20 +3673,30 @@ openWebSearch: () => {
 
 // ==================== MODULO: EMAIL & GEMINI EXTRACTION ====================
 const Email = {
-  readAI: async (pid, fornId, urlEncodedText = null) => {
+  readAI: async (emailIndex) => {
     UI.openModal('modal-ia-email');
     const tb = document.getElementById('ia-email-data');
-    document.getElementById('ia-email-status').innerHTML = `<div class="spinner" style="border-color:var(--navy); border-top-color:transparent"></div> Enviando para o Google Gemini...`;
+    document.getElementById('ia-email-status').innerHTML = `<div class="spinner" style="border-color:var(--navy); border-top-color:transparent"></div> IA lendo PDF e cruzando sinônimos...`;
     tb.innerHTML = '';
     document.getElementById('ia-email-actions').style.display = 'none';
 
     try {
-      const textoReal = urlEncodedText ? decodeURIComponent(urlEncodedText) : "Proposta Simulação Gemini...";
+      const mailInfo = window.currentInboxEmails[emailIndex];
+      const p = DB.getProcess(currentPID);
       
-      const res = await fetch('/api/analisar-proposta', {
+      // MÁGICA 1: Prepara a lista de itens exata que estamos comprando para a IA comparar
+      const itensSolicitados = p.req.itens.map(i => ({ id: i.id, descricao: i.desc, quantidade: i.qtd, unidade: i.unid }));
+
+      const payloadIA = { 
+          textoProposta: mailInfo.texto_proposta || "Proposta em anexo.",
+          pdfBase64: mailInfo.pdfBase64 || null, // O backend da Locaweb terá que mandar isso
+          itensSolicitados: itensSolicitados
+      };
+      
+      const res = await fetch('https://suprimentos-cgvga.vercel.app/api/analisar-proposta', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ textoProposta: textoReal })
+        body: JSON.stringify(payloadIA)
       });
 
       const data = await res.json();
@@ -3707,17 +3704,24 @@ const Email = {
 
       currentEmailParsing = { pid: currentPID, parsed: data };
 
-      document.getElementById('ia-email-status').innerHTML = `<strong style="color:var(--success)">Extração Concluída com Sucesso!</strong>`;
+      document.getElementById('ia-email-status').innerHTML = `<strong style="color:var(--success)">Extração Inteligente Concluída!</strong>`;
+      
       tb.innerHTML = `
-        <tr><td><strong>Fornecedor Detectado</strong></td><td>${data.fornecedor || 'Desconhecido'}</td></tr>
+        <tr><td><strong>Fornecedor</strong></td><td>${data.fornecedor || 'Desconhecido'}</td></tr>
         <tr><td><strong>CNPJ</strong></td><td>${data.cnpj || '-'}</td></tr>
-        <tr><td><strong>Prazo</strong></td><td>${data.prazo || '-'}</td></tr>
-        <tr><td><strong>Condição</strong></td><td>${data.condicao || '-'}</td></tr>
-        <tr><td><strong>Frete Estimado</strong></td><td>${Util.formatBRL(data.frete)}</td></tr>
+        <tr><td><strong>Frete / Prazo</strong></td><td>${Util.formatBRL(data.frete)} / ${data.prazo || '-'}</td></tr>
       `;
+      
       if(data.itens) {
         data.itens.forEach(pi => {
-          tb.innerHTML += `<tr><td style="font-size:11px">${pi.descricao}</td><td style="font-weight:700">${Util.formatBRL(pi.preco_unitario)}</td></tr>`;
+          // A IA agora devolve a descrição original do fornecedor e o ID que ela cruzou!
+          tb.innerHTML += `<tr>
+             <td style="font-size:11px">
+                <span style="color:var(--navy); font-weight:bold;">Identificado:</span> ${pi.descricaoFornecedor}<br>
+                <span style="color:var(--success); font-size:9px;">⮑ Cruzado com nosso item com sucesso</span>
+             </td>
+             <td style="font-weight:800; vertical-align:middle;">${Util.formatBRL(pi.preco_unitario)}</td>
+          </tr>`;
         });
       }
 
@@ -5225,36 +5229,28 @@ window.salvarFornDoMapaNoBanco = () => {
   // Atualiza a tabela do mapa de preços imediatamente para mostrar o novo nome digitado
   MapaPrecos.load(p); 
 };
-window.enviarCotacaoAvulsa = (propId) => {
-  const p = DB.getProcess(currentPID);
-  const prop = p.propostas.find(x => x.fornId === propId);
-  const f = DB.data.fornecedores.find(x => x.id === propId);
-  
-  if (currentCompFornId === propId) {
-      prop.nome = document.getElementById('cfNome').value || prop.nome;
-      prop.email = document.getElementById('cfEmail').value || prop.email;
-      if (f) { f.nome = prop.nome; f.email = prop.email; DB.saveItem('fornecedores', f); }
-      DB.saveItem('processos', p); 
-  }
-  
-  const emailDestino = prop.email || (f ? f.email : '') || (f ? f.contato : '');
-  if (!emailDestino || !emailDestino.includes('@')) {
-      return alert('O e-mail digitado não é válido. Preencha o e-mail em "Dados Complementares" antes de enviar.');
-  }
-  
-  // Salva no input oculto qual é o fornecedor e já dispara direto
-  document.getElementById('cot-avulsa-propid').value = propId;
-  window.confirmarEnvioAvulso();
-};
 
-window.confirmarEnvioAvulso = async () => {
-    const propId = document.getElementById('cot-avulsa-propid').value;
+window.enviarCotacaoAvulsa = async (propId) => {
     const p = DB.getProcess(currentPID);
     const prop = p.propostas.find(x => x.fornId === propId);
     const f = DB.data.fornecedores.find(x => x.id === propId) || prop;
+    
+    // Salva as alterações feitas nos inputs antes de enviar
+    if (currentCompFornId === propId) {
+        prop.nome = document.getElementById('cfNome').value || prop.nome;
+        prop.email = document.getElementById('cfEmail').value || prop.email;
+        if (f) { f.nome = prop.nome; f.email = prop.email; DB.saveItem('fornecedores', f); }
+        DB.saveItem('processos', p); 
+    }
+    
+    const emailDestino = prop.email || (f ? f.email : '') || (f ? f.contato : '');
+    if (!emailDestino || !emailDestino.includes('@')) {
+        return alert('O e-mail digitado não é válido. Preencha o e-mail em "Dados Complementares" antes de enviar.');
+    }
+    
     const nomeDestino = prop.nome || f.nome || 'Fornecedor';
-    const emailDestino = prop.email || f.email || f.contato;
 
+    // Chama o Loader imediatamente
     const loader = document.getElementById('db-loader');
     loader.style.display = 'flex';
     loader.style.opacity = '1';
@@ -5268,7 +5264,7 @@ window.confirmarEnvioAvulso = async () => {
         const listaEnvio = [{ nome: nomeDestino, email: emailDestino }];
         listaEnvio.push({ nome: "Cópia Suprimentos", email: "gustavocosta@casagrandeurbanismo.com.br" }); // SUA CÓPIA FIXA
 
-        // Payload leve
+        // Payload leve e sem anexos avulsos
         const payload = { 
             fornecedores: listaEnvio, 
             rcData: { ...p.req, respNome: respNome, speInfo: speInfo, mensagemAdicional: "" },
