@@ -549,6 +549,7 @@
       <button class="nav-btn" onclick="App.nav('politica')">Política de Fornecedores</button>
       <button class="nav-btn" onclick="App.nav('manual')">Manual de Compras</button>
       <button class="nav-btn" onclick="App.nav('escopos-lista')">Escopo de Obras</button>
+      <button class="nav-btn" onclick="App.nav('relatorios-lista')">Relatório Mensal</button>
 
       <div class="nav-label" style="margin-top:24px;">Ações Globais</div>
       
@@ -620,7 +621,7 @@
 <!-- QUADRO DE CONTROLE DE CONTRATOS E OCS -->
       <section class="block">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; padding-bottom:10px; border-bottom:1px solid var(--line);">
-           <h2 style="margin:0; border:none; padding:0; font-size:14px; font-weight:800; color:var(--navy); text-transform:uppercase;">Quadro de Controle de Contratos e OCs Emitidas</h2>
+           <h2 style="margin:0; border:none; padding:0; font-size:14px; font-weight:800; color:var(--navy); text-transform:uppercase;">Quadro de Controle de OC's Emitidas</h2>
            <div style="display:flex; gap:10px;">
                <!-- FILTRO DE OBRA -->
                <select id="dash-filtro-obra" style="padding:6px 12px; border-radius:4px; border:1px solid var(--line); font-family:'Montserrat', sans-serif; font-weight:700; color:var(--navy); font-size:12px; background:var(--paper); cursor:pointer;" onchange="App.renderDashContratos()">
@@ -1902,6 +1903,81 @@
       </div>
     </div>
 
+<!-- ==================== VIEW: LISTA DE RELATÓRIOS ==================== -->
+    <div id="view-relatorios-lista" class="view">
+      <div class="doc-head">
+        <div class="doc-title">Relatórios de Obra<small>Acompanhamento Mensal e Evolutivo</small></div>
+        <div class="header-actions">
+           <button class="btn btn-solid" onclick="Relatorio.abrirNovo()">+ Criar Novo Relatório</button>
+        </div>
+      </div>
+      <section class="block">
+        <div class="table-wrapper">
+          <table class="items">
+            <thead>
+              <tr>
+                <th style="width:15%; text-align:center;">Data Criação</th>
+                <th style="width:25%; text-align:center;">Obra</th>
+                <th style="width:40%">Período de Referência</th>
+                <th style="width:20%; text-align:center;">Ações</th>
+              </tr>
+            </thead>
+            <tbody id="lista-relatorios-body"></tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+
+    <!-- ==================== VIEW: CONSTRUTOR DE RELATÓRIO ==================== -->
+    <div id="view-relatorio" class="view">
+      <div class="doc-head">
+        <div class="doc-title">Construtor de Relatórios<small>Apresentação Mensal de Obras</small></div>
+        <div class="header-actions">
+           <button class="btn btn-outline" onclick="App.nav('relatorios-lista')">← Voltar à Lista</button>
+           <button class="btn btn-success" onclick="Relatorio.salvar()">💾 Salvar Relatório</button>
+           <button class="btn btn-outline" onclick="Relatorio.imprimir()">🖨️ Imprimir PDF</button>
+        </div>
+      </div>
+
+      <!-- Barra de Ferramentas -->
+      <div class="atd-builder-toolbar">
+         <strong style="color:var(--navy); font-size:12px; margin-right:10px;">Inserir:</strong>
+         <button class="btn btn-outline" style="border-style:dashed;" onclick="Relatorio.addSubtitulo()">T Subtítulo Elegante</button>
+         <button class="btn btn-outline" style="border-style:dashed;" onclick="Relatorio.addTexto()">📝 Bloco de Texto Rico</button>
+         <button class="btn btn-outline" style="border-style:dashed;" onclick="Relatorio.addImagem()">🖼 Foto com Legenda</button>
+      </div>
+
+      <!-- Folha A4 do Relatório -->
+      <div id="relatorio-content-area" class="escopo-print-area" style="min-height:297mm; display:flex; flex-direction:column; background:var(--paper);">
+         
+         <!-- Cabeçalho Elegante e Minimalista -->
+         <div style="text-align: center; margin-bottom: 30px; border-bottom: 2px solid var(--navy); padding-bottom: 20px;">
+            <h1 style="color: var(--navy); font-size: 26px; font-weight: 300; letter-spacing: 3px; text-transform: uppercase; margin: 0 0 15px 0;">Relatório Evolutivo de Obra</h1>
+            
+            <div style="display:flex; justify-content:center; gap:15px; align-items:center;">
+               <select id="rel-obra" class="escopo-input" style="font-weight:800; width:auto; text-align:center; font-size:12px; border:none; background:transparent; color:var(--ink);" onchange="this.setAttribute('data-selected', this.value);">
+                  <option value="">SELECIONE A OBRA...</option>
+                  <option value="Mirante da Lagoa">MIRANTE DA LAGOA (BOCAIUVA)</option>
+                  <option value="Joaquim Leme">JOAQUIM LEME (JLEME)</option>
+                  <option value="Parque das Nações">PARQUE DAS NAÇÕES (MIFE)</option>
+                  <option value="Cidade Nova">CIDADE NOVA (NAZARENO)</option>
+               </select>
+               <span style="color:var(--muted)">|</span>
+               <input type="text" id="rel-periodo" placeholder="Ex: Referência Setembro/2026" class="escopo-input" style="width:250px; text-align:center; font-size:12px; border:none; background:transparent; font-weight:600; color:var(--muted);" oninput="this.setAttribute('value', this.value)">
+            </div>
+         </div>
+         
+         <!-- Área de Montagem dos Blocos -->
+         <div id="rel-drag-area" style="display:flex; flex-direction:column; gap:15px; flex:1;"></div>
+         
+         <!-- Rodapé / Numeração Fake para o Layout -->
+         <div style="margin-top:40px; padding-top:15px; display:flex; justify-content:space-between; font-size:9px; font-weight:600; color:var(--muted); border-top:1px solid var(--line);">
+             <span>Gestão de Suprimentos - Casagrande Urbanismo</span>
+             <span>Página 1</span>
+         </div>
+      </div>
+    </div>
+
 </main>
 </div>
 
@@ -2362,6 +2438,8 @@ const App = {
     if(viewId === 'atds') ATD.loadHistory();
     if(viewId === 'insumos') Insumos.render();
     if(viewId === 'escopos-lista') Escopo.listar();
+    if(viewId === 'relatorios-lista') Relatorio.listar();
+    if(viewId === 'relatorio') { /* Apenas abre a view */ }
     if(viewId === 'escopo') { if(document.getElementById('esc-materiais-body').children.length === 0) Escopo.addMaterial(); }
   },
 
@@ -6242,6 +6320,193 @@ const Escopo = {
    }
 };
 
+// ==================== MODULO: RELATÓRIO MENSAL ====================
+let relatorioImgCount = 0;
+const Relatorio = {
+   currentId: null,
+
+   listar: () => {
+      const tb = document.getElementById('lista-relatorios-body');
+      if(!tb) return;
+      tb.innerHTML = '';
+      if(!DB.data.relatorios) DB.data.relatorios = [];
+      
+      if(DB.data.relatorios.length === 0) {
+          tb.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:20px; color:var(--muted);">Nenhum relatório criado.</td></tr>';
+          return;
+      }
+
+      [...DB.data.relatorios].reverse().forEach(r => {
+         tb.innerHTML += `<tr>
+            <td style="text-align:center;">${r.data || '-'}</td>
+            <td style="text-align:center; font-weight:800; color:var(--navy);">${r.obra || '-'}</td>
+            <td>${r.periodo || '-'}</td>
+            <td style="text-align:center; white-space:nowrap;">
+               <button class="btn btn-outline" style="padding:4px 8px; font-size:10px;" onclick="Relatorio.carregar('${r.id}')">✏️ Abrir</button>
+               <button class="del-btn" style="font-size:16px; margin-left:4px;" onclick="Relatorio.excluir('${r.id}')">×</button>
+            </td>
+         </tr>`;
+      });
+   },
+
+   abrirNovo: () => {
+      Relatorio.currentId = Util.genId();
+      document.getElementById('rel-obra').value = '';
+      document.getElementById('rel-obra').setAttribute('data-selected', '');
+      document.getElementById('rel-periodo').value = '';
+      document.getElementById('rel-drag-area').innerHTML = '';
+      relatorioImgCount = 0;
+      Relatorio.addTexto(); // Já abre com um bloco de texto
+      App.nav('relatorio');
+   },
+
+   carregar: (id) => {
+      const r = DB.data.relatorios.find(x => x.id === id);
+      if(!r) return;
+      Relatorio.currentId = r.id;
+      
+      const selObra = document.getElementById('rel-obra');
+      selObra.value = r.obra || '';
+      selObra.setAttribute('data-selected', r.obra || '');
+      
+      const inpPer = document.getElementById('rel-periodo');
+      inpPer.value = r.periodo || '';
+      inpPer.setAttribute('value', r.periodo || '');
+      
+      document.getElementById('rel-drag-area').innerHTML = r.htmlContent;
+      App.nav('relatorio');
+   },
+
+   salvar: () => {
+      if(!Relatorio.currentId) return;
+      
+      // Fixa os valores dos inputs/selects para o PDF ler depois
+      document.getElementById('rel-obra').setAttribute('data-selected', document.getElementById('rel-obra').value);
+      document.getElementById('rel-periodo').setAttribute('value', document.getElementById('rel-periodo').value);
+
+      const obj = { 
+          id: Relatorio.currentId, 
+          obra: document.getElementById('rel-obra').value, 
+          periodo: document.getElementById('rel-periodo').value, 
+          data: Util.today(), 
+          htmlContent: document.getElementById('rel-drag-area').innerHTML 
+      };
+      
+      if(!DB.data.relatorios) DB.data.relatorios = [];
+      const idx = DB.data.relatorios.findIndex(x => x.id === Relatorio.currentId);
+      
+      // Validação de peso (evita crash com muitas imagens)
+      const pesoEstimado = new Blob([JSON.stringify(obj)]).size;
+      if(pesoEstimado > 900000) {
+          alert("⚠️ ATENÇÃO: Muitas imagens! O relatório excedeu 1MB. Remova ou diminua fotos.");
+          return;
+      }
+
+      if(idx > -1) DB.data.relatorios[idx] = obj;
+      else DB.data.relatorios.push(obj);
+      
+      localStorage.setItem('grp_ai_db', JSON.stringify(DB.data));
+      UI.toast("Relatório Salvo!");
+   },
+
+   excluir: (id) => {
+      if(confirm("Deseja excluir este relatório?")) {
+         DB.data.relatorios = DB.data.relatorios.filter(x => x.id !== id);
+         localStorage.setItem('grp_ai_db', JSON.stringify(DB.data));
+         Relatorio.listar();
+      }
+   },
+
+   addSubtitulo: () => {
+      const area = document.getElementById('rel-drag-area');
+      const html = `
+         <div style="position:relative; margin-top:15px; margin-bottom:5px; border:1px dashed transparent; transition:0.2s;" onmouseover="this.style.borderColor='var(--line)'" onmouseout="this.style.borderColor='transparent'">
+            <button class="del-btn no-print" onclick="this.parentElement.remove()" style="position:absolute; top:-10px; right:0; font-size:18px;">×</button>
+            <h2 contenteditable="true" style="font-size:16px; font-weight:700; color:var(--navy); margin:0; outline:none; text-transform:uppercase;" placeholder="Escreva o subtítulo da seção...">NOVA SEÇÃO DO RELATÓRIO</h2>
+         </div>
+      `;
+      area.insertAdjacentHTML('beforeend', html);
+   },
+
+   addTexto: () => {
+      const area = document.getElementById('rel-drag-area');
+      const html = `
+         <div style="border:1px dashed transparent; padding:5px; position:relative; border-radius:4px; transition:0.2s;" onmouseover="this.style.borderColor='var(--line)'; this.querySelector('.rel-toolbar').style.opacity='1';" onmouseout="this.style.borderColor='transparent'; this.querySelector('.rel-toolbar').style.opacity='0';">
+            <button class="del-btn no-print" onclick="this.parentElement.remove()" style="position:absolute; top:-5px; right:5px; font-size:18px; z-index:10;">×</button>
+            
+            <div class="no-print rel-toolbar" style="display:flex; gap:6px; margin-bottom:4px; opacity:0; transition:0.2s; background:var(--highlight); padding:4px; border-radius:4px; width:fit-content;">
+               <button class="btn btn-outline" style="padding:2px 8px; font-size:10px; font-weight:bold;" onclick="document.execCommand('bold',false,null)" title="Negrito">B</button>
+               <button class="btn btn-outline" style="padding:2px 8px; font-size:10px; font-style:italic;" onclick="document.execCommand('italic',false,null)" title="Itálico">I</button>
+               <button class="btn btn-outline" style="padding:2px 8px; font-size:10px; text-decoration:underline;" onclick="document.execCommand('underline',false,null)" title="Sublinhado">U</button>
+               <button class="btn btn-outline" style="padding:2px 8px; font-size:10px;" onclick="document.execCommand('insertOrderedList',false,null)" title="Lista Numerada">1.</button>
+               <button class="btn btn-outline" style="padding:2px 8px; font-size:10px;" onclick="document.execCommand('insertUnorderedList',false,null)" title="Lista de Pontos">•</button>
+               <button class="btn btn-outline" style="padding:2px 8px; font-size:10px;" onclick="document.execCommand('indent',false,null)" title="Recuar (Tab)">Tab ⇥</button>
+               <button class="btn btn-outline" style="padding:2px 8px; font-size:10px;" onclick="document.execCommand('outdent',false,null)" title="Tirar Recuo">⇤</button>
+            </div>
+            
+            <div contenteditable="true" style="min-height:30px; font-size:12px; line-height:1.8; color:var(--ink); outline:none; text-align:justify;" placeholder="Digite o texto explicativo do relatório aqui..."></div>
+         </div>
+      `;
+      area.insertAdjacentHTML('beforeend', html);
+   },
+
+   addImagem: () => {
+      relatorioImgCount++;
+      const id = Util.genId();
+      const area = document.getElementById('rel-drag-area');
+      const html = `
+         <div style="border:1px dashed transparent; padding:15px; position:relative; border-radius:6px; text-align:center; transition:0.2s;" onmouseover="this.style.borderColor='var(--line)'" onmouseout="this.style.borderColor='transparent'">
+            <button class="del-btn no-print" onclick="this.parentElement.remove()" style="position:absolute; top:5px; right:5px; font-size:20px; z-index:10;">×</button>
+            
+            <div class="no-print" style="margin-bottom:10px; background:var(--highlight); padding:8px; border-radius:6px; display:inline-flex; align-items:center; gap:10px;">
+               <input type="file" accept="image/*" onchange="Escopo.loadImage(event, 'img_rel_${id}')" style="font-size:10px; width:180px;">
+               <span style="font-size:10px; font-weight:800; color:var(--navy);">Tamanho:</span>
+               <input type="range" min="30" max="100" value="80" style="width:100px; accent-color:var(--navy);" oninput="document.getElementById('img_rel_${id}').style.width = this.value + '%';">
+            </div>
+            
+            <img id="img_rel_${id}" src="" style="width:80%; max-height:450px; object-fit:contain; border-radius:4px; display:block; margin:0 auto 10px auto; box-shadow:0 2px 6px rgba(0,0,0,0.1);">
+            
+            <div contenteditable="true" style="font-size:10.5px; font-style:italic; font-weight:600; color:var(--muted); outline:none; text-align:center; padding:4px; border-bottom:1px dashed transparent;" onfocus="this.style.borderBottomColor='var(--navy)'" onblur="this.style.borderBottomColor='transparent'" placeholder="Escreva aqui a legenda da foto..."></div>
+         </div>
+      `;
+      area.insertAdjacentHTML('beforeend', html);
+   },
+
+   imprimir: () => {
+      const landscapeStyle = document.createElement('style');
+      landscapeStyle.innerHTML = `
+          @media print {
+              @page { size: A4 portrait !important; margin: 15mm; }
+              #view-relatorio.view { position: static !important; overflow: visible !important; height: auto !important; }
+              .doc-head, .sidebar, .atd-builder-toolbar, .no-print { display: none !important; }
+              #relatorio-content-area { 
+                  position: absolute; left: 0; top: 0; width: 100%; border: none !important; box-shadow:none !important;
+                  padding: 10mm !important; box-sizing: border-box !important;
+              }
+              body { background: #fff !important; color: #232323 !important; }
+              body::after {
+                  content: ''; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+                  border: 2px solid #0d3b1f; border-radius: 6px; pointer-events: none; z-index: 9999;
+              }
+              select.escopo-input { appearance: none; -webkit-appearance: none; color:#000 !important; }
+              input.escopo-input { color:#555 !important; }
+          }
+      `;
+      document.head.appendChild(landscapeStyle);
+      
+      const element = document.getElementById('relatorio-content-area');
+      const originalShadow = element.style.boxShadow;
+      element.style.boxShadow = 'none';
+
+      setTimeout(() => {
+          window.print();
+          document.head.removeChild(landscapeStyle);
+          element.style.boxShadow = originalShadow;
+      }, 300);
+   }
+};
+
+window.Relatorio = Relatorio;
 window.Escopo = Escopo;
 window.onload = App.init;
 </script>
