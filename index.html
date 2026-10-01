@@ -6315,10 +6315,10 @@ const Escopo = {
 let relatorioImgCount = 0;
 // Base de dados injetada com as informações da sua tabela
 const DADOS_OBRAS = {
-    'bocaiuva': { nome: 'Mirante da Lagoa', cidade: 'Bocaiúva', estado: 'MG', logo: 'LogoMiranteLagoa.png', img: 'DJI_0853.JPG', lotes: '705', orcamento: 'R$ 7.859.182', previsao: 'R$ 8.127.399', avanco: '96,50%', custoOrcado: 'R$ 11.148', custoProjetado: 'R$ 11.528', vgv: 'R$ 77.550.000,00', area: '-', dataEntrega: '-', status: 'Fase Final' },
-    'jleme': { nome: 'Joaquim Leme', cidade: 'Ituiutaba', estado: 'MG', logo: 'LogoJoaquimLeme.png', img: 'DJI_0853.JPG', lotes: '576', orcamento: 'R$ 5.019.403', previsao: 'R$ 4.546.417', avanco: '72,30%', custoOrcado: 'R$ 8.714', custoProjetado: 'R$ 7.893', vgv: 'R$ 57.600.000,00', area: '-', dataEntrega: '-', status: 'Execução' },
-    'mife': { nome: 'Parque das Nações', cidade: 'Campanha', estado: 'MG', logo: 'LogoPqNações.png', img: 'DJI_0853.JPG', lotes: '364', orcamento: 'R$ 5.852.117', previsao: 'R$ 5.850.801', avanco: '10,00%', custoOrcado: 'R$ 16.077', custoProjetado: 'R$ 16.074', vgv: 'R$ 32.760.000,00', area: '-', dataEntrega: '-', status: 'Mobilização' },
-    'nazareno': { nome: 'Cidade Nova', cidade: 'Nazareno', estado: 'MG', logo: 'LogoCidadeNova.png', img: 'DJI_0853.JPG', lotes: '-', orcamento: '-', previsao: '-', avanco: '-', custoOrcado: '-', custoProjetado: '-', vgv: '-', area: '-', dataEntrega: '-', status: 'Planejamento' }
+    'bocaiuva': { nome: 'Mirante da Lagoa', cidade: 'Bocaiúva', estado: 'MG', logo: 'LogoMiranteLagoa.png', img: 'mirantedalagoa.jpeg', lotes: '705', orcamento: 'R$ 7.859.182', previsao: 'R$ 8.127.399', area: '453.329,59 m²', dataEntrega: '30/08/2026', status: 'Fase Final', custoOrcado: 'R$ 11.148', custoProjetado: 'R$ 11.528', vgv: 'R$ 77.550.000,00' },
+    'jleme': { nome: 'Joaquim Leme', cidade: 'Ituiutaba', estado: 'MG', logo: 'LogoJoaquimLeme.png', img: 'joaquimleme.jpg', lotes: '576', orcamento: 'R$ 5.019.403', previsao: 'R$ 4.546.417', area: '236.226,89 m²', dataEntrega: '30/10/2026', status: 'Execução', custoOrcado: 'R$ 8.714', custoProjetado: 'R$ 7.893', vgv: 'R$ 57.600.000,00' },
+    'mife': { nome: 'Parque das Nações', cidade: 'Campanha', estado: 'MG', logo: 'LogoPqNações.png', img: 'parquedasnações.jpg', lotes: '364', orcamento: 'R$ 5.852.117', previsao: 'R$ 5.850.801', area: '120.000,00 m²', dataEntrega: '31/07/2027', status: 'Mobilização', custoOrcado: 'R$ 16.077', custoProjetado: 'R$ 16.074', vgv: 'R$ 32.760.000,00' },
+    'nazareno': { nome: 'Cidade Nova', cidade: 'Nazareno', estado: 'MG', logo: 'LogoCidadeNova.png', img: 'cidadenova.jpg', lotes: '-', orcamento: '-', previsao: '-', area: '119.998,00 m²', dataEntrega: '31/12/2027', status: 'Planejamento', custoOrcado: '-', custoProjetado: '-', vgv: '-' }
 };
 
 const Relatorio = {
@@ -6345,11 +6345,12 @@ const Relatorio = {
             </div>
             
             <div id="rel-capa-img-box" style="flex:1; display:flex; align-items:center; justify-content:center; margin: 40px 0; width:100%; position:relative;">
-                <div style="position:absolute; inset:0; border:3px solid var(--navy); border-radius:8px; display:flex; align-items:center; justify-content:center; background:var(--highlight); color:var(--navy); font-weight:bold; font-size:14px; text-align:center; padding:20px; z-index:1;">
+                <div id="rel-capa-placeholder" style="position:absolute; inset:0; border:3px solid var(--navy); border-radius:8px; display:flex; flex-direction:column; align-items:center; justify-content:center; background:var(--highlight); color:var(--navy); font-weight:bold; font-size:14px; text-align:center; padding:20px; z-index:1;">
                    <i class="fa-solid fa-camera" style="font-size:24px; margin-bottom:10px; display:block;"></i>
                    Imagem Aérea<br>(Será carregada automaticamente)
                 </div>
-                <img id="rel-capa-img" src="" style="width:100%; height:100%; object-fit:cover; border-radius:8px; position:relative; z-index:2; opacity:0; transition:opacity 0.3s;" onload="this.style.opacity='1'" onerror="this.style.opacity='0'">
+                <!-- Imagem adaptável que esconde o placeholder ao carregar -->
+                <img id="rel-capa-img" src="" style="display:none; max-width:100%; max-height:450px; object-fit:contain; border-radius:8px; border:3px solid var(--navy); box-shadow:0 10px 20px rgba(0,0,0,0.15); position:relative; z-index:2; padding:4px;" onload="this.style.display='block'; document.getElementById('rel-capa-placeholder').style.display='none';" onerror="this.style.display='none'; document.getElementById('rel-capa-placeholder').style.display='flex';">
             </div>
             
             <div style="text-align:center; color:var(--ink); font-size:14px; font-weight:700; line-height:1.6; margin-bottom:10px;">
@@ -6369,12 +6370,9 @@ const Relatorio = {
                     <tr><td style="font-weight:800; width:60%; background:var(--highlight); color:var(--navy); padding:10px 15px; border:1px solid #cccccc;">Empreendimento</td><td id="ri-nome" style="width:40%; padding:10px 15px; border:1px solid #cccccc; font-weight:600; color:var(--ink); text-align:center;"></td></tr>
                     <tr><td style="font-weight:800; background:var(--highlight); color:var(--navy); padding:10px 15px; border:1px solid #cccccc;">Cidade</td><td id="ri-cidade" style="padding:10px 15px; border:1px solid #cccccc; font-weight:600; color:var(--ink); text-align:center;"></td></tr>
                     <tr><td style="font-weight:800; background:var(--highlight); color:var(--navy); padding:10px 15px; border:1px solid #cccccc;">Estado</td><td id="ri-estado" style="padding:10px 15px; border:1px solid #cccccc; font-weight:600; color:var(--ink); text-align:center;"></td></tr>
-                    <tr><td style="font-weight:800; background:var(--highlight); color:var(--navy); padding:10px 15px; border:1px solid #cccccc;">Número de Lotes</td><td id="ri-lotes" style="padding:10px 15px; border:1px solid #cccccc; font-weight:600; color:var(--ink); outline:none; text-align:center;" contenteditable="true" onblur="this.setAttribute('value', this.innerHTML); Relatorio.calcularCustoProjetado();"></td></tr>
-                    <tr><td style="font-weight:800; background:var(--highlight); color:var(--navy); padding:10px 15px; border:1px solid #cccccc;">Orçamento Aprovado de Obra (Base)</td><td id="ri-orcamento" style="padding:10px 15px; border:1px solid #cccccc; font-weight:600; color:var(--ink); outline:none; text-align:center;" contenteditable="true" onblur="this.setAttribute('value', this.innerHTML)"></td></tr>
-                    <tr><td style="font-weight:800; background:var(--highlight); color:var(--navy); padding:10px 15px; border:1px solid #cccccc;">Previsão de Custo Total Atual <span class="no-print" style="font-size:9px; color:var(--danger); font-weight:bold; margin-left:6px;">(Editável)</span></td><td id="ri-previsao" style="padding:10px 15px; border:1px solid #cccccc; font-weight:600; color:var(--ink); outline:none; text-align:center;" contenteditable="true" oninput="Util.maskCur(this)" onblur="this.setAttribute('value', this.innerHTML); Relatorio.calcularCustoProjetado();"></td></tr>
-                    <tr><td style="font-weight:800; background:var(--highlight); color:var(--navy); padding:10px 15px; border:1px solid #cccccc;">Avanço global de obra</td><td id="ri-avanco" style="padding:10px 15px; border:1px solid #cccccc; font-weight:600; color:var(--ink); outline:none; text-align:center;" contenteditable="true" onblur="this.setAttribute('value', this.innerHTML)"></td></tr>
-                    <tr><td style="font-weight:800; background:var(--highlight); color:var(--navy); padding:10px 15px; border:1px solid #cccccc;">Área do Empreendimento</td><td id="ri-area" style="padding:10px 15px; border:1px solid #cccccc; font-weight:600; color:var(--ink); outline:none; text-align:center;" contenteditable="true" onblur="this.setAttribute('value', this.innerHTML)"></td></tr>
-                    <tr><td style="font-weight:800; background:var(--highlight); color:var(--navy); padding:10px 15px; border:1px solid #cccccc;">Data de previsão de entrega</td><td id="ri-data-entrega" style="padding:10px 15px; border:1px solid #cccccc; font-weight:600; color:var(--ink); outline:none; text-align:center;" contenteditable="true" onblur="this.setAttribute('value', this.innerHTML)"></td></tr>
+                    <tr><td style="font-weight:800; background:var(--highlight); color:var(--navy); padding:10px 15px; border:1px solid #cccccc;">Área do Empreendimento</td><td id="ri-area" style="padding:10px 15px; border:1px solid #cccccc; font-weight:600; color:var(--ink); text-align:center;"></td></tr>
+                    <tr><td style="font-weight:800; background:var(--highlight); color:var(--navy); padding:10px 15px; border:1px solid #cccccc;">Data de previsão de entrega</td><td id="ri-data-entrega" style="padding:10px 15px; border:1px solid #cccccc; font-weight:600; color:var(--ink); text-align:center;"></td></tr>
+                    <tr><td style="font-weight:800; background:var(--highlight); color:var(--navy); padding:10px 15px; border:1px solid #cccccc;">Número de Lotes</td><td id="ri-lotes" style="padding:10px 15px; border:1px solid #cccccc; font-weight:600; color:var(--ink); text-align:center;"></td></tr>
                     <tr><td style="font-weight:800; background:var(--highlight); color:var(--navy); padding:10px 15px; border:1px solid #cccccc;">Status da obra</td><td style="padding:10px 15px; border:1px solid #cccccc; text-align:center; vertical-align:middle; position:relative;">
                         <select id="ri-status" style="font-family:'Montserrat', sans-serif; font-size:14px; font-weight:600; color:var(--ink); text-align:center; border:none; outline:none; background:transparent; appearance:none; -webkit-appearance:none; width:100%; cursor:pointer;" onchange="this.setAttribute('data-selected', this.value);">
                             <option value="Planejamento">Planejamento</option>
@@ -6385,9 +6383,13 @@ const Relatorio = {
                         </select>
                         <i class="fa-solid fa-chevron-down no-print" style="position:absolute; right:15px; top:50%; transform:translateY(-50%); font-size:10px; color:var(--muted); pointer-events:none;"></i>
                     </td></tr>
-                    <tr><td style="font-weight:800; background:var(--highlight); color:var(--navy); padding:10px 15px; border:1px solid #cccccc;">Custo por lote (Orçado)</td><td id="ri-custo-orcado" style="padding:10px 15px; border:1px solid #cccccc; font-weight:600; color:var(--ink); outline:none; text-align:center;" contenteditable="true" onblur="this.setAttribute('value', this.innerHTML)"></td></tr>
+                    <tr><td style="font-weight:800; background:var(--highlight); color:var(--navy); padding:10px 15px; border:1px solid #cccccc;">Orçamento Aprovado</td><td id="ri-orcamento" style="padding:10px 15px; border:1px solid #cccccc; font-weight:600; color:var(--ink); text-align:center;"></td></tr>
+                    <tr><td style="font-weight:800; background:var(--highlight); color:var(--navy); padding:10px 15px; border:1px solid #cccccc;">Previsão de Custo Total Atual <span class="no-print" style="font-size:9px; color:var(--danger); font-weight:bold; margin-left:6px;">(Editável)</span></td><td id="ri-previsao" style="padding:10px 15px; border:1px solid #cccccc; font-weight:600; color:var(--ink); outline:none; text-align:center;" contenteditable="true" oninput="Util.maskCur(this)" onblur="this.setAttribute('value', this.innerHTML); Relatorio.calcularCustoProjetado();"></td></tr>
+                    <tr><td style="font-weight:800; background:var(--highlight); color:var(--navy); padding:10px 15px; border:1px solid #cccccc;">Desembolso Atual <span class="no-print" style="font-size:9px; color:var(--danger); font-weight:bold; margin-left:6px;">(Editável)</span></td><td id="ri-desembolso" style="padding:10px 15px; border:1px solid #cccccc; font-weight:600; color:var(--ink); outline:none; text-align:center;" contenteditable="true" oninput="Util.maskCur(this)" onblur="this.setAttribute('value', this.innerHTML); Relatorio.calcularAvancoGlobal();">R$ 0,00</td></tr>
+                    <tr><td style="font-weight:800; background:var(--highlight); color:var(--navy); padding:10px 15px; border:1px solid #cccccc;">Avanço global de obra</td><td id="ri-avanco" style="padding:10px 15px; border:1px solid #cccccc; font-weight:600; color:var(--ink); text-align:center;">0,00%</td></tr>
+                    <tr><td style="font-weight:800; background:var(--highlight); color:var(--navy); padding:10px 15px; border:1px solid #cccccc;">Custo por lote (Orçado)</td><td id="ri-custo-orcado" style="padding:10px 15px; border:1px solid #cccccc; font-weight:600; color:var(--ink); text-align:center;"></td></tr>
                     <tr><td style="font-weight:800; background:var(--highlight); color:var(--navy); padding:10px 15px; border:1px solid #cccccc;">Custo por lote (Projetado)</td><td id="ri-custo-projetado" style="padding:10px 15px; border:1px solid #cccccc; font-weight:600; color:var(--ink); text-align:center;"></td></tr>
-                    <tr><td style="font-weight:800; background:var(--highlight); color:var(--navy); padding:10px 15px; border:1px solid #cccccc;">Potencial de VGV</td><td id="ri-vgv" style="padding:10px 15px; border:1px solid #cccccc; font-weight:600; color:var(--ink); outline:none; text-align:center;" contenteditable="true" onblur="this.setAttribute('value', this.innerHTML)"></td></tr>
+                    <tr><td style="font-weight:800; background:var(--highlight); color:var(--navy); padding:10px 15px; border:1px solid #cccccc;">Potencial de VGV</td><td id="ri-vgv" style="padding:10px 15px; border:1px solid #cccccc; font-weight:600; color:var(--ink); text-align:center;"></td></tr>
                  </tbody>
              </table>
              
@@ -6408,7 +6410,7 @@ const Relatorio = {
         const lotesText = document.getElementById('ri-lotes').textContent.replace(/\D/g, '');
         const lotes = parseInt(lotesText) || 0;
         
-        const previsaoText = document.getElementById('ri-previsao').value || document.getElementById('ri-previsao').textContent;
+        const previsaoText = document.getElementById('ri-previsao').textContent;
         const previsao = Util.unmaskCur(previsaoText);
         
         if (lotes > 0 && previsao > 0) {
@@ -6416,6 +6418,21 @@ const Relatorio = {
             document.getElementById('ri-custo-projetado').textContent = Util.formatBRL(custoLote);
         } else {
             document.getElementById('ri-custo-projetado').textContent = '-';
+        }
+   },
+
+   calcularAvancoGlobal: () => {
+        const orcamentoText = document.getElementById('ri-orcamento').textContent;
+        const orcamento = Util.unmaskCur(orcamentoText);
+        
+        const desembolsoText = document.getElementById('ri-desembolso').textContent;
+        const desembolso = Util.unmaskCur(desembolsoText);
+        
+        if (orcamento > 0 && desembolso > 0) {
+            const avanco = (desembolso / orcamento) * 100;
+            document.getElementById('ri-avanco').textContent = avanco.toFixed(2).replace('.', ',') + '%';
+        } else {
+            document.getElementById('ri-avanco').textContent = '0,00%';
         }
    },
 
@@ -6472,8 +6489,8 @@ const Relatorio = {
       // Reativa os eventos de carregamento da imagem da capa após injetar o HTML
       const imgCapa = document.getElementById('rel-capa-img');
       if(imgCapa) {
-          imgCapa.onload = function() { this.style.opacity = '1'; };
-          imgCapa.onerror = function() { this.style.opacity = '0'; };
+          imgCapa.onload = function() { this.style.display = 'block'; document.getElementById('rel-capa-placeholder').style.display='none'; };
+          imgCapa.onerror = function() { this.style.display = 'none'; document.getElementById('rel-capa-placeholder').style.display='flex'; };
       }
       
       App.nav('relatorio');
@@ -6505,7 +6522,9 @@ const Relatorio = {
       
       // Carregamento inteligente da imagem aérea
       const imgCapa = document.getElementById('rel-capa-img');
-      imgCapa.style.opacity = '0';
+      const placeholder = document.getElementById('rel-capa-placeholder');
+      imgCapa.style.display = 'none';
+      placeholder.style.display = 'flex';
       imgCapa.src = d.img;
 
       // Injeta dados reais da Obra na Tabela
@@ -6513,22 +6532,26 @@ const Relatorio = {
       document.getElementById('ri-cidade').textContent = d.cidade;
       document.getElementById('ri-estado').textContent = d.estado;
       
-      document.getElementById('ri-lotes').textContent = d.lotes;
-      document.getElementById('ri-orcamento').textContent = d.orcamento;
-      document.getElementById('ri-previsao').textContent = d.previsao;
-      document.getElementById('ri-avanco').textContent = d.avanco;
-      document.getElementById('ri-custo-orcado').textContent = d.custoOrcado;
-      document.getElementById('ri-custo-projetado').textContent = d.custoProjetado;
-      document.getElementById('ri-vgv').textContent = d.vgv;
-      
       document.getElementById('ri-area').textContent = d.area;
       document.getElementById('ri-data-entrega').textContent = d.dataEntrega;
+      document.getElementById('ri-lotes').textContent = d.lotes;
       
       const selStatus = document.getElementById('ri-status');
       if(selStatus) {
           selStatus.value = d.status;
           selStatus.setAttribute('data-selected', d.status);
       }
+      
+      document.getElementById('ri-orcamento').textContent = d.orcamento;
+      document.getElementById('ri-previsao').textContent = d.previsao;
+      
+      // Desembolso sempre reseta pra zero ao trocar de obra
+      document.getElementById('ri-desembolso').textContent = 'R$ 0,00';
+      document.getElementById('ri-avanco').textContent = '0,00%';
+      
+      document.getElementById('ri-custo-orcado').textContent = d.custoOrcado;
+      document.getElementById('ri-custo-projetado').textContent = d.custoProjetado;
+      document.getElementById('ri-vgv').textContent = d.vgv;
       
       Relatorio.calcularCustoProjetado();
    },
@@ -6644,18 +6667,27 @@ const Relatorio = {
               #view-relatorio.view { position: static !important; overflow: visible !important; height: auto !important; }
               .doc-head, .sidebar, .atd-builder-toolbar, .no-print { display: none !important; }
               
-              /* Fundo branco ABSOLUTO: Tira as linhas vermelhas e o cinza do final da página */
-              html, body { background: #fff !important; color: #232323 !important; height: 100% !important; margin: 0 !important; padding: 0 !important; }
-              .escopo-print-area::after, #relatorio-content-area::after { display: none !important; }
-              
-              /* Ajuste de Margem Interna para a Impressão */
+              /* Fundo branco ABSOLUTO sem sobras e sem padding global para não cortar a borda */
+              html, body { background: #fff !important; color: #232323 !important; margin: 0 !important; padding: 0 !important; height: 100% !important; }
               #relatorio-content-area { 
                   position: absolute; left: 0; top: 0; width: 100%; border: none !important; box-shadow:none !important;
-                  padding: 0 !important; margin: 0 !important; background: #fff !important;
+                  padding: 0 !important; margin: 0 !important; background: transparent !important;
+              }
+
+              /* Transforma as páginas em caixas exatas com bordas */
+              .rel-page {
+                  border: 2px solid #0d3b1f !important; 
+                  border-radius: 6px !important;
+                  padding: 15mm !important;
+                  margin-bottom: 5mm !important;
+                  page-break-after: always;
+                  box-sizing: border-box !important;
+                  position: relative;
+                  height: 270mm !important; /* Altura exata da borda na página A4 */
               }
 
               /* Força que TODAS as linhas da tabela apareçam na impressão de forma consistente */
-              table.items { border-collapse: collapse !important; }
+              table.items { border-collapse: collapse !important; table-layout: fixed; width: 100%; }
               table.items td, table.items th { border: 1px solid #cccccc !important; }
               
               /* Remove background escuro do select ao imprimir e esconde a seta */
