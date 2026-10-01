@@ -601,17 +601,59 @@
           <div class="kpi-value" style="color:var(--success); font-size:19px; white-space:nowrap; letter-spacing:-0.5px;" id="dash-econ">R$ 0,00</div>
           <div class="kpi-sub">vs. Maior Valor</div>
         </div>
-        <div class="kpi-card">
-          <div class="kpi-title">Tempo Médio (SLA)</div>
-          <div class="kpi-value">4.2 <span style="font-size:12px; color:var(--muted)">dias</span></div>
-          <div class="kpi-sub">Req até OC</div>
-        </div>
       </div>
 
       <section class="block">
         <h2>Evolução de Custos Consolidados vs. Potencial sem Negociação - Saving Acumulado</h2>
-        <div style="height:280px; position:relative; width:100%; margin-bottom:10px;">
-            <canvas id="dash-saving-chart"></canvas>
+        <div style="display:flex; gap:15px; align-items:center;">
+            <div style="flex:1; height:280px; position:relative; margin-bottom:10px;">
+                <canvas id="dash-saving-chart"></canvas>
+            </div>
+            
+            <!-- NOVO PAINEL DE TOTAIS FIXOS À DIREITA (Centralizado verticalmente) -->
+            <div id="dash-saving-totals" style="width:180px; display:flex; flex-direction:column; justify-content:center; gap:12px; height:280px; border-left:1px dashed var(--line); padding-left:15px; margin-bottom:10px;">
+               <!-- Será injetado pelo Javascript -->
+            </div>
+        </div>
+      </section>
+
+<!-- QUADRO DE CONTROLE DE CONTRATOS E OCS -->
+      <section class="block">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; padding-bottom:10px; border-bottom:1px solid var(--line);">
+           <h2 style="margin:0; border:none; padding:0; font-size:14px; font-weight:800; color:var(--navy); text-transform:uppercase;">Quadro de Controle de Contratos e OCs Emitidas</h2>
+           <div style="display:flex; gap:10px;">
+               <!-- FILTRO DE OBRA -->
+               <select id="dash-filtro-obra" style="padding:6px 12px; border-radius:4px; border:1px solid var(--line); font-family:'Montserrat', sans-serif; font-weight:700; color:var(--navy); font-size:12px; background:var(--paper); cursor:pointer;" onchange="App.renderDashContratos()">
+                  <option value="bocaiuva">Mirante da Lagoa (BOC)</option>
+                  <option value="jleme">Joaquim Leme (JLE)</option>
+                  <option value="mife">Parque das Nações (MIF)</option>
+                  <option value="nazareno">Cidade Nova (NAZ)</option>
+               </select>
+               
+               <!-- NOVO FILTRO DE STATUS (Ativos / Arquivados) -->
+               <select id="dash-filtro-status" style="padding:6px 12px; border-radius:4px; border:1px solid var(--line); font-family:'Montserrat', sans-serif; font-weight:700; color:var(--navy); font-size:12px; background:var(--paper); cursor:pointer;" onchange="App.renderDashContratos()">
+                  <option value="ativos">Apenas Processos Ativos</option>
+                  <option value="arquivados">Processos Finalizados (Arquivados)</option>
+               </select>
+
+               <!-- FILTRO DE ANO (Atualizado sem 23, 24, 25) -->
+               <select id="dash-filtro-ano" style="padding:6px 12px; border-radius:4px; border:1px solid var(--line); font-family:'Montserrat', sans-serif; font-weight:700; color:var(--navy); font-size:12px; background:var(--paper); cursor:pointer;" onchange="App.renderDashContratos()">
+                  <option value="todos">Todos os Anos</option>
+                  <option value="2027">2027</option>
+                  <option value="2026">2026</option>
+               </select>
+           </div>
+        </div>
+
+        <!-- PLACAR FINANCEIRO DO FILTRO ATUAL -->
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; background:var(--highlight); padding:15px 25px; border-radius:6px; border:1px solid var(--navy-2);">
+            <div style="font-size:12px; font-weight:800; color:var(--navy); text-transform:uppercase;">Volume Financeiro (Itens Listados Abaixo):</div>
+            <div id="dash-contratos-total" style="font-size:26px; font-weight:800; color:var(--success);">R$ 0,00</div>
+        </div>
+        
+        <!-- LISTA EXPANDIDA DE CONTRATOS (OCUPA TUDO) -->
+        <div style="display:flex; flex-direction:column; gap:12px; max-height:450px; overflow-y:auto; padding-right:5px;" id="dash-contratos-lista">
+            <!-- Javascript vai injetar os cards aqui -->
         </div>
       </section>
 
@@ -2515,6 +2557,28 @@ const App = {
         dataMax.push(accMax);
     });
 
+    // INJETA OS TOTAIS ACUMULADOS NO PAINEL FIXO DA DIREITA
+    const painelTotais = document.getElementById('dash-saving-totals');
+    if(painelTotais) {
+        const percSaving = accMax > 0 ? ((accMax - accReal) / accMax) * 100 : 0;
+        
+        painelTotais.innerHTML = `
+          <div>
+            <div style="font-size:9px; font-weight:700; color:var(--success); text-transform:uppercase;"><i class="fa-solid fa-check-double"></i> Custo Real (Negociado)</div>
+            <div style="font-size:16px; font-weight:800; color:var(--success);">${Util.formatBRL(accReal)}</div>
+          </div>
+          <div>
+            <div style="font-size:9px; font-weight:700; color:var(--danger); text-transform:uppercase;"><i class="fa-solid fa-arrow-trend-up"></i> Pior Cenário (Potencial)</div>
+            <div style="font-size:16px; font-weight:800; color:var(--danger);">${Util.formatBRL(accMax)}</div>
+          </div>
+          <div style="border-top:1px solid var(--line); padding-top:10px; margin-top:2px;">
+            <div style="font-size:9px; font-weight:700; color:var(--navy); text-transform:uppercase;">Saving Consolidado</div>
+            <div style="font-size:20px; font-weight:800; color:var(--navy); line-height:1.1;">${Util.formatBRL(totalEcon)}</div>
+            <div style="font-size:11px; font-weight:800; color:var(--success); margin-top:2px;">▼ -${percSaving.toFixed(1)}%</div>
+          </div>
+        `;
+    }
+
     const ctxSaving = document.getElementById('dash-saving-chart');
     if(ctxSaving) {
         if(window.dashSavingChart) window.dashSavingChart.destroy();
@@ -2594,6 +2658,167 @@ const App = {
             }
         });
     }
+	// Dispara a montagem do novo bloco de Contratos
+   	 App.renderDashContratos();
+  },
+
+  renderDashContratos: () => {
+      const anoSelecionado = document.getElementById('dash-filtro-ano').value;
+      const obraSelecionada = document.getElementById('dash-filtro-obra').value;
+      const statusSelecionado = document.getElementById('dash-filtro-status').value;
+      
+      const procs = DB.data.processos.filter(p => p.status === 'aprovado' && p.spe === obraSelecionada && p.ocs && p.ocs.length > 0);
+      
+      const listaCards = []; 
+      let somatorioTotal = 0;
+      
+      procs.forEach(p => {
+          p.ocs.forEach(oc => {
+              // 1. Filtro de Status (Ativo vs Arquivado)
+              const isArquivado = oc.arquivado === true;
+              if (statusSelecionado === 'ativos' && isArquivado) return;
+              if (statusSelecionado === 'arquivados' && !isArquivado) return;
+
+              // 2. Filtro de Ano
+              const dt = oc.emissao || p.criadoEm || '';
+              const anoOC = dt.split('/').length === 3 ? dt.split('/')[2] : '';
+              if (anoSelecionado !== 'todos' && anoOC !== anoSelecionado) return;
+              
+              // Cálculo do Valor da OC
+              let volOc = (oc.frete || 0) + (oc.imposto || 0);
+              oc.itens.forEach(i => volOc += (i.qtd * i.preco));
+              somatorioTotal += volOc;
+              
+              const fornec = DB.data.fornecedores.find(f => f.id === oc.fornId);
+              const nomeForn = fornec ? fornec.nome : 'Fornecedor';
+              
+              // Lógica da Categoria (Material ou Serviço)
+              let tipoDefinido = oc.tipoContrato;
+              if (!tipoDefinido) {
+                  const cat = (p.req.cat || '').toLowerCase();
+                  if(cat.includes('serviço') || cat.includes('mão de obra') || cat.includes('empreiteira') || cat.includes('locação')) {
+                      tipoDefinido = 'servico';
+                  } else {
+                      tipoDefinido = 'material';
+                  }
+              }
+
+              // Converte data para organizar da mais nova para a mais velha
+              const parts = dt.split('/');
+              const sortTimestamp = parts.length === 3 ? new Date(parts[2], parts[1]-1, parts[0]).getTime() : 0;
+              
+              listaCards.push({
+                  pid: p.id,
+                  ocNum: oc.numero,
+                  fornecedor: nomeForn,
+                  nomeContrato: oc.nomeContrato || '',
+                  tipo: tipoDefinido,
+                  valor: volOc,
+                  data: dt,
+                  timestamp: sortTimestamp,
+                  arquivado: isArquivado
+              });
+          });
+      });
+      
+      // Atualiza o Placar Financeiro no HTML com base apenas nos itens filtrados
+      const elTotal = document.getElementById('dash-contratos-total');
+      if (elTotal) elTotal.textContent = Util.formatBRL(somatorioTotal);
+
+      const divLista = document.getElementById('dash-contratos-lista');
+      divLista.innerHTML = '';
+      
+      if(listaCards.length === 0) {
+          divLista.innerHTML = `<div style="text-align:center; color:var(--muted); font-size:13px; padding:30px; border:1px dashed var(--line); border-radius:6px; background:var(--paper);">Nenhum contrato encontrado para os filtros selecionados.</div>`;
+      } else {
+          // Ordena a lista para as OCs mais recentes ficarem no topo
+          const listaVisual = [...listaCards].sort((a,b) => b.timestamp - a.timestamp);
+          
+          listaVisual.forEach(c => {
+              const bgBadge = c.tipo === 'servico' ? 'var(--danger)' : 'var(--ai-color)';
+              const colorBadge = c.tipo === 'servico' ? '#fff' : '#000';
+              
+              const selectTipo = `
+                 <select onchange="App.atualizarTipoOC('${c.pid}', '${c.ocNum}', this.value)" style="background:${bgBadge}; color:${colorBadge}; border:none; border-radius:4px; font-size:10px; font-weight:800; padding:4px 8px; outline:none; cursor:pointer;">
+                    <option value="material" ${c.tipo==='material'?'selected':''}>MATERIAL</option>
+                    <option value="servico" ${c.tipo==='servico'?'selected':''}>SERVIÇO</option>
+                 </select>
+              `;
+
+              // O botão muda dependendo se está na tela de ativos ou na tela de histórico (arquivados)
+              const btnArquivar = c.arquivado 
+                  ? `<button class="btn btn-outline" style="font-size:10px; padding:8px 16px; color:var(--muted); border-color:var(--line);" onclick="App.arquivarContrato('${c.pid}', '${c.ocNum}', false)"><i class="fa-solid fa-rotate-left"></i> Reativar OC</button>`
+                  : `<button class="btn btn-success" style="font-size:10px; padding:8px 16px;" onclick="App.arquivarContrato('${c.pid}', '${c.ocNum}', true)"><i class="fa-solid fa-box-archive"></i> Arquivar / Finalizar</button>`;
+
+              divLista.innerHTML += `
+                  <div style="background:var(--paper); border:1px solid var(--line); border-radius:6px; padding:15px 20px; display:flex; justify-content:space-between; align-items:center; gap:20px; transition:0.2s;">
+                     <!-- Lado Esquerdo: Identificação -->
+                     <div style="display:flex; flex-direction:column; gap:8px; flex:2;">
+                        <div style="display:flex; align-items:center; gap:12px;">
+                            <span style="font-size:13px; font-weight:800; color:var(--navy);">${c.ocNum}</span>
+                            ${selectTipo}
+                        </div>
+                        <input type="text" placeholder="Escreva o nome/descrição do contrato, material ou serviço..." value="${c.nomeContrato}" onchange="App.atualizarNomeContrato('${c.pid}', '${c.ocNum}', this.value)" style="border:1px solid transparent; border-bottom:1px dashed var(--line); background:transparent; font-size:14px; font-family:'Montserrat', sans-serif; font-weight:600; color:var(--ink); width:100%; outline:none; padding:4px 0;">
+                     </div>
+                     
+                     <!-- Meio: Fornecedor e Data -->
+                     <div style="flex:1; border-left:1px dashed var(--line); padding-left:20px;">
+                        <div style="font-size:10px; color:var(--muted); text-transform:uppercase; margin-bottom:4px;">Fornecedor Contratado:</div>
+                        <div style="font-size:12px; font-weight:700; color:var(--ink);">${c.fornecedor}</div>
+                        <div style="font-size:10px; color:var(--muted); margin-top:6px;"><i class="fa-regular fa-calendar"></i> Emissão: ${c.data}</div>
+                     </div>
+                     
+                     <!-- Meio: Fornecedor e Data -->
+                     <div style="flex:1; border-left:1px dashed var(--line); padding-left:20px;">
+                        <div style="font-size:10px; color:var(--muted); text-transform:uppercase; margin-bottom:4px;">Fornecedor Contratado:</div>
+                        <div style="font-size:12px; font-weight:700; color:var(--ink);">${c.fornecedor}</div>
+                        <div style="font-size:10px; color:var(--muted); margin-top:6px;"><i class="fa-regular fa-calendar"></i> Emissão: ${c.data}</div>
+                     </div>
+                     
+                     <!-- Lado Direito: Valores e Botão (Ajustado) -->
+                     <div style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px; border-left:1px dashed var(--line); padding-left:20px;">
+                        <div style="font-size:16px; font-weight:800; color:var(--navy);">${Util.formatBRL(c.valor)}</div>
+                        <button class="${c.arquivado ? 'btn-outline' : 'btn-success'} btn" style="font-size:9px; padding:6px 12px; ${c.arquivado ? 'color:var(--muted); border-color:var(--line);' : ''}" onclick="App.arquivarContrato('${c.pid}', '${c.ocNum}', ${!c.arquivado})">
+                           <i class="fa-solid ${c.arquivado ? 'fa-rotate-left' : 'fa-box-archive'}"></i> ${c.arquivado ? 'Reativar OC' : 'Arquivar / Finalizar'}
+                        </button>
+                     </div>
+                  </div>
+              `;
+          });
+      }
+  },
+
+  arquivarContrato: (pid, ocNum, arquivar) => {
+      const p = DB.getProcess(pid);
+      if(p && p.ocs) {
+          const oc = p.ocs.find(x => x.numero === ocNum);
+          if(oc) { 
+              oc.arquivado = arquivar; 
+              DB.saveItem('processos', p); 
+              App.renderDashContratos(); 
+              UI.toast(arquivar ? "Contrato arquivado com sucesso!" : "Contrato reativado!"); 
+          }
+      }
+  },
+
+  atualizarNomeContrato: (pid, ocNum, val) => {
+      const p = DB.getProcess(pid);
+      if(p && p.ocs) {
+          const oc = p.ocs.find(x => x.numero === ocNum);
+          if(oc) { oc.nomeContrato = val; DB.saveItem('processos', p); UI.toast("Nome do contrato salvo!"); }
+      }
+  },
+
+  atualizarTipoOC: (pid, ocNum, val) => {
+      const p = DB.getProcess(pid);
+      if(p && p.ocs) {
+          const oc = p.ocs.find(x => x.numero === ocNum);
+          if(oc) { 
+              oc.tipoContrato = val; 
+              DB.saveItem('processos', p); 
+              App.renderDashContratos(); 
+          }
+      }
   },
 
   renderProcessos: () => {
