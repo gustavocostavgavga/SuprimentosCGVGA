@@ -3893,61 +3893,65 @@ const Req = {
     const p = DB.getProcess(currentPID);
     const fornecedoresData = p.fornecedoresSelecionados.map(fid => DB.data.fornecedores.find(x => x.id === fid)).filter(Boolean);
     
-    if (fornecedoresData.length === 0) return UI.toast("Sem fornecedores para enviar.");
-
-    const loader = document.getElementById('db-loader');
-    loader.style.display = 'flex';
-    loader.style.opacity = '1';
-    loader.children[1].textContent = 'ENVIANDO E-MAILS EM LOTE. AGUARDE...';
-    
-    try {
-        const selectResp = document.getElementById('rcResp');
-        const respNome = selectResp.options[selectResp.selectedIndex].text;
-        const speInfo = p.spe && SPES[p.spe] ? `${SPES[p.spe].nome} (CNPJ: ${SPES[p.spe].cnpj})` : "A confirmar";
+    // Se TEM fornecedores, faz o fluxo de API e envio de e-mails
+    if (fornecedoresData.length > 0) {
+        const loader = document.getElementById('db-loader');
+        loader.style.display = 'flex';
+        loader.style.opacity = '1';
+        loader.children[1].textContent = 'ENVIANDO E-MAILS EM LOTE. AGUARDE...';
         
-        // Monta a Lista de E-mails
-        const listaEnvio = fornecedoresData.map(f => ({ nome: f.nome, email: f.email || f.contato }));
-        listaEnvio.push({ nome: "Cópia Suprimentos", email: "gustavocosta@casagrandeurbanismo.com.br" }); // SUA CÓPIA
-        
-        // Payload super limpo e leve (Garante que não dê erro 413)
-        const payload = { 
-            fornecedores: listaEnvio, 
-            rcData: { ...p.req, respNome: respNome, speInfo: speInfo, mensagemAdicional: "" },
-            anexos: [] 
-        };
+        try {
+            const selectResp = document.getElementById('rcResp');
+            const respNome = selectResp.options[selectResp.selectedIndex].text;
+            const speInfo = p.spe && SPES[p.spe] ? `${SPES[p.spe].nome} (CNPJ: ${SPES[p.spe].cnpj})` : "A confirmar";
+            
+            // Monta a Lista de E-mails
+            const listaEnvio = fornecedoresData.map(f => ({ nome: f.nome, email: f.email || f.contato }));
+            listaEnvio.push({ nome: "Cópia Suprimentos", email: "gustavocosta@casagrandeurbanismo.com.br" }); // SUA CÓPIA
+            
+            // Payload super limpo e leve (Garante que não dê erro 413)
+            const payload = { 
+                fornecedores: listaEnvio, 
+                rcData: { ...p.req, respNome: respNome, speInfo: speInfo, mensagemAdicional: "" },
+                anexos: [] 
+            };
 
-        const resposta = await fetch('https://suprimentos-cgvga.vercel.app/api/enviar-email', { 
-            method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) 
-        });
+            const resposta = await fetch('https://suprimentos-cgvga.vercel.app/api/enviar-email', { 
+                method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) 
+            });
 
-        const textoResposta = await resposta.text();
-        let dados; try { dados = JSON.parse(textoResposta); } catch(e) {}
-        
-        if (!resposta.ok || (dados && (dados.error || dados.success === false))) {
-            throw new Error(dados?.error || `Erro HTTP ${resposta.status}`);
+            const textoResposta = await resposta.text();
+            let dados; try { dados = JSON.parse(textoResposta); } catch(e) {}
+            
+            if (!resposta.ok || (dados && (dados.error || dados.success === false))) {
+                throw new Error(dados?.error || `Erro HTTP ${resposta.status}`);
+            }
+
+        } catch (err) { 
+            console.error("Falha ao acionar API:", err);
+            alert("Erro no disparo: " + err.message);
+            loader.style.opacity = '0';
+            setTimeout(()=> loader.style.display = 'none', 500);
+            return; // Se a API der erro fatal, ele trava pra você não perder os dados.
         }
-
-    } catch (err) { 
-        console.error("Falha ao acionar API:", err);
-        alert("Erro no disparo: " + err.message);
+        
         loader.style.opacity = '0';
         setTimeout(()=> loader.style.display = 'none', 500);
-        return; 
+        App.logHistory(p.id, "Cotação disparada para " + p.fornecedoresSelecionados.length + " fornecedores.");
+    } else {
+        // Se NÃO tem fornecedores, apenas registra que avançou em branco
+        App.logHistory(p.id, "Cotação iniciada sem disparo inicial de e-mails em lote.");
     }
     
-    // Finalização e Atualização do Status
-    loader.style.opacity = '0';
-    setTimeout(()=> loader.style.display = 'none', 500);
-    
+    // Finalização e Atualização do Status (Roda independente de ter enviado e-mail ou não)
     p.status = 'cotando'; 
     p.propostas = p.fornecedoresSelecionados.map(fid => {
         const f = DB.data.fornecedores.find(x => x.id === fid);
         return { fornId: fid, nome: f ? f.nome : 'Fornecedor', doc: f ? (f.cnpj || f.doc || '') : '', tel: f ? (f.tel || '') : '', email: f ? (f.email || f.contato || '') : '', status: 'pendente', itens: {}, frete: 0, imposto: 0, prazo: f ? (f.prazo || '') : '', cond: '' };
     });
     
-    App.logHistory(p.id, "Cotação disparada para " + p.fornecedoresSelecionados.length + " fornecedores.");
     DB.saveItem('processos', p);
-    UI.toast("Cotações iniciadas com sucesso!"); 
+    UI.toast("Cotação iniciada com sucesso!"); 
     App.nav('processos'); 
   }
 };
