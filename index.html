@@ -1974,6 +1974,24 @@
 </div>
 
 <!-- ====== MODALS ====== -->
+<!-- MODAL: LISTA DE INSUMOS (IMPORTAÇÃO) -->
+<div class="modal-overlay" id="modal-importar-insumo">
+  <div class="modal" style="max-width:700px;">
+    <div class="modal-header">
+      <span>📦 Importar Insumo da Base</span>
+      <button class="del-btn" onclick="UI.closeModal('modal-importar-insumo')" style="font-size:24px;">&times;</button>
+    </div>
+    <div class="field" style="margin-bottom:15px;">
+       <input type="text" id="busca-import-insumo" placeholder="🔍 Pesquisar por nome ou código..." oninput="Req.filtrarInsumosImport()">
+    </div>
+    <div class="table-wrapper" style="max-height:350px;">
+       <table class="items" style="width:100%;">
+          <thead><tr><th>Cód/Família</th><th>Descrição</th><th>Unid</th><th style="text-align:right">Ação</th></tr></thead>
+          <tbody id="import-insumos-body"></tbody>
+       </table>
+    </div>
+  </div>
+</div>
 <!-- MODAL: BUSCA NO GOOGLE MAPS -->
 <div class="modal-overlay" id="modal-busca-google">
   <div class="modal" style="max-width:550px;">
@@ -3688,6 +3706,8 @@ const ATD = {
   }
 };
 const Req = {
+  currentRowInsumo: null,
+
   load: (p) => {
     document.getElementById('rc-subtitle').textContent = `PROCESSO ${p.id}`;
     document.getElementById('rcNum').textContent = p.req.numero;
@@ -3716,6 +3736,7 @@ const Req = {
     document.getElementById('btn-enviar-cot').style.display = p.status === 'rascunho' ? 'inline-flex' : 'none';
     document.getElementById('btn-busca-web').style.display = p.status === 'rascunho' ? 'inline-flex' : 'none';
   },
+
   updateSPE: (valLocal = '') => {
     const speEl = document.getElementById('rcSpe');
     if(!speEl) return;
@@ -3738,6 +3759,50 @@ const Req = {
       if(valLocal) loc.value = valLocal;
     }
   },
+
+  abrirModalInsumos: (btn) => {
+      Req.currentRowInsumo = btn.closest('tr');
+      document.getElementById('busca-import-insumo').value = '';
+      Req.filtrarInsumosImport();
+      UI.openModal('modal-importar-insumo');
+  },
+
+  filtrarInsumosImport: () => {
+      const tb = document.getElementById('import-insumos-body');
+      const query = document.getElementById('busca-import-insumo').value.toLowerCase();
+      tb.innerHTML = '';
+      const filtrados = DB.data.insumos.filter(i => 
+          (i.desc && i.desc.toLowerCase().includes(query)) || 
+          (i.codigo && i.codigo.toLowerCase().includes(query))
+      ).slice(0, 50); // Limita a 50 para performance
+      
+      if(filtrados.length === 0) {
+          tb.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:20px; color:var(--muted)">Nenhum insumo encontrado.</td></tr>';
+          return;
+      }
+      
+      filtrados.forEach(ins => {
+          tb.innerHTML += `<tr>
+              <td style="font-weight:700; color:var(--navy);">${ins.codigo || '-'}</td>
+              <td>${ins.desc}</td>
+              <td style="text-align:center;">${ins.unid || '-'}</td>
+              <td style="text-align:right;">
+                  <button class="btn btn-outline" style="padding:4px 10px; font-size:10px; border-color:var(--navy-2); color:var(--navy-2);" onclick="Req.importarInsumo('${ins.codigo || ''}', '${ins.desc.replace(/'/g, "\\'")}', '${ins.unid || 'un.'}')">Importar</button>
+              </td>
+          </tr>`;
+      });
+  },
+
+  importarInsumo: (cod, desc, unid) => {
+      if(Req.currentRowInsumo) {
+          Req.currentRowInsumo.querySelector('.item-cod').value = cod;
+          Req.currentRowInsumo.querySelector('.desc').value = desc;
+          Req.currentRowInsumo.querySelector('.unit').value = unid;
+      }
+      UI.closeModal('modal-importar-insumo');
+      UI.toast("Insumo importado com sucesso!");
+  },
+
   addItem: (d=null) => {
     const id = d ? d.id : Util.genId();
     const tb = document.getElementById('rcItemsBody');
@@ -3750,8 +3815,9 @@ const Req = {
     tr.innerHTML = `
       <td class="col-desc">
          <div style="display:flex; gap:6px;">
-            <input type="text" class="item-cod" placeholder="Cód/Família" value="${codeVal}" style="width:110px;" title="Obrigatório preencher a família (Ex: MO-ELE)">
+            <input type="text" class="item-cod" placeholder="Cód/Família" value="${codeVal}" style="width:90px;" title="Obrigatório preencher a família (Ex: MO-ELE)">
             <input type="text" class="desc" placeholder="Nome do Insumo..." value="${descVal}" list="dl-insumos" onchange="Req.onDescChange(this)" style="flex:1;">
+            <button class="btn btn-outline no-print" style="padding:0 8px; border-color:var(--line); color:var(--navy);" onclick="Req.abrirModalInsumos(this)" title="Buscar Insumo na Base"><i class="fa-solid fa-search"></i></button>
          </div>
       </td>
       <td class="col-qty"><input type="number" class="qty num" min="0" step="1" value="${d?.qtd || 1}" onchange="Req.calcTotal()"></td>
@@ -3767,6 +3833,7 @@ const Req = {
     `;
     tb.appendChild(tr); Req.calcTotal();
   },
+
   onDescChange: (input) => {
       const val = input.value || '';
       const match = val.match(/^\[(.*?)\]\s*(.*)$/);
@@ -3777,7 +3844,6 @@ const Req = {
           input.value = match[2];
       }
       const clean = Insumos.extractDesc(input.value);
-      // PREVENÇÃO DE ERRO: Garante que não quebre se x.desc for null na base antiga
       const ins = DB.data.insumos.find(x => (x.desc || '').toLowerCase() === (clean || '').toLowerCase());
       if(ins && ins.unid) {
           const tr = input.closest('tr');
@@ -3785,6 +3851,7 @@ const Req = {
           if (unitInput) unitInput.value = ins.unid;
       }
   },
+
   verHistorico: (btn) => {
       const tr = btn.closest('tr');
       const codEl = tr.querySelector('.item-cod');
@@ -3795,6 +3862,7 @@ const Req = {
       }
       window.verHistoricoItem(rawDesc);
   },
+
   calcTotal: () => {
     let tot=0;
     document.querySelectorAll('#rcItemsBody tr').forEach(tr=>{
@@ -3807,6 +3875,7 @@ const Req = {
     const totalEl = document.getElementById('rcTotal');
     if (totalEl) totalEl.textContent = Util.formatBRL(tot);
   },
+
   save: () => {
     const p = DB.getProcess(currentPID);
     ['Emissao','Prazo','Resp','Email','Cat','Local'].forEach(k => {
@@ -3821,8 +3890,6 @@ const Req = {
     document.querySelectorAll('#rcItemsBody tr').forEach(tr=>{
       const inputCod = tr.querySelector('.item-cod');
       const inputDesc = tr.querySelector('.desc');
-      
-      // Failsafe contra DOMs antigos
       if(!inputCod || !inputDesc) return;
 
       const codEl = inputCod.value.trim();
@@ -3847,11 +3914,10 @@ const Req = {
       
       p.req.itens.push({ id: tr.dataset.id, desc: rawDesc, qtd: qtyVal, unid: unid, preco: priceVal });
       
-      // PREVENÇÃO DE ERRO MAXIMA: Varredura protegida com "(x.desc || '')"
       if (!DB.data.insumos.find(x => (x.desc || '').toLowerCase() === descEl.toLowerCase())) {
           const novoInsumo = { id: Util.genId(), codigo: codEl, desc: descEl, unid: unid, criadoEm: Util.today() };
           DB.data.insumos.push(novoInsumo);
-          DB.saveItem('insumos', novoInsumo); // ✅ Envia o insumo novo para a nuvem
+          DB.saveItem('insumos', novoInsumo);
       }
     });
 
@@ -3860,11 +3926,12 @@ const Req = {
         return false;
     }
 
-    DB.saveItem('processos', p); // Mudança aqui!
+    DB.saveItem('processos', p); 
     Insumos.updateDatalist(); 
     UI.toast("Requisição Salva!"); Req.load(p); 
     return true;
   },
+
   renderFornList: (p) => {
     const blk = document.getElementById('req-forn-block');
     const tb = document.getElementById('rcFornBody'); tb.innerHTML = '';
@@ -3879,21 +3946,16 @@ const Req = {
   enviarCotacao: () => {
     const savedOk = Req.save(); 
     if(savedOk === false) return;
-
-    const p = DB.getProcess(currentPID);
-    if (p.fornecedoresSelecionados.length === 0) { 
-        if(!confirm("Nenhum fornecedor selecionado. Deseja iniciar a cotação assim mesmo?")) return; 
-    }
-
-    // Chama o envio direto sem abrir modal
     Req.confirmarEnvioCotacao();
   },
 
   confirmarEnvioCotacao: async () => {
     const p = DB.getProcess(currentPID);
-    const fornecedoresData = p.fornecedoresSelecionados.map(fid => DB.data.fornecedores.find(x => x.id === fid)).filter(Boolean);
     
-    // Se TEM fornecedores, faz o fluxo de API e envio de e-mails
+    // Filtra APENAS os fornecedores que AINDA NÃO receberam cotação neste processo
+    const novosParaDisparo = p.fornecedoresSelecionados.filter(fid => !p.propostas.some(prop => prop.fornId === fid));
+    const fornecedoresData = novosParaDisparo.map(fid => DB.data.fornecedores.find(x => x.id === fid)).filter(Boolean);
+    
     if (fornecedoresData.length > 0) {
         const loader = document.getElementById('db-loader');
         loader.style.display = 'flex';
@@ -3905,11 +3967,9 @@ const Req = {
             const respNome = selectResp.options[selectResp.selectedIndex].text;
             const speInfo = p.spe && SPES[p.spe] ? `${SPES[p.spe].nome} (CNPJ: ${SPES[p.spe].cnpj})` : "A confirmar";
             
-            // Monta a Lista de E-mails
             const listaEnvio = fornecedoresData.map(f => ({ nome: f.nome, email: f.email || f.contato }));
-            listaEnvio.push({ nome: "Cópia Suprimentos", email: "gustavocosta@casagrandeurbanismo.com.br" }); // SUA CÓPIA
+            listaEnvio.push({ nome: "Cópia Suprimentos", email: "gustavocosta@casagrandeurbanismo.com.br" }); 
             
-            // Payload super limpo e leve (Garante que não dê erro 413)
             const payload = { 
                 fornecedores: listaEnvio, 
                 rcData: { ...p.req, respNome: respNome, speInfo: speInfo, mensagemAdicional: "" },
@@ -3932,26 +3992,28 @@ const Req = {
             alert("Erro no disparo: " + err.message);
             loader.style.opacity = '0';
             setTimeout(()=> loader.style.display = 'none', 500);
-            return; // Se a API der erro fatal, ele trava pra você não perder os dados.
+            return; 
         }
         
         loader.style.opacity = '0';
         setTimeout(()=> loader.style.display = 'none', 500);
-        App.logHistory(p.id, "Cotação disparada para " + p.fornecedoresSelecionados.length + " fornecedores.");
+        App.logHistory(p.id, `Cotação disparada para ${fornecedoresData.length} novos fornecedores.`);
+        UI.toast("Cotações iniciadas com sucesso!"); 
     } else {
-        // Se NÃO tem fornecedores, apenas registra que avançou em branco
-        App.logHistory(p.id, "Cotação iniciada sem disparo inicial de e-mails em lote.");
+        App.logHistory(p.id, "Edição do processo salva. Nenhum e-mail novo precisou ser disparado.");
+        UI.toast("Alterações salvas! Nenhum novo e-mail foi disparado.");
     }
     
-    // Finalização e Atualização do Status (Roda independente de ter enviado e-mail ou não)
+    // Muda o status e incorpora os novos fornecedores no mapa
     p.status = 'cotando'; 
-    p.propostas = p.fornecedoresSelecionados.map(fid => {
-        const f = DB.data.fornecedores.find(x => x.id === fid);
-        return { fornId: fid, nome: f ? f.nome : 'Fornecedor', doc: f ? (f.cnpj || f.doc || '') : '', tel: f ? (f.tel || '') : '', email: f ? (f.email || f.contato || '') : '', status: 'pendente', itens: {}, frete: 0, imposto: 0, prazo: f ? (f.prazo || '') : '', cond: '' };
+    p.fornecedoresSelecionados.forEach(fid => {
+        if (!p.propostas.some(prop => prop.fornId === fid)) {
+            const f = DB.data.fornecedores.find(x => x.id === fid);
+            p.propostas.push({ fornId: fid, nome: f ? f.nome : 'Fornecedor', doc: f ? (f.cnpj || f.doc || '') : '', tel: f ? (f.tel || '') : '', email: f ? (f.email || f.contato || '') : '', status: 'pendente', itens: {}, frete: 0, imposto: 0, prazo: f ? (f.prazo || '') : '', cond: '' });
+        }
     });
     
     DB.saveItem('processos', p);
-    UI.toast("Cotação iniciada com sucesso!"); 
     App.nav('processos'); 
   }
 };
@@ -5676,7 +5738,16 @@ window.enviarCotacaoAvulsa = async (propId) => {
     setTimeout(()=> { loader.style.display = 'none'; loader.children[1].textContent = 'Conectando ao Firebase...'; }, 500);
 };
 
-window.removeFornecedorComp = (propId) => { if(!confirm('Remover fornecedor do Mapa?')) return; const p = DB.getProcess(currentPID); p.propostas = p.propostas.filter(x => x.fornId !== propId); if(p.vencedorId === propId) p.vencedorId = null; DB.saveItem('processos', p); MapaPrecos.load(p); document.getElementById('comp-form-forn').style.display = 'none'; };
+window.removeFornecedorComp = (propId) => { 
+    if(!confirm('Remover fornecedor DEFINITIVAMENTE do Mapa e do Processo?')) return; 
+    const p = DB.getProcess(currentPID); 
+    p.propostas = p.propostas.filter(x => x.fornId !== propId); 
+    p.fornecedoresSelecionados = p.fornecedoresSelecionados.filter(x => x !== propId); // Limpa da seleção original
+    if(p.vencedorId === propId) p.vencedorId = null; 
+    DB.saveItem('processos', p); 
+    MapaPrecos.load(p); 
+    document.getElementById('comp-form-forn').style.display = 'none'; 
+};
 window.updatePropFornNome = (propId, val) => { const p = DB.getProcess(currentPID); const prop = p.propostas.find(x => x.fornId === propId); if(prop) prop.nome = val; DB.saveItem('processos', p); if(currentCompFornId === propId) document.getElementById('comp-form-title').textContent = `- ${val}`; };
 window.updatePropPreco = (propId, itemId, valStr) => { const p = DB.getProcess(currentPID); const prop = p.propostas.find(x => x.fornId === propId); if(prop) { prop.itens[itemId] = Util.unmaskCur(valStr); prop.status = 'recebida'; } DB.saveItem('processos', p); MapaPrecos.load(p); };
 window.updatePropFreco = (propId, valStr) => { const p = DB.getProcess(currentPID); const prop = p.propostas.find(x => x.fornId === propId); if(prop) prop.frete = Util.unmaskCur(valStr); DB.saveItem('processos', p); MapaPrecos.load(p); };
@@ -6407,7 +6478,7 @@ const Relatorio = {
          </div>
          
          <!-- ÁREA DOS BLOCOS (Páginas e Tópicos Fixos subsequentes) -->
-         <div id="rel-drag-area-container" class="rel-page" style="background:#fff; min-height:290mm; padding: 20mm; position:relative; border: 2px solid var(--navy); border-radius: 6px;">
+         <div id="rel-drag-area-container" class="rel-page" style="display:none; background:#fff; min-height:290mm; padding: 20mm; position:relative; border: 2px solid var(--navy); border-radius: 6px;">
              <div id="rel-drag-area" style="display:flex; flex-direction:column; gap:25px; flex:1;">
                  
                  <!-- TÓPICO 1: RESUMO EXECUTIVO -->
