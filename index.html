@@ -947,7 +947,7 @@
           <table class="items" style="min-width: 100%; table-layout: fixed;">
             <thead>
               <tr>
-                <th style="width:12%">Código</th>
+                <th class="sortable" style="width:12%" onclick="Insumos.toggleSort('codigo')" title="Ordenar por código">Código ↕</th>
                 <th style="width:58%">Descrição do Insumo (Alfabética)</th>
                 <th class="sortable" style="width:12%; text-align:center;" onclick="Insumos.toggleSort('data')" title="Ordenar por data">Cadastro ↕</th>
                 <th style="width:10%; text-align:center;">Unidade</th>
@@ -5245,7 +5245,13 @@ const Insumos = {
                 const dA = a.criadoEm ? new Date(a.criadoEm.split('/').reverse().join('-')) : new Date(0);
                 const dB = b.criadoEm ? new Date(b.criadoEm.split('/').reverse().join('-')) : new Date(0);
                 return insumoSortAsc ? dA - dB : dB - dA;
+            } else if(insumoSortCol === 'codigo') {
+                // O {numeric: true} garante que "MO-001" venha antes de "MO-002" inteligentemente
+                return insumoSortAsc 
+                    ? (a.codigo||'').localeCompare((b.codigo||''), undefined, {numeric: true}) 
+                    : (b.codigo||'').localeCompare((a.codigo||''), undefined, {numeric: true});
             } else {
+                // Padrão: Descrição Alfabética
                 return insumoSortAsc ? (a.desc||'').localeCompare(b.desc||'') : (b.desc||'').localeCompare(a.desc||'');
             }
         });
