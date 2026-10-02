@@ -691,7 +691,7 @@
           <thead>
             <tr>
               <th>Processo / RC</th>
-              <th>Data</th>
+              <th class="sortable" onclick="App.sortProcessos('data')" title="Ordenar por data de criação">Data ↕</th>
               <th>Empresa (SPE)</th>
               <th>Status</th>
               <th style="text-align:right">Ações</th>
@@ -2094,16 +2094,23 @@
 </div>
 
 <div class="modal-overlay" id="modal-add-forn-mapa">
-  <div class="modal">
+  <div class="modal" style="max-width:600px;">
     <div class="modal-header">
       <span>➕ Adicionar Fornecedor ao Mapa</span>
       <button class="del-btn" onclick="UI.closeModal('modal-add-forn-mapa')" style="font-size:24px;">&times;</button>
     </div>
-    <div class="field">
-      <label>Selecione um fornecedor cadastrado:</label>
-      <select id="map-forn-select" style="width:100%; padding:10px; border:1px solid var(--line); border-radius:4px; font-family:'Montserrat';"></select>
+    
+    <div class="field" style="margin-bottom:15px;">
+      <input type="text" id="busca-forn-mapa" placeholder="🔍 Pesquisar por nome, CNPJ ou cidade..." oninput="filtrarFornMapa()">
     </div>
-    <button class="btn btn-solid" style="width:100%; margin-top:20px;" onclick="confirmarAddFornMapa()">Adicionar ao Mapa</button>
+    
+    <div id="lista-forn-mapa" style="max-height: 300px; overflow-y: auto; border: 1px solid var(--line); border-radius: 6px; padding: 10px; display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px;">
+        <!-- A lista de fornecedores em ordem alfabética será injetada aqui -->
+    </div>
+
+    <div style="text-align:center; width: 100%;">
+      <button class="btn btn-solid" style="padding:15px 40px; font-size:14px; margin: 0 auto; display: inline-block;" onclick="confirmarAddFornMapa()">Adicionar ao Mapa</button>
+    </div>
   </div>
 </div>
 
@@ -2909,9 +2916,27 @@ const App = {
       }
   },
 
+  procSortAsc: false, // Define que o padrão é mostrar os mais recentes primeiro
+  
+  sortProcessos: (col) => {
+      App.procSortAsc = !App.procSortAsc; // Inverte a ordem
+      App.renderProcessos();
+  },
+
   renderProcessos: () => {
     const tbody = document.getElementById('lista-processos-body'); tbody.innerHTML = '';
-    [...DB.data.processos].reverse().forEach(p => {
+    
+    // Clona a lista de processos
+    let lista = [...DB.data.processos];
+    
+    // Aplica a ordenação por data de criação
+    lista.sort((a, b) => {
+        const dateA = a.criadoEm ? new Date(a.criadoEm.split('/').reverse().join('-')) : new Date(0);
+        const dateB = b.criadoEm ? new Date(b.criadoEm.split('/').reverse().join('-')) : new Date(0);
+        return App.procSortAsc ? dateA - dateB : dateB - dateA;
+    });
+
+    lista.forEach(p => {
       let stHtml = '', acHtml = '';
       if(p.status==='rascunho') { 
         stHtml = '<span class="status-badge s-req">RC CRIADA</span>'; 
@@ -5591,35 +5616,75 @@ window.editarRequisicao = () => {
   }
 };
 
-window.abrirModalAddFornMapa = () => {
-  const p = DB.getProcess(currentPID);
-  const sel = document.getElementById('map-forn-select');
-  sel.innerHTML = '<option value="">Selecione...</option>';
-  DB.data.fornecedores.forEach(f => {
-    if(!p.propostas.find(prop => prop.fornId === f.id)) {
-       sel.innerHTML += `<option value="${f.id}">${f.nome} (${f.cidade || 'Sem cidade'})</option>`;
+window.filtrarFornMapa = () => {
+    const query = (document.getElementById('busca-forn-mapa').value || '').toLowerCase();
+    const p = DB.getProcess(currentPID);
+    const listDiv = document.getElementById('lista-forn-mapa');
+    listDiv.innerHTML = '';
+    
+    // Pega apenas quem ainda não está no mapa
+    let disponiveis = DB.data.fornecedores.filter(f => !p.propostas.find(prop => prop.fornId === f.id));
+    
+    if (query) {
+        disponiveis = disponiveis.filter(f => 
+            (f.nome || '').toLowerCase().includes(query) || 
+            (f.cnpj || f.doc || '').toLowerCase().includes(query) ||
+            (f.cidade || '').toLowerCase().includes(query)
+        );
     }
-  });
+    
+    // Força a ordenação alfabética crescente (A-Z)
+    disponiveis.sort((a,b) => (a.nome||'').localeCompare(b.nome||''));
+    
+    if (disponiveis.length === 0) {
+        listDiv.innerHTML = '<div style="text-align:center; padding:20px; color:var(--muted); font-size:12px;">Nenhum fornecedor encontrado.</div>';
+        return;
+    }
+    
+    disponiveis.forEach(f => {
+        listDiv.innerHTML += `
+          <label style="display:flex; align-items:center; gap:10px; padding:10px; border:1px solid var(--line); border-radius:4px; cursor:pointer; transition:0.2s;" onmouseover="this.style.background='var(--highlight)'" onmouseout="this.style.background='transparent'">
+             <input type="checkbox" class="chk-add-mapa" value="${f.id}" style="width:18px; height:18px; accent-color:var(--navy);">
+             <div style="display:flex; flex-direction:column;">
+                <strong style="color:var(--navy); font-size:13px;">${f.nome}</strong>
+                <span style="color:var(--muted); font-size:10px;">${f.cidade || 'Sem cidade'} | ${f.cats || 'Sem categoria'}</span>
+             </div>
+          </label>
+        `;
+    });
+};
+
+window.abrirModalAddFornMapa = () => {
+  document.getElementById('busca-forn-mapa').value = '';
+  window.filtrarFornMapa();
   UI.openModal('modal-add-forn-mapa');
 };
 
 window.confirmarAddFornMapa = () => {
-  const fid = document.getElementById('map-forn-select').value;
-  if(!fid) return alert('Selecione um fornecedor.');
+  // Pega todos os fornecedores que você marcou na lista
+  const selecionados = Array.from(document.querySelectorAll('.chk-add-mapa:checked')).map(cb => cb.value);
+  if(selecionados.length === 0) return alert('Selecione ao menos um fornecedor na lista.');
+  
   const p = DB.getProcess(currentPID);
-  const f = DB.data.fornecedores.find(x => x.id === fid);
-  if(f && p) {
-    p.propostas.push({ 
-      fornId: f.id, nome: f.nome || '', doc: f.cnpj || f.doc || '', tel: f.tel || '', email: f.email || f.contato || '', 
-      status: 'pendente', itens: {}, frete: 0, imposto: 0, prazo: f.prazo || '', cond: '' 
-    });
-    // Garante que ele faça parte da lista oficial do processo para não sumir
-    if(!p.fornecedoresSelecionados.includes(f.id)) p.fornecedoresSelecionados.push(f.id);
-    
-    DB.saveItem('processos', p);
-    MapaPrecos.load(p);
-    UI.closeModal('modal-add-forn-mapa');
-    UI.toast('Fornecedor adicionado ao mapa!');
+  let adicionou = false;
+  
+  selecionados.forEach(fid => {
+      const f = DB.data.fornecedores.find(x => x.id === fid);
+      if(f && p) {
+        p.propostas.push({ 
+          fornId: f.id, nome: f.nome || '', doc: f.cnpj || f.doc || '', tel: f.tel || '', email: f.email || f.contato || '', 
+          status: 'pendente', itens: {}, frete: 0, imposto: 0, prazo: f.prazo || '', cond: '' 
+        });
+        if(!p.fornecedoresSelecionados.includes(f.id)) p.fornecedoresSelecionados.push(f.id);
+        adicionou = true;
+      }
+  });
+  
+  if (adicionou) {
+      DB.saveItem('processos', p);
+      MapaPrecos.load(p);
+      UI.closeModal('modal-add-forn-mapa');
+      UI.toast(selecionados.length > 1 ? 'Fornecedores adicionados ao mapa!' : 'Fornecedor adicionado ao mapa!');
   }
 };
 
