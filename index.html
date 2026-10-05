@@ -6571,11 +6571,16 @@ const Relatorio = {
                  .escopo-print-area::after { display: none !important; }
                  .drag-handle, .no-print, .btn-add-page { display: none !important; }
                  
-                 #relatorio-content-area { padding: 0 !important; background: transparent !important; display: block !important; }
+                 /* GARANTIA ZERO DE MARGENS E PÁGINAS EM BRANCO */
+                 #relatorio-content-area { 
+                     position: absolute !important; left: 0 !important; top: 0 !important; 
+                     padding: 0 !important; background: transparent !important; display: block !important; 
+                 }
                  
                  .rel-page {
-                     width: 210mm !important;
-                     height: 297mm !important; 
+                     width: 100% !important;
+                     height: 100vh !important; /* Altura exata da folha para não pular página */
+                     max-height: 100vh !important;
                      margin: 0 !important;
                      border: none !important;
                      box-shadow: none !important;
@@ -6583,9 +6588,9 @@ const Relatorio = {
                      page-break-inside: avoid !important;
                      page-break-after: always !important;
                      overflow: hidden !important; 
+                     box-sizing: border-box !important;
                  }
                  
-                 /* Blinda a primeira página (Capa) para impedir que desça gerando folhas em branco */
                  .rel-page:first-of-type {
                      page-break-before: avoid !important;
                  }
@@ -6604,27 +6609,26 @@ const Relatorio = {
             </div>
 
             <!-- LOGO CENTRALIZADA COM ESPAÇAMENTO AJUSTADO (Mais para Cima) -->
-            <div style="width:100%; display:flex; justify-content:center; align-items:center; padding-top:15mm; margin-bottom:15px; z-index:10; position:relative;">
-                <img id="rel-capa-logo" src="" style="max-width:240px; max-height:90px; object-fit:contain; display:none;">
+            <div style="width:100%; display:flex; justify-content:center; align-items:center; margin-top: 10mm; margin-bottom: 15mm; z-index:10; position:relative;">
+                <img id="rel-capa-logo" src="" style="max-width:240px; max-height:80px; object-fit:contain; display:none;">
             </div>
             
-            <div style="width:100%; text-align:center; z-index:5; position:relative;">
+            <div style="width:100%; text-align:center; z-index:5; position:relative; margin-bottom: 15mm;">
                <h1 style="color:var(--navy); font-size:32px; font-weight:900; letter-spacing:1px; text-transform:uppercase; margin:0 auto; line-height:1.2; padding:0 30px; max-width: 600px;">RELATÓRIO DE EVOLUÇÃO MENSAL DE OBRA</h1>
                <div id="rel-capa-obra" style="color:var(--navy-2); font-size:20px; font-weight:800; margin-top:15px; text-transform:uppercase;">NOME DA OBRA</div>
                <div id="rel-capa-mes" contenteditable="true" style="color:var(--navy-2); font-size:16px; font-weight:700; margin-top:5px; text-transform:uppercase; outline:none; display:inline-block; border-bottom:1px dashed transparent; min-width:200px; padding:2px; background:rgba(255,255,255,0.85); border-radius:4px;" oninput="document.querySelectorAll('.hdr-mes').forEach(el => el.textContent = this.textContent);" onfocus="this.style.borderBottom='1px dashed var(--line)'" onblur="this.style.borderBottom='1px dashed transparent'; this.setAttribute('value', this.innerHTML); document.querySelectorAll('.hdr-mes').forEach(el => el.textContent = this.textContent);">${dataSugerida}</div>
             </div>
             
-            <!-- IMAGEM DA CAPA (BLINDADA CONTRA ESTICAMENTO!) -->
-            <div id="rel-capa-img-box" style="flex:1; min-height:0; display:flex; align-items:center; justify-content:center; margin: 15px 0 20px 0; width:100%; position:relative; z-index:5; border:4px solid var(--navy); border-radius:8px; overflow:hidden; background:var(--highlight); box-shadow:0 10px 30px rgba(0,0,0,0.15);">
+            <!-- IMAGEM DA CAPA COM ALTURA FIXA (Não estica) -->
+            <div id="rel-capa-img-box" style="height:115mm; width:100%; display:flex; align-items:center; justify-content:center; position:relative; z-index:5; border:4px solid var(--navy); border-radius:8px; overflow:hidden; background:var(--highlight); box-shadow:0 10px 30px rgba(0,0,0,0.15); margin: 0 auto 15mm auto;">
                 <div id="rel-capa-placeholder" style="position:absolute; left:0; top:0; width:100%; height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; color:var(--navy); font-weight:bold; font-size:14px; text-align:center; z-index:1;">
                    <i class="fa-solid fa-camera" style="font-size:24px; margin-bottom:10px; display:block;"></i>Imagem Aérea<br>(Será carregada automaticamente)
                 </div>
-                <!-- Posição ABSOLUTA impede que a imagem comande o tamanho da página, forçando-a a caber no flexbox -->
                 <img id="rel-capa-img" src="" style="display:none; position:absolute; left:0; top:0; width:100%; height:100%; object-fit:cover; z-index:2; margin:0; padding:0;" onload="this.style.display='block'; document.getElementById('rel-capa-placeholder').style.display='none';" onerror="this.style.display='none'; document.getElementById('rel-capa-placeholder').style.display='flex';">
             </div>
             
-            <!-- ASSINATURA BLINDADA (width: max-content não deixa espremer a caixa e margin: 0 auto centraliza) -->
-            <div style="margin: 0 auto 5mm auto; width: max-content; align-self: center; text-align:center; font-size:10px; font-weight:900; line-height:1.4; z-index:5; position:relative; text-transform:uppercase; background:rgba(255,255,255,0.9); padding:8px 24px; border-radius:6px; box-shadow:0 4px 6px rgba(0,0,0,0.05); border:1px solid rgba(0,0,0,0.05);">
+            <!-- ASSINATURA REDUZIDA E PROTEGIDA -->
+            <div style="text-align:center; font-size:10px; font-weight:900; line-height:1.4; z-index:5; position:relative; text-transform:uppercase; background:rgba(255,255,255,0.9); padding:8px 24px; border-radius:6px; margin: 0 auto; width: max-content; align-self: center; box-shadow:0 4px 6px rgba(0,0,0,0.05); border:1px solid rgba(0,0,0,0.05);">
                <span style="color:var(--navy);">SETOR RESPONSÁVEL:</span> <span style="color:var(--navy-2);">ENGENHARIA</span><br>
                <span style="color:var(--navy);">DATA DE EMISSÃO:</span> <span id="rel-capa-data" style="color:var(--navy-2);"></span>
             </div>
@@ -7200,6 +7204,7 @@ const Relatorio = {
               
               #view-relatorio { position: static !important; margin: 0 !important; padding: 0 !important; border: none !important; }
               
+              /* BLINDAGEM DA PRIMEIRA PÁGINA (POSIÇÃO ABSOLUTA MATA O BUG DA PÁGINA EM BRANCO) */
               #relatorio-content-area { 
                   position: absolute !important; left: 0 !important; top: 0 !important; 
                   width: 100% !important; display: block !important; border: none !important; background: #fff !important;
