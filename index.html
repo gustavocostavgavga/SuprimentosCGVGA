@@ -6514,7 +6514,8 @@ const Relatorio = {
              .atd-block:hover > .drag-handle { opacity: 1; }
              .atd-block.dragging { opacity: 0.5; background: var(--highlight) !important; box-shadow: 0 4px 12px rgba(0,0,0,0.1); border-radius:6px; z-index:99; }
              
-             .print-spacer { height: 100%; border: none !important; padding: 0 !important; }
+             table.layout-table { width: 100%; height: 100%; min-height: 297mm; border-collapse: collapse; table-layout: fixed; }
+             table.layout-table > thead > tr > td, table.layout-table > tbody > tr > td, table.layout-table > tfoot > tr > td { border: none !important; }
 
              @media print {
                  @page { size: A4 portrait !important; margin: 0 !important; }
@@ -6533,16 +6534,14 @@ const Relatorio = {
                      page-break-after: always !important;
                  }
                  
-                 /* AQUI ESTAVA O BUG DO ESTICAMENTO: Corrigido para afetar só as tabelas pai (a moldura da página) */
-                 .rel-page > table { height: 100%; min-height: 297mm; } 
+                 /* GARANTIA DE RODAPÉ COLADO NO FUNDO NA ÚLTIMA PÁGINA */
+                 table.layout-table { height: 100vh !important; } 
                  table.items { height: auto !important; }
-                 
-                 .print-spacer { height: 100% !important; }
              }
          </style>
 
          <!-- PÁGINA 1: CAPA -->
-         <div id="rel-capa" class="rel-page" style="display:none; flex-direction:column; min-height:297mm; padding: 20mm; position:relative; page-break-after:always; background: linear-gradient(135deg, #ffffff 0%, #f4fcf6 50%, #ffffff 100%) !important; border: 2px solid var(--navy); border-radius: 6px; margin-bottom: 20px; overflow:hidden; box-sizing: border-box;">
+         <div id="rel-capa" class="rel-page" style="display:none; flex-direction:column; min-height:297mm; position:relative; page-break-after:always; background: linear-gradient(135deg, #ffffff 0%, #f4fcf6 50%, #ffffff 100%) !important; border: 2px solid var(--navy); border-radius: 6px; margin-bottom: 20px; overflow:hidden; box-sizing: border-box;">
             
             <div style="position:absolute; bottom:0; left:0; width:100%; height:100%; z-index:1; pointer-events:none;">
                 <svg viewBox="0 0 100 100" preserveAspectRatio="none" style="width:100%; height:100%; position:absolute; bottom:0; left:0;">
@@ -6551,97 +6550,93 @@ const Relatorio = {
                 </svg>
             </div>
 
-            <img id="rel-capa-logo" src="" style="position:absolute; right:15mm; top:15mm; max-width:140px; max-height:70px; object-fit:contain; z-index:10;">
+            <!-- LOGO CENTRALIZADA COM ESPAÇOS IGUAIS -->
+            <div style="width:100%; display:flex; justify-content:center; align-items:center; padding-top:15mm; padding-bottom:15mm; z-index:10; position:relative;">
+                <img id="rel-capa-logo" src="" style="max-width:200px; max-height:80px; object-fit:contain; display:none;">
+            </div>
             
-            <div style="width:100%; text-align:center; padding-top:80px; z-index:5; position:relative;">
+            <div style="width:100%; text-align:center; z-index:5; position:relative;">
                <h1 style="color:var(--navy); font-size:32px; font-weight:900; letter-spacing:1px; text-transform:uppercase; margin:0 auto; line-height:1.2; padding:0 30px; max-width: 600px;">RELATÓRIO DE EVOLUÇÃO MENSAL DE OBRA</h1>
                <div id="rel-capa-obra" style="color:var(--navy-2); font-size:20px; font-weight:800; margin-top:20px; text-transform:uppercase;">NOME DA OBRA</div>
                <div id="rel-capa-mes" contenteditable="true" style="color:var(--navy-2); font-size:16px; font-weight:700; margin-top:5px; text-transform:uppercase; outline:none; display:inline-block; border-bottom:1px dashed transparent; min-width:200px; padding:2px; background:rgba(255,255,255,0.85); border-radius:4px;" oninput="document.querySelectorAll('.hdr-mes').forEach(el => el.textContent = this.textContent);" onfocus="this.style.borderBottom='1px dashed var(--line)'" onblur="this.style.borderBottom='1px dashed transparent'; this.setAttribute('value', this.innerHTML); document.querySelectorAll('.hdr-mes').forEach(el => el.textContent = this.textContent);">${dataSugerida}</div>
             </div>
             
-            <div id="rel-capa-img-box" style="flex:1; display:flex; align-items:center; justify-content:center; margin: 40px 0; width:100%; position:relative; z-index:5;">
+            <!-- IMAGEM DA CAPA COM BORDA COLADA HERMETICAMENTE -->
+            <div id="rel-capa-img-box" style="flex:1; display:flex; align-items:center; justify-content:center; margin: 10px 0 20px 0; width:100%; position:relative; z-index:5; padding: 0 20mm;">
                 <div id="rel-capa-placeholder" style="position:absolute; left:50%; top:50%; transform:translate(-50%, -50%); border:3px solid var(--navy); border-radius:8px; display:flex; flex-direction:column; align-items:center; justify-content:center; background:var(--highlight); color:var(--navy); font-weight:bold; font-size:14px; text-align:center; padding:20px; z-index:1; width:80%; height:300px;">
                    <i class="fa-solid fa-camera" style="font-size:24px; margin-bottom:10px; display:block;"></i>Imagem Aérea<br>(Será carregada automaticamente)
                 </div>
-                <img id="rel-capa-img" src="" style="display:none; width:auto; height:auto; max-width:100%; max-height:450px; object-fit:contain; border-radius:8px; border:3px solid var(--navy); box-shadow:0 10px 20px rgba(0,0,0,0.15); position:relative; z-index:2; padding:4px;" onload="this.style.display='block'; document.getElementById('rel-capa-placeholder').style.display='none';" onerror="this.style.display='none'; document.getElementById('rel-capa-placeholder').style.display='flex';">
+                <img id="rel-capa-img" src="" style="display:none; width:auto; height:auto; max-width:100%; max-height:400px; object-fit:contain; border-radius:8px; border:4px solid var(--navy); box-shadow:0 10px 30px rgba(0,0,0,0.2); position:relative; z-index:2; background:#fff; padding:0; margin:0;" onload="this.style.display='block'; document.getElementById('rel-capa-placeholder').style.display='none';" onerror="this.style.display='none'; document.getElementById('rel-capa-placeholder').style.display='flex';">
             </div>
             
-            <div style="text-align:center; font-size:18px; font-weight:900; line-height:1.6; margin-bottom:10px; z-index:5; position:relative; text-transform:uppercase; background:rgba(255,255,255,0.85); padding:10px 20px; border-radius:8px; display:inline-block; align-self:center; box-shadow:0 4px 6px rgba(0,0,0,0.05);">
+            <!-- CAIXA DE ASSINATURA REDUZIDA -->
+            <div style="text-align:center; font-size:12px; font-weight:900; line-height:1.6; margin-bottom:15mm; z-index:5; position:relative; text-transform:uppercase; background:rgba(255,255,255,0.85); padding:6px 16px; border-radius:6px; display:inline-block; align-self:center; box-shadow:0 4px 6px rgba(0,0,0,0.05);">
                <span style="color:var(--navy);">SETOR RESPONSÁVEL:</span> <span style="color:var(--navy-2);">ENGENHARIA</span><br>
                <span style="color:var(--navy);">DATA DE EMISSÃO:</span> <span id="rel-capa-data" style="color:var(--navy-2);"></span>
             </div>
             
-            <!-- Paginação Capa (Apenas número) -->
-            <div style="position:absolute; bottom:15mm; right:15mm; display:inline-block; font-size:14px; color:var(--navy); font-weight:800; z-index:10;">1</div>
+            <!-- Paginação Capa: Apenas o número -->
+            <div style="position:absolute; bottom:15mm; right:15mm; font-size:14px; color:var(--navy); font-weight:800; z-index:10;">1</div>
          </div>
 
-         <!-- PÁGINA 2: INFORMAÇÕES GERAIS -->
-         <div id="rel-info" class="rel-page" style="display:none; width:100%; background: linear-gradient(135deg, #ffffff 0%, #f4fcf6 50%, #ffffff 100%) !important; page-break-after:always; margin-bottom: 20px; position:relative; border: 2px solid var(--navy); border-radius: 6px; overflow:hidden; box-sizing: border-box;">
-             <table style="width:100%; height:100%; min-height:297mm; border-collapse: collapse; table-layout: fixed;">
-                <thead class="print-repeating-header">
-                    <tr><td style="padding: 0; vertical-align: top;">
-                        <div style="width:100%; height:20mm; background:var(--navy); display:flex; justify-content:flex-end; align-items:center; padding: 0 15mm; box-sizing: border-box; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
-                            <div style="text-align:right; color:#fff;">
-                                <div style="font-size:14px; font-weight:800; text-transform:uppercase; letter-spacing:0.5px;">Engenharia - <span class="hdr-obra">NOME DA OBRA</span></div>
-                                <div style="font-size:11px; font-weight:600; text-transform:uppercase; color:#a4c9a8; margin-top:2px;" class="hdr-mes">${dataSugerida}</div>
-                            </div>
-                        </div>
-                    </td></tr>
-                    <tr><td style="height: 10mm; padding: 0; border: none;"></td></tr>
-                </thead>
-                <tbody>
-                    <tr><td style="padding: 0 20mm; vertical-align: top;">
-                        <h2 style="width:100%; display:block; box-sizing:border-box; color:var(--navy); font-size:22px; font-weight:900; border-bottom:3px solid var(--navy-2); padding-bottom:10px; margin-bottom:30px; text-transform:uppercase;">Informações Gerais do Empreendimento</h2>
-                        <table class="items" style="width:100%; font-size:14px; border-collapse: collapse; table-layout: fixed; background:#fff;">
-                            <tbody>
-                                <tr><td style="font-weight:800; width:60%; background:var(--highlight); color:var(--navy); padding:10px 15px; border:1px solid #cccccc;">Empreendimento</td><td id="ri-nome" style="width:40%; padding:10px 15px; border:1px solid #cccccc; font-weight:600; color:var(--ink); text-align:center;"></td></tr>
-                                <tr><td style="font-weight:800; background:var(--highlight); color:var(--navy); padding:10px 15px; border:1px solid #cccccc;">Cidade</td><td id="ri-cidade" style="padding:10px 15px; border:1px solid #cccccc; font-weight:600; color:var(--ink); text-align:center;"></td></tr>
-                                <tr><td style="font-weight:800; background:var(--highlight); color:var(--navy); padding:10px 15px; border:1px solid #cccccc;">Estado</td><td id="ri-estado" style="padding:10px 15px; border:1px solid #cccccc; font-weight:600; color:var(--ink); text-align:center;"></td></tr>
-                                <tr><td style="font-weight:800; background:var(--highlight); color:var(--navy); padding:10px 15px; border:1px solid #cccccc;">Área do Empreendimento</td><td id="ri-area" style="padding:10px 15px; border:1px solid #cccccc; font-weight:600; color:var(--ink); text-align:center;"></td></tr>
-                                <tr><td style="font-weight:800; background:var(--highlight); color:var(--navy); padding:10px 15px; border:1px solid #cccccc;">Data de previsão de entrega</td><td id="ri-data-entrega" style="padding:10px 15px; border:1px solid #cccccc; font-weight:600; color:var(--ink); text-align:center;"></td></tr>
-                                <tr><td style="font-weight:800; background:var(--highlight); color:var(--navy); padding:10px 15px; border:1px solid #cccccc;">Número de Lotes</td><td id="ri-lotes" style="padding:10px 15px; border:1px solid #cccccc; font-weight:600; color:var(--ink); text-align:center;"></td></tr>
-                                <tr><td style="font-weight:800; background:var(--highlight); color:var(--navy); padding:10px 15px; border:1px solid #cccccc;">Status da obra</td><td style="padding:10px 15px; border:1px solid #cccccc; text-align:center; vertical-align:middle; position:relative;">
-                                    <select id="ri-status" style="font-family:'Montserrat', sans-serif; font-size:14px; font-weight:600; color:var(--ink); text-align:center; border:none; outline:none; background:transparent; appearance:none; -webkit-appearance:none; width:100%; cursor:pointer;" onchange="this.setAttribute('data-selected', this.value);">
-                                        <option value="Planejamento">Planejamento</option>
-                                        <option value="Mobilização">Mobilização</option>
-                                        <option value="Execução">Execução</option>
-                                        <option value="Fase Final">Fase Final</option>
-                                        <option value="Concluída">Concluída</option>
-                                    </select>
-                                    <i class="fa-solid fa-chevron-down no-print" style="position:absolute; right:15px; top:50%; transform:translateY(-50%); font-size:10px; color:var(--muted); pointer-events:none;"></i>
-                                </td></tr>
-                                <tr><td style="font-weight:800; background:var(--highlight); color:var(--navy); padding:10px 15px; border:1px solid #cccccc;">Orçamento Aprovado</td><td id="ri-orcamento" style="padding:10px 15px; border:1px solid #cccccc; font-weight:600; color:var(--ink); text-align:center;"></td></tr>
-                                <tr><td style="font-weight:800; background:var(--highlight); color:var(--navy); padding:10px 15px; border:1px solid #cccccc;">Previsão de Custo Total Atual <span class="no-print" style="font-size:9px; color:var(--danger); font-weight:bold; margin-left:6px;">(Editável)</span></td><td id="ri-previsao" style="padding:10px 15px; border:1px solid #cccccc; font-weight:600; color:var(--ink); outline:none; text-align:center;" contenteditable="true" oninput="Util.maskCur(this)" onblur="this.setAttribute('value', this.innerHTML); Relatorio.calcularCustoProjetado();"></td></tr>
-                                <tr><td style="font-weight:800; background:var(--highlight); color:var(--navy); padding:10px 15px; border:1px solid #cccccc;">Desembolso Atual <span class="no-print" style="font-size:9px; color:var(--danger); font-weight:bold; margin-left:6px;">(Editável)</span></td><td id="ri-desembolso" style="padding:10px 15px; border:1px solid #cccccc; font-weight:600; color:var(--ink); outline:none; text-align:center;" contenteditable="true" oninput="Util.maskCur(this)" onblur="this.setAttribute('value', this.innerHTML); Relatorio.calcularAvancoGlobal();">R$ 0,00</td></tr>
-                                <tr><td style="font-weight:800; background:var(--highlight); color:var(--navy); padding:10px 15px; border:1px solid #cccccc;">Avanço global da obra</td><td id="ri-avanco" style="padding:10px 15px; border:1px solid #cccccc; font-weight:600; color:var(--ink); text-align:center;">0,00%</td></tr>
-                                <tr><td style="font-weight:800; background:var(--highlight); color:var(--navy); padding:10px 15px; border:1px solid #cccccc;">Custo por lote (Orçado)</td><td id="ri-custo-orcado" style="padding:10px 15px; border:1px solid #cccccc; font-weight:600; color:var(--ink); text-align:center;"></td></tr>
-                                <tr><td style="font-weight:800; background:var(--highlight); color:var(--navy); padding:10px 15px; border:1px solid #cccccc;">Custo por lote (Projetado)</td><td id="ri-custo-projetado" style="padding:10px 15px; border:1px solid #cccccc; font-weight:600; color:var(--ink); text-align:center;"></td></tr>
-                                <tr><td style="font-weight:800; background:var(--highlight); color:var(--navy); padding:10px 15px; border:1px solid #cccccc;">Potencial de VGV</td><td id="ri-vgv" style="padding:10px 15px; border:1px solid #cccccc; font-weight:600; color:var(--ink); text-align:center;"></td></tr>
-                            </tbody>
-                        </table>
-                    </td></tr>
-                    <tr class="print-spacer"><td style="height: 100%; border: none; padding: 0;"></td></tr>
-                </tbody>
-                <tfoot class="print-repeating-footer">
-                    <tr><td style="height: 5mm; padding: 0; border: none;"></td></tr>
-                    <tr><td style="padding: 0; vertical-align: bottom; height: 15mm;">
-                        <div style="width:100%; height:15mm; background:var(--navy); display:flex; align-items:center; justify-content:space-between; padding: 0 15mm; box-sizing: border-box;">
-                            <div style="font-size:14px; font-weight:800; color:#fff; text-transform:uppercase; letter-spacing:0.5px; font-family:'Montserrat', sans-serif; white-space:nowrap;">RELATÓRIO DE OBRAS</div>
-                            <div contenteditable="true" style="font-size:14px; color:#fff; font-weight:800; outline:none; text-align:right; white-space:nowrap;" onblur="this.setAttribute('value', this.innerHTML)">2</div>
-                        </div>
-                    </td></tr>
-                </tfoot>
-             </table>
+         <!-- PÁGINA 2: INFORMAÇÕES GERAIS (Layout Flexbox Anti-Esticamento de Tabela) -->
+         <div id="rel-info" class="rel-page" style="display:none; flex-direction:column; width:100%; min-height:297mm; background: linear-gradient(135deg, #ffffff 0%, #f4fcf6 50%, #ffffff 100%) !important; page-break-after:always; margin-bottom: 20px; position:relative; border: 2px solid var(--navy); border-radius: 6px; overflow:hidden; box-sizing: border-box;">
+             
+             <!-- HEADER -->
+             <div class="print-repeating-header" style="width:100%; height:20mm; background:var(--navy); display:flex; justify-content:flex-end; align-items:center; padding: 0 15mm; box-sizing: border-box; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                 <div style="text-align:right; color:#fff;">
+                     <div style="font-size:14px; font-weight:800; text-transform:uppercase; letter-spacing:0.5px; white-space:nowrap;">Engenharia - <span class="hdr-obra">NOME DA OBRA</span></div>
+                     <div style="font-size:11px; font-weight:600; text-transform:uppercase; color:#a4c9a8; margin-top:2px;" class="hdr-mes">${dataSugerida}</div>
+                 </div>
+             </div>
+             
+             <!-- BODY DA PÁGINA (Não estica) -->
+             <div style="padding: 10mm 20mm; flex: 1;">
+                 <h2 style="width:100%; display:block; box-sizing:border-box; color:var(--navy); font-size:22px; font-weight:900; border-bottom:3px solid var(--navy-2); padding-bottom:10px; margin-bottom:30px; text-transform:uppercase;">Informações Gerais do Empreendimento</h2>
+                 <table class="items" style="width:100%; font-size:14px; border-collapse: collapse; table-layout: fixed; background:#fff;">
+                     <tbody>
+                         <tr><td style="font-weight:800; width:60%; background:var(--highlight); color:var(--navy); padding:10px 15px; border:1px solid #cccccc;">Empreendimento</td><td id="ri-nome" style="width:40%; padding:10px 15px; border:1px solid #cccccc; font-weight:600; color:var(--ink); text-align:center;"></td></tr>
+                         <tr><td style="font-weight:800; background:var(--highlight); color:var(--navy); padding:10px 15px; border:1px solid #cccccc;">Cidade</td><td id="ri-cidade" style="padding:10px 15px; border:1px solid #cccccc; font-weight:600; color:var(--ink); text-align:center;"></td></tr>
+                         <tr><td style="font-weight:800; background:var(--highlight); color:var(--navy); padding:10px 15px; border:1px solid #cccccc;">Estado</td><td id="ri-estado" style="padding:10px 15px; border:1px solid #cccccc; font-weight:600; color:var(--ink); text-align:center;"></td></tr>
+                         <tr><td style="font-weight:800; background:var(--highlight); color:var(--navy); padding:10px 15px; border:1px solid #cccccc;">Área do Empreendimento</td><td id="ri-area" style="padding:10px 15px; border:1px solid #cccccc; font-weight:600; color:var(--ink); text-align:center;"></td></tr>
+                         <tr><td style="font-weight:800; background:var(--highlight); color:var(--navy); padding:10px 15px; border:1px solid #cccccc;">Data de previsão de entrega</td><td id="ri-data-entrega" style="padding:10px 15px; border:1px solid #cccccc; font-weight:600; color:var(--ink); text-align:center;"></td></tr>
+                         <tr><td style="font-weight:800; background:var(--highlight); color:var(--navy); padding:10px 15px; border:1px solid #cccccc;">Número de Lotes</td><td id="ri-lotes" style="padding:10px 15px; border:1px solid #cccccc; font-weight:600; color:var(--ink); text-align:center;"></td></tr>
+                         <tr><td style="font-weight:800; background:var(--highlight); color:var(--navy); padding:10px 15px; border:1px solid #cccccc;">Status da obra</td><td style="padding:10px 15px; border:1px solid #cccccc; text-align:center; vertical-align:middle; position:relative;">
+                             <select id="ri-status" style="font-family:'Montserrat', sans-serif; font-size:14px; font-weight:600; color:var(--ink); text-align:center; border:none; outline:none; background:transparent; appearance:none; -webkit-appearance:none; width:100%; cursor:pointer;" onchange="this.setAttribute('data-selected', this.value);">
+                                 <option value="Planejamento">Planejamento</option>
+                                 <option value="Mobilização">Mobilização</option>
+                                 <option value="Execução">Execução</option>
+                                 <option value="Fase Final">Fase Final</option>
+                                 <option value="Concluída">Concluída</option>
+                             </select>
+                             <i class="fa-solid fa-chevron-down no-print" style="position:absolute; right:15px; top:50%; transform:translateY(-50%); font-size:10px; color:var(--muted); pointer-events:none;"></i>
+                         </td></tr>
+                         <tr><td style="font-weight:800; background:var(--highlight); color:var(--navy); padding:10px 15px; border:1px solid #cccccc;">Orçamento Aprovado</td><td id="ri-orcamento" style="padding:10px 15px; border:1px solid #cccccc; font-weight:600; color:var(--ink); text-align:center;"></td></tr>
+                         <tr><td style="font-weight:800; background:var(--highlight); color:var(--navy); padding:10px 15px; border:1px solid #cccccc;">Previsão de Custo Total Atual <span class="no-print" style="font-size:9px; color:var(--danger); font-weight:bold; margin-left:6px;">(Editável)</span></td><td id="ri-previsao" style="padding:10px 15px; border:1px solid #cccccc; font-weight:600; color:var(--ink); outline:none; text-align:center;" contenteditable="true" oninput="Util.maskCur(this)" onblur="this.setAttribute('value', this.innerHTML); Relatorio.calcularCustoProjetado();"></td></tr>
+                         <tr><td style="font-weight:800; background:var(--highlight); color:var(--navy); padding:10px 15px; border:1px solid #cccccc;">Desembolso Atual <span class="no-print" style="font-size:9px; color:var(--danger); font-weight:bold; margin-left:6px;">(Editável)</span></td><td id="ri-desembolso" style="padding:10px 15px; border:1px solid #cccccc; font-weight:600; color:var(--ink); outline:none; text-align:center;" contenteditable="true" oninput="Util.maskCur(this)" onblur="this.setAttribute('value', this.innerHTML); Relatorio.calcularAvancoGlobal();">R$ 0,00</td></tr>
+                         <tr><td style="font-weight:800; background:var(--highlight); color:var(--navy); padding:10px 15px; border:1px solid #cccccc;">Avanço global da obra</td><td id="ri-avanco" style="padding:10px 15px; border:1px solid #cccccc; font-weight:600; color:var(--ink); text-align:center;">0,00%</td></tr>
+                         <tr><td style="font-weight:800; background:var(--highlight); color:var(--navy); padding:10px 15px; border:1px solid #cccccc;">Custo por lote (Orçado)</td><td id="ri-custo-orcado" style="padding:10px 15px; border:1px solid #cccccc; font-weight:600; color:var(--ink); text-align:center;"></td></tr>
+                         <tr><td style="font-weight:800; background:var(--highlight); color:var(--navy); padding:10px 15px; border:1px solid #cccccc;">Custo por lote (Projetado)</td><td id="ri-custo-projetado" style="padding:10px 15px; border:1px solid #cccccc; font-weight:600; color:var(--ink); text-align:center;"></td></tr>
+                         <tr><td style="font-weight:800; background:var(--highlight); color:var(--navy); padding:10px 15px; border:1px solid #cccccc;">Potencial de VGV</td><td id="ri-vgv" style="padding:10px 15px; border:1px solid #cccccc; font-weight:600; color:var(--ink); text-align:center;"></td></tr>
+                     </tbody>
+                 </table>
+             </div>
+             
+             <!-- FOOTER (Empurrado para baixo pelo flex-direction da página) -->
+             <div class="print-repeating-footer" style="margin-top: auto; width:100%; height:15mm; background:var(--navy); display:flex; align-items:center; justify-content:space-between; padding: 0 15mm; box-sizing: border-box;">
+                 <div style="font-size:14px; font-weight:800; color:#fff; text-transform:uppercase; letter-spacing:0.5px; font-family:'Montserrat', sans-serif; white-space:nowrap;">RELATÓRIO DE OBRAS</div>
+                 <div contenteditable="true" style="font-size:14px; color:#fff; font-weight:800; outline:none; text-align:right; white-space:nowrap;" onblur="this.setAttribute('value', this.innerHTML)">2</div>
+             </div>
          </div>
          
-         <!-- ÁREA DOS BLOCOS (Páginas 3+ com Drag and Drop e Rodapé Garantido) -->
+         <!-- ÁREA DOS BLOCOS (Páginas 3+ com Tabela para as quebras automáticas) -->
          <div id="rel-drag-area-container" class="rel-page" style="display:none; width:100%; background: linear-gradient(135deg, #ffffff 0%, #f4fcf6 50%, #ffffff 100%) !important; position:relative; border: 2px solid var(--navy); border-radius: 6px; overflow:hidden; box-sizing: border-box;">
-             <table style="width:100%; height:100%; min-height:297mm; border-collapse: collapse; table-layout: fixed;">
+             <table class="layout-table">
                 <thead class="print-repeating-header">
                     <tr><td style="padding: 0; vertical-align: top;">
                         <div style="width:100%; height:20mm; background:var(--navy); display:flex; justify-content:flex-end; align-items:center; padding: 0 15mm; box-sizing: border-box; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
                             <div style="text-align:right; color:#fff;">
-                                <div style="font-size:14px; font-weight:800; text-transform:uppercase; letter-spacing:0.5px;">Engenharia - <span class="hdr-obra">NOME DA OBRA</span></div>
+                                <div style="font-size:14px; font-weight:800; text-transform:uppercase; letter-spacing:0.5px; white-space:nowrap;">Engenharia - <span class="hdr-obra">NOME DA OBRA</span></div>
                                 <div style="font-size:11px; font-weight:600; text-transform:uppercase; color:#a4c9a8; margin-top:2px;" class="hdr-mes">${dataSugerida}</div>
                             </div>
                         </div>
@@ -6683,14 +6678,6 @@ const Relatorio = {
                             <div class="atd-block" draggable="true" style="flex-direction:column; padding:0; border:none; background:transparent;">
                                 <div class="drag-handle no-print" title="Arraste para reordenar">☰</div>
                                 <h2 style="width:100%; display:block; box-sizing:border-box; font-size:18px; font-weight:900; color:var(--navy); text-transform:uppercase; border-bottom:2px solid var(--navy-2); padding-bottom:5px; margin:0 0 15px 0;">2. DESENVOLVIMENTO</h2>
-                                
-                                <div class="no-print" style="display:flex; gap:6px; margin-bottom:8px; background:var(--highlight); padding:6px; border-radius:4px; border:1px solid var(--line); width:fit-content;">
-                                   <button class="btn btn-outline" style="padding:4px 8px; font-size:10px; font-weight:bold;" onclick="document.execCommand('bold',false,null)">B</button>
-                                   <button class="btn btn-outline" style="padding:4px 8px; font-size:10px; font-style:italic;" onclick="document.execCommand('italic',false,null)">I</button>
-                                   <button class="btn btn-outline" style="padding:4px 8px; font-size:10px; text-decoration:underline;" onclick="document.execCommand('underline',false,null)">U</button>
-                                   <button class="btn btn-outline" style="padding:4px 8px; font-size:10px;" onclick="document.execCommand('insertOrderedList',false,null)">1.</button>
-                                   <button class="btn btn-outline" style="padding:4px 8px; font-size:10px;" onclick="document.execCommand('insertUnorderedList',false,null)">•</button>
-                                </div>
                                 <div contenteditable="true" class="esc-editor-rico" style="width:100%; min-height:100px; font-size:12px; line-height:1.6; color:var(--ink); outline:none; text-align:justify; border:1px dashed var(--line); padding:10px; border-radius:4px; background:rgba(255,255,255,0.6);" onfocus="this.style.borderColor='var(--navy)'" onblur="this.style.borderColor='var(--line)'; this.setAttribute('value', this.innerHTML);"><b>2.1. AVANÇOS:</b><br><br><br><b>2.2. PONTOS DE ATENÇÃO:</b><br><br><br><b>2.3. PONTOS CRÍTICOS:</b><br><br><br><b>2.4. FEEDBACK E APRENDIZADOS:</b><br></div>
                             </div>
 
@@ -6746,7 +6733,6 @@ const Relatorio = {
 
                         </div>
                     </td></tr>
-                    <tr class="print-spacer"><td style="height: 100%; border: none; padding: 0;"></td></tr>
                 </tbody>
                 <tfoot class="print-repeating-footer">
                     <tr><td style="height: 5mm; padding: 0; border: none;"></td></tr>
@@ -6857,7 +6843,7 @@ const Relatorio = {
       
       if(!spe) { capa.style.display = 'none'; info.style.display = 'none'; document.getElementById('rel-drag-area-container').style.display = 'none'; return; }
 
-      capa.style.display = 'flex'; info.style.display = 'block'; document.getElementById('rel-drag-area-container').style.display = 'block';
+      capa.style.display = 'flex'; info.style.display = 'flex'; document.getElementById('rel-drag-area-container').style.display = 'block';
       const pMsg = document.querySelector('.placeholder-msg'); if(pMsg) pMsg.remove();
 
       const d = DADOS_OBRAS[spe];
@@ -6921,16 +6907,14 @@ const Relatorio = {
       if(!Relatorio.currentId) return;
       document.getElementById('rel-obra').setAttribute('data-selected', document.getElementById('rel-obra').value);
       
-      // Salva de forma invisível as opções selecionadas nos dropdowns de texto
       document.querySelectorAll('#relatorio-content-area select').forEach(s => s.setAttribute('data-selected', s.value));
       document.querySelectorAll('#relatorio-content-area [contenteditable=true]').forEach(el => { el.setAttribute('value', el.innerHTML); });
       
-      // Inteligência de Backup: Clone limpa as imagens Base64 antes de salvar no DB
       const cloneArea = document.getElementById('relatorio-content-area').cloneNode(true);
       cloneArea.querySelectorAll('img').forEach(img => {
           if (img.src && img.src.length > 500 && img.src.startsWith('data:image')) {
-              img.setAttribute('src', ''); // Limpa os dados pesados
-              img.style.display = 'none'; // Esconde a imagem quebrada
+              img.setAttribute('src', ''); 
+              img.style.display = 'none'; 
           }
       });
 
@@ -7109,14 +7093,13 @@ const Relatorio = {
                   page-break-after: always !important;
               }
               
-              .rel-page > table { height: 100%; min-height: 297mm; }
+              table.layout-table { height: 100vh !important; }
               table.items { height: auto !important; border-collapse: collapse !important; }
               table.items td, table.items th { border: 1px solid #cccccc !important; }
               
               select#ri-status { background: transparent !important; color: #000 !important; border:none !important; appearance: none; -webkit-appearance: none; }
               .print-only { display: flex !important; }
               .drag-handle { display: none !important; }
-              .print-spacer { height: 100% !important; }
           }
       `;
       document.head.appendChild(landscapeStyle);
