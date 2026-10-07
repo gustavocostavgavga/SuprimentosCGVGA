@@ -475,6 +475,39 @@
   </div>
 </div>
 
+<!-- ==================== TELA DO ENCARREGADO (RDO EXTERNO) ==================== -->
+<div id="view-rdo-externo" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:var(--bg); z-index:999999; overflow-y:auto; padding:20px;">
+  <div id="rdo-print-area" style="max-width:600px; margin:0 auto; background:var(--paper); border-radius:12px; box-shadow:0 10px 30px rgba(0,0,0,0.15); overflow:hidden; padding-bottom: 20px;">
+    <div style="background:var(--navy); padding:20px; text-align:center; color:#fff;">
+      <h1 style="margin:0; font-size:18px; font-weight:800; text-transform: uppercase;">RELATÓRIO DIÁRIO DE OBRA</h1>
+      <p style="margin:4px 0 0 0; font-size:12px; color:#a4c9a8; font-weight: 700;" id="ext-rdo-obra-nome">Carregando Obra...</p>
+    </div>
+    
+    <div style="padding:20px 30px;">
+      <input type="hidden" id="ext-rdo-obra-id">
+      <div class="grid cols-2" style="margin-bottom:15px;">
+         <div class="field"><label>Data da Atividade</label><input type="date" id="ext-rdo-data" style="width:100%; padding:10px; height:auto;"></div>
+         <div class="field"><label>Condição Climática</label>
+            <select id="ext-rdo-clima" style="width:100%; padding:10px; height:auto; cursor:pointer;">
+               <option value="Bom">☀️ Tempo Bom</option>
+               <option value="Chuva Leve">🌦️ Chuva Leve (Parcial)</option>
+               <option value="Chuva Forte">🌧️ Chuva Forte (Impediu)</option>
+            </select>
+         </div>
+      </div>
+      <div class="field" style="margin-bottom:20px;"><label><i class="fa-solid fa-users" style="color:var(--navy); margin-right:6px;"></i> Efetivo na Obra (Qtd Pessoas)</label><input type="text" id="ext-rdo-efetivo" placeholder="Ex: 15 próprios, 5 terceirizados" style="width:100%; padding:10px; height:auto;"></div>
+      <div class="field" style="margin-bottom:20px;"><label><i class="fa-solid fa-person-digging" style="color:var(--navy); margin-right:6px;"></i> Principais Atividades</label><textarea id="ext-rdo-texto" rows="4" placeholder="Frentes de trabalho atuando, avanço físico..." style="width:100%; border:1px solid var(--line); border-radius:4px; padding:10px; font-family:'Montserrat'; font-size:13px;"></textarea></div>
+      <div class="field" style="margin-bottom:15px; background: #FEF3C7; padding: 15px; border-radius: 6px; border: 1px solid #F59E0B;"><label style="color: #92400E;"><i class="fa-solid fa-triangle-exclamation" style="margin-right:6px;"></i> Avisos para Engenharia</label><textarea id="ext-rdo-aviso-plan" rows="2" placeholder="Necessidade de replanejamento, dúvidas..." style="width:100%; border:none; background:transparent; font-family:'Montserrat'; font-size:12px; outline:none; border-bottom:1px dashed #92400E; padding:0;"></textarea></div>
+      <div class="field" style="margin-bottom:20px; background: var(--highlight); padding: 15px; border-radius: 6px; border: 1px solid var(--success);"><label style="color: var(--success);"><i class="fa-solid fa-cart-shopping" style="margin-right:6px;"></i> Avisos para Suprimentos</label><textarea id="ext-rdo-aviso-sup" rows="2" placeholder="Falta de material, necessidade de locação..." style="width:100%; border:none; background:transparent; font-family:'Montserrat'; font-size:12px; outline:none; border-bottom:1px dashed var(--success); padding:0;"></textarea></div>
+      <div class="field"><label><i class="fa-solid fa-camera" style="color:var(--navy); margin-right:6px;"></i> Relatório Fotográfico</label><input type="file" id="ext-rdo-upload" multiple accept="image/*" class="no-print" style="margin-bottom:10px; padding:8px; border:1px dashed var(--line); width:100%;" onchange="PortalEncarregado.adicionarFotos(event)"><div id="ext-rdo-fotos-preview" style="display:flex; flex-wrap:wrap; gap:10px; justify-content:center;"></div></div>
+    </div>
+  </div>
+  <div style="max-width:600px; margin:20px auto 40px auto; display:flex; gap:10px;" class="no-print">
+     <button class="btn btn-outline" style="flex:1; padding:15px; font-size:13px; background:var(--paper);" onclick="PortalEncarregado.baixarPDF()"><i class="fa-solid fa-file-pdf"></i> Baixar PDF</button>
+     <button class="btn btn-success" style="flex:2; padding:15px; font-size:14px; font-weight:800;" onclick="PortalEncarregado.salvar()"><i class="fa-solid fa-cloud-arrow-up"></i> Enviar RDO para Nuvem</button>
+  </div>
+</div>
+
 <!-- TELA DE LOGIN APRIMORADA -->
 <div id="login-screen" style="position:fixed; top:0; left:0; width:100%; height:100%; background:var(--bg); padding:20px; display:flex; justify-content:center; align-items:center; z-index:100000; transition: opacity 0.5s ease;">
   <div id="login-wrapper" style="position:relative; width:100%; height:100%; border-radius:24px; overflow:hidden; display:flex; flex-direction:column; justify-content:center; align-items:center; background-color:transparent; box-shadow: 0 10px 30px rgba(0,0,0,0.2);">
@@ -550,6 +583,7 @@
       <button class="nav-btn" onclick="App.nav('manual')">Manual de Compras</button>
       <button class="nav-btn" onclick="App.nav('escopos-lista')">Escopo de Obras</button>
       <button class="nav-btn" onclick="App.nav('relatorios-lista')">Relatório Mensal</button>
+      <button class="nav-btn" onclick="App.nav('rdo-lista')">Diários de Obra (RDO)</button>
 
       <div class="nav-label" style="margin-top:24px;">Ações Globais</div>
       
@@ -1903,6 +1937,54 @@
       </div>
     </div>
 
+<!-- ==================== VIEW: LISTA DE DIÁRIOS DE OBRA (RDO) ==================== -->
+    <div id="view-rdo-lista" class="view">
+      <div class="doc-head">
+        <div class="doc-title">Diários de Obra (RDO)<small>Acompanhamento de lançamentos de campo</small></div>
+      </div>
+      
+      <section class="block">
+        <div style="display:flex; gap:16px; margin-bottom:16px; align-items: flex-end;">
+           <div class="field" style="width: 300px;">
+              <label>🔍 Filtrar por Obra</label>
+              <select id="filtro-rdo-obra" onchange="RDO.listar()" style="cursor:pointer;">
+                  <option value="">Todas as Obras</option>
+                  <option value="bocaiuva">Mirante da Lagoa</option>
+                  <option value="jleme">Joaquim Leme</option>
+                  <option value="mife">Parque das Nações</option>
+                  <option value="nazareno">Cidade Nova</option>
+              </select>
+           </div>
+        </div>
+        
+        <div class="table-wrapper">
+          <table class="items">
+            <thead>
+              <tr>
+                <th style="width:15%; text-align:center;">Data</th>
+                <th style="width:20%; text-align:center;">Obra</th>
+                <th style="width:15%; text-align:center;">Clima</th>
+                <th style="width:40%">Atividades Executadas</th>
+                <th style="width:10%; text-align:center;">Ações</th>
+              </tr>
+            </thead>
+            <tbody id="lista-rdo-body"></tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+
+    <!-- MODAL PARA VER O RDO COMPLETO E FOTOS -->
+    <div class="modal-overlay" id="modal-ver-rdo">
+      <div class="modal" style="max-width:700px;">
+        <div class="modal-header">
+          <span>📄 Detalhes do RDO</span>
+          <button class="del-btn" onclick="UI.closeModal('modal-ver-rdo')" style="font-size:24px;">&times;</button>
+        </div>
+        <div id="modal-rdo-content"></div>
+      </div>
+    </div>
+
 <!-- ==================== VIEW: LISTA DE RELATÓRIOS ==================== -->
     <div id="view-relatorios-lista" class="view">
       <div class="doc-head">
@@ -1960,6 +2042,7 @@
              <button class="btn btn-outline" style="border-style:dashed;" onclick="Relatorio.addTexto()">📝 Texto Rico</button>
              <button class="btn btn-outline" style="border-style:dashed;" onclick="Relatorio.addImagem()">🖼 Foto com Legenda</button>
 	     <button class="btn btn-outline" style="border-style:dashed;" onclick="Relatorio.addRelatorioFotografico()">📷 Relatório Fotográfico</button>
+	     <button class="btn btn-ai" style="color:#000;" onclick="Relatorio.importarRDOs()"><i class="fa-solid fa-cloud-arrow-down"></i> Importar RDOs</button>
          </div>
       </div>
 
@@ -2254,7 +2337,7 @@ window.appCharts = {};
 window.appMap = null;
 
 const DB = {
-  data: { processos: [], fornecedores: [], atds_avulsas: [], insumos: [], escopos: [] },
+  data: { processos: [], fornecedores: [], atds_avulsas: [], insumos: [], escopos: [], diarios: [] },
   
   init: async () => {
     try {
@@ -2264,7 +2347,7 @@ const DB = {
       if (cacheLocal) { dadosLocais = JSON.parse(cacheLocal); }
 
       // 1. Verifica as novas coleções ilimitadas da nuvem
-      const colecoes = ['processos', 'fornecedores', 'atds_avulsas', 'insumos', 'escopos'];
+      const colecoes = ['processos', 'fornecedores', 'atds_avulsas', 'insumos', 'escopos', 'diarios'];
       let encontrouDadosNasColecoes = false;
       
       for (let colName of colecoes) {
@@ -2431,6 +2514,11 @@ const App = {
         return; 
     }
 
+    if (PortalEncarregado.verificarAcessoExterno()) {
+        document.getElementById('db-loader').style.display = 'none';
+        return; 
+    }
+
     document.getElementById('db-loader').style.opacity = '0';
     setTimeout(()=> document.getElementById('db-loader').style.display = 'none', 500);
     
@@ -2456,6 +2544,7 @@ const App = {
     if(viewId === 'insumos') Insumos.render();
     if(viewId === 'escopos-lista') Escopo.listar();
     if(viewId === 'relatorios-lista') Relatorio.listar();
+    if(viewId === 'rdo-lista') RDO.listar();
     if(viewId === 'relatorio') { /* Apenas abre a view */ }
     if(viewId === 'escopo') { if(document.getElementById('esc-materiais-body').children.length === 0) Escopo.addMaterial(); }
   },
@@ -5466,6 +5555,221 @@ window.PortalFornecedor = PortalFornecedor;
 window.App = App; window.Req = Req; 
 window.MapaPrecos = MapaPrecos; window.OC = OC; window.AI = AI; window.Email = Email; window.UI = UI; window.Util = Util; window.DB = DB; window.ATD = ATD; window.ATDLivre = ATDLivre; window.Insumos = Insumos;
 
+// ==================== MODULO: PORTAL DO ENCARREGADO (RDO) ====================
+let rdoFotosTemporarias = []; 
+
+const PortalEncarregado = {
+  verificarAcessoExterno: () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const obraId = urlParams.get('rdo');
+    
+    if (obraId) {
+      document.getElementById('login-screen').style.display = 'none';
+      document.getElementById('view-rdo-externo').style.display = 'block';
+      document.getElementById('ext-rdo-obra-id').value = obraId;
+      document.getElementById('ext-rdo-obra-nome').textContent = SPES[obraId] ? SPES[obraId].nome : "Obra Desconhecida";
+      
+      const hoje = new Date();
+      const formatada = hoje.getFullYear() + '-' + String(hoje.getMonth() + 1).padStart(2, '0') + '-' + String(hoje.getDate()).padStart(2, '0');
+      document.getElementById('ext-rdo-data').value = formatada;
+      rdoFotosTemporarias = [];
+      return true; 
+    }
+    return false;
+  },
+
+  adicionarFotos: (event) => {
+      const files = event.target.files;
+      const previewContainer = document.getElementById('ext-rdo-fotos-preview');
+      for (let i = 0; i < files.length; i++) {
+          const reader = new FileReader();
+          reader.onload = (e) => {
+              const img = new Image();
+              img.onload = () => {
+                  const canvas = document.createElement('canvas');
+                  let width = img.width; let height = img.height;
+                  if (width > 800) { height *= 800 / width; width = 800; }
+                  canvas.width = width; canvas.height = height;
+                  canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+                  const dataUrl = canvas.toDataURL('image/jpeg', 0.6);
+                  rdoFotosTemporarias.push(dataUrl);
+                  
+                  const imgEl = document.createElement('img');
+                  imgEl.src = dataUrl;
+                  imgEl.style.cssText = "width: 45%; max-height: 200px; object-fit: cover; border-radius: 6px; border: 1px solid var(--line);";
+                  previewContainer.appendChild(imgEl);
+              };
+              img.src = e.target.result;
+          };
+          reader.readAsDataURL(files[i]);
+      }
+  },
+
+  baixarPDF: () => {
+      const elemento = document.getElementById('rdo-print-area');
+      const textareas = elemento.querySelectorAll('textarea');
+      const spansTemporarios = [];
+      textareas.forEach(ta => {
+         const span = document.createElement('div');
+         span.style.cssText = "white-space: pre-wrap; font-size: 12px; color: #000; margin-bottom: 10px; border-bottom: 1px dashed #ccc; padding-bottom: 5px;";
+         span.textContent = ta.value || 'Nenhum apontamento.';
+         ta.style.display = 'none';
+         ta.parentNode.insertBefore(span, ta.nextSibling);
+         spansTemporarios.push({original: ta, fake: span});
+      });
+      elemento.querySelectorAll('.no-print').forEach(el => el.style.display = 'none');
+
+      const opt = { margin: 10, filename: `RDO_${document.getElementById('ext-rdo-data').value}.pdf`, image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2 }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' } };
+      html2pdf().set(opt).from(elemento).save().then(() => {
+          spansTemporarios.forEach(item => { item.fake.remove(); item.original.style.display = ''; });
+          elemento.querySelectorAll('.no-print').forEach(el => el.style.display = '');
+      });
+  },
+
+  salvar: () => {
+    const obra = document.getElementById('ext-rdo-obra-id').value;
+    const dataStr = document.getElementById('ext-rdo-data').value;
+    const texto = document.getElementById('ext-rdo-texto').value.trim();
+
+    if(!dataStr || !texto) return alert("Preencha a data e as atividades executadas.");
+
+    const btn = event.currentTarget;
+    btn.innerHTML = `<div class="spinner" style="width:14px; height:14px; border-width:2px; display:inline-block;"></div> Enviando...`;
+    btn.disabled = true;
+
+    const novoRdo = { 
+        id: Util.genId(), obra, data: dataStr, mesAno: dataStr.substring(0, 7), 
+        clima: document.getElementById('ext-rdo-clima').value, efetivo: document.getElementById('ext-rdo-efetivo').value, 
+        texto, avisoPlan: document.getElementById('ext-rdo-aviso-plan').value.trim(), 
+        avisoSup: document.getElementById('ext-rdo-aviso-sup').value.trim(), fotos: rdoFotosTemporarias, criadoEm: Util.today() 
+    };
+
+    if(!DB.data.diarios) DB.data.diarios = [];
+    DB.data.diarios.push(novoRdo);
+    
+    DB.saveItem('diarios', novoRdo).then(() => {
+        document.getElementById('view-rdo-externo').innerHTML = `
+        <div style="display:flex; height:100vh; align-items:center; justify-content:center; text-align:center; padding:20px;">
+            <div style="background:var(--paper); padding:30px; border-radius:12px; box-shadow:0 10px 30px rgba(0,0,0,0.15);">
+               <i class="fa-solid fa-circle-check" style="font-size:60px; color:var(--success); margin-bottom:20px;"></i>
+               <h1 style="color:var(--navy); font-size:20px; margin:0;">RDO Enviado com Sucesso!</h1>
+               <button class="btn btn-outline" style="margin-top:20px; width:100%;" onclick="window.location.reload()">Lançar outro dia</button>
+            </div>
+        </div>`;
+    });
+  }
+};
+window.PortalEncarregado = PortalEncarregado;
+
+// ==================== MODULO: DIÁRIO DE OBRA (GERENCIAL INTERNO) ====================
+const RDO = {
+   listar: () => {
+      const tb = document.getElementById('lista-rdo-body');
+      if(!tb) return;
+      tb.innerHTML = '';
+      if(!DB.data.diarios || DB.data.diarios.length === 0) {
+          tb.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:20px; color:var(--muted);">Nenhum RDO encontrado.</td></tr>';
+          return;
+      }
+
+      const filtroObra = document.getElementById('filtro-rdo-obra')?.value || '';
+      
+      let filtrados = DB.data.diarios;
+      if (filtroObra) {
+          filtrados = filtrados.filter(d => d.obra === filtroObra);
+      }
+
+      // Ordena do mais recente para o mais antigo
+      filtrados.sort((a,b) => b.data.localeCompare(a.data));
+
+      if(filtrados.length === 0) {
+          tb.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:20px; color:var(--muted);">Nenhum RDO encontrado para este filtro.</td></tr>';
+          return;
+      }
+
+      filtrados.forEach(d => {
+         const dtBr = d.data.split('-').reverse().join('/');
+         const obraNome = SPES[d.obra] ? SPES[d.obra].nome : d.obra;
+         const qtdFotos = d.fotos ? d.fotos.length : 0;
+         const badgeFotos = qtdFotos > 0 ? `<span style="background:var(--navy); color:#fff; padding:2px 6px; border-radius:10px; font-size:9px; margin-left:6px;"><i class="fa-solid fa-camera"></i> ${qtdFotos}</span>` : '';
+         
+         // Verifica se tem alertas de planejamento ou suprimentos
+         let alertasHtml = '';
+         if (d.avisoPlan || d.avisoSup) {
+             alertasHtml = `<div style="margin-top:4px;">`;
+             if (d.avisoPlan) alertasHtml += `<span style="color:#92400E; font-size:10px; font-weight:700; margin-right:8px;" title="${d.avisoPlan}">⚠️ Alerta Plan.</span>`;
+             if (d.avisoSup) alertasHtml += `<span style="color:var(--success); font-size:10px; font-weight:700;" title="${d.avisoSup}">🛒 Alerta Sup.</span>`;
+             alertasHtml += `</div>`;
+         }
+
+         tb.innerHTML += `
+            <tr>
+               <td style="text-align:center;"><strong>${dtBr}</strong></td>
+               <td style="text-align:center; font-weight:600; color:var(--navy);">${obraNome}</td>
+               <td style="text-align:center;">${d.clima}</td>
+               <td>
+                  <div style="max-height:40px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:350px;" title="${d.texto}">${d.texto}</div>
+                  ${alertasHtml}
+               </td>
+               <td style="text-align:center; white-space:nowrap;">
+                  <button class="btn btn-outline" style="padding: 4px 8px; font-size:10px;" onclick="RDO.verDetalhes('${d.id}')">🔍 Ver ${badgeFotos}</button>
+                  <button class="del-btn" style="font-size:16px; margin-left:4px;" onclick="RDO.excluir('${d.id}')" title="Excluir">×</button>
+               </td>
+            </tr>
+         `;
+      });
+   },
+
+   verDetalhes: (id) => {
+       const d = DB.data.diarios.find(x => x.id === id);
+       if (!d) return;
+
+       const dtBr = d.data.split('-').reverse().join('/');
+       const obraNome = SPES[d.obra] ? SPES[d.obra].nome : d.obra;
+
+       let fotosHtml = '';
+       if (d.fotos && d.fotos.length > 0) {
+           fotosHtml = `<h4 style="color:var(--navy); font-size:12px; margin-bottom:8px; border-bottom:1px solid var(--line); padding-bottom:4px;">Relatório Fotográfico</h4><div style="display:flex; flex-wrap:wrap; gap:10px; justify-content:center;">`;
+           d.fotos.forEach(f => {
+               fotosHtml += `<img src="${f}" style="width: 45%; max-height: 250px; object-fit: cover; border-radius: 6px; border: 1px solid var(--line);">`;
+           });
+           fotosHtml += `</div>`;
+       } else {
+           fotosHtml = `<p style="font-size:11px; color:var(--muted);">Sem fotos anexadas.</p>`;
+       }
+
+       let avisosHtml = '';
+       if (d.avisoPlan || d.avisoSup) {
+           avisosHtml += `<h4 style="color:var(--navy); font-size:12px; margin-bottom:8px; margin-top:15px; border-bottom:1px solid var(--line); padding-bottom:4px;">Alertas do Encarregado</h4>`;
+           if (d.avisoPlan) avisosHtml += `<div style="background: #FEF3C7; padding: 10px; border-radius: 4px; border: 1px solid #F59E0B; margin-bottom:8px;"><strong style="color:#92400E; font-size:11px;">Aviso Planejamento:</strong><p style="font-size:12px; margin:4px 0 0 0;">${d.avisoPlan}</p></div>`;
+           if (d.avisoSup) avisosHtml += `<div style="background: var(--highlight); padding: 10px; border-radius: 4px; border: 1px solid var(--success);"><strong style="color:var(--success); font-size:11px;">Aviso Suprimentos:</strong><p style="font-size:12px; margin:4px 0 0 0;">${d.avisoSup}</p></div>`;
+       }
+
+       document.getElementById('modal-rdo-content').innerHTML = `
+           <div style="display:flex; justify-content:space-between; margin-bottom:15px;">
+               <div><strong style="font-size:14px; color:var(--navy);">${obraNome}</strong><br><span style="font-size:11px; color:var(--muted);">${dtBr}</span></div>
+               <div style="text-align:right;"><strong style="font-size:12px; color:var(--ink);">${d.clima}</strong><br><span style="font-size:11px; color:var(--muted);">Efetivo: ${d.efetivo || 'Não informado'}</span></div>
+           </div>
+           
+           <h4 style="color:var(--navy); font-size:12px; margin-bottom:8px; border-bottom:1px solid var(--line); padding-bottom:4px;">Atividades Executadas</h4>
+           <div style="font-size:13px; line-height:1.5; color:var(--ink); margin-bottom:15px; white-space:pre-wrap;">${d.texto}</div>
+           
+           ${avisosHtml}
+           <div style="margin-top:20px;">${fotosHtml}</div>
+       `;
+       UI.openModal('modal-ver-rdo');
+   },
+
+   excluir: (id) => {
+      if(!confirm("Tem certeza que deseja excluir este RDO permanentemente?")) return;
+      DB.data.diarios = DB.data.diarios.filter(x => x.id !== id);
+      DB.deleteItem('diarios', id);
+      RDO.listar();
+      UI.toast("RDO excluído.");
+   }
+};
+window.RDO = RDO;
+
 // ==================== FUNÇÕES DE INTERFACE GLOBAIS ====================
 window.efetuarLogin = () => {
   const u = document.getElementById('login-user').value.trim();
@@ -6465,6 +6769,38 @@ const DADOS_OBRAS = {
 const Relatorio = {
    currentId: null,
    draggedBlock: null,
+
+   importarRDOs: () => {
+      const obraSelecionada = document.getElementById('rel-obra').value;
+      if (!obraSelecionada) return alert("Selecione a OBRA no topo primeiro.");
+      const mesAno = prompt("Mês para importar? (Ex: 2026-10)");
+      if (!mesAno) return;
+      if (!DB.data.diarios) return alert("Nenhum Diário registrado.");
+
+      const diariosFiltrados = DB.data.diarios.filter(d => d.obra === obraSelecionada && d.mesAno === mesAno).sort((a,b) => a.data.localeCompare(b.data));
+      if (diariosFiltrados.length === 0) return alert("Nenhum RDO encontrado neste mês.");
+
+      let textoHtml = `<p><strong>RESUMO DAS ATIVIDADES EXECUTADAS EM CAMPO:</strong></p><ul>`;
+      diariosFiltrados.forEach(d => {
+         const dtBr = d.data.split('-').reverse().join('/');
+         textoHtml += `<li><strong>${dtBr} (${d.clima}):</strong> ${d.texto} <br><em style="font-size:10px; color:var(--muted);">Efetivo: ${d.efetivo || 'Não inf.'}</em></li>`;
+      });
+      textoHtml += `</ul>`;
+
+      const area = document.getElementById('relatorio-content-area');
+      const block = document.createElement('div');
+      block.className = 'atd-block';
+      block.draggable = true;
+      block.innerHTML = `
+         <div class="drag-handle no-print" title="Arraste para reordenar">☰</div>
+         <div class="atd-block-content" style="width:100%;">
+            <div contenteditable="true" style="font-size:12px; line-height:1.6; color:var(--ink); text-align:justify; padding:10px; border:1px dashed var(--line); border-radius:4px; background:var(--highlight);">${textoHtml}</div>
+         </div>
+         <button class="btn-remove-block no-print" onclick="this.closest('.atd-block').remove()">×</button>
+      `;
+      area.appendChild(block);
+      UI.toast("Diários importados para o Relatório!");
+   },
 
    templateVazio: () => {
       const hoje = new Date();
