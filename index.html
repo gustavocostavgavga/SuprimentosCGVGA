@@ -2104,16 +2104,21 @@
 <!-- ====== MODAL: IMPORTAR RDO ======= -->
 <div class="modal-overlay" id="modal-importar-rdo-ia">
   <div class="modal" style="max-width:550px;">
-    <div class="modal-header">
+    <!-- Borda horizontal removida e margem reduzida para ficar mais harmônico -->
+    <div class="modal-header" style="border-bottom: none; margin-bottom: 5px;">
       <span><i class="fa-solid fa-robot" style="color:var(--ai-color);"></i> Inteligência Artificial: Resumo de RDOs</span>
       <button class="del-btn" onclick="UI.closeModal('modal-importar-rdo-ia')" style="font-size:24px;">&times;</button>
     </div>
-    <div style="font-size:12px; color:var(--muted); margin-bottom:15px; line-height:1.5;">O Motor Inteligente lerá todos os Diários de Obra do mês selecionado e gerará um painel de indicadores (Estatísticas de Clima, Efetivo Médio, Rank de Atividades) injetando no Resumo Executivo.</div>
+    
+    <div style="font-size:12px; color:var(--muted); margin-bottom:15px; line-height:1.5;">O Motor Inteligente lerá todos os Diários de Obra do mês selecionado e gerará um painel de indicadores (Clima, Efetivo e Detalhamento de Frentes) injetando no Resumo Executivo.</div>
+    
     <div class="field" style="margin-bottom:20px;">
        <label>Mês e Ano de Referência:</label>
-       <input type="month" id="ia-rdo-mes" style="font-size:14px; font-weight:700; color:var(--navy); padding:10px; height:auto;">
+       <input type="month" id="ia-rdo-mes" lang="pt-BR" style="font-size:14px; font-weight:700; color:var(--navy); padding:10px; height:auto; box-sizing:border-box;">
     </div>
-    <button class="btn btn-solid" style="width:100%; padding:15px; font-size:14px; background:var(--ai-color); color:#000;" id="btn-gerar-rdo-ia" onclick="Relatorio.executarIAResumoRDO()"><i class="fa-solid fa-wand-magic-sparkles"></i> Processar RDOs e Gerar Quadro</button>
+    
+    <!-- box-sizing:border-box trava a largura exata junto com o campo de cima -->
+    <button class="btn btn-solid" style="width:100%; box-sizing:border-box; padding:15px; font-size:14px; background:var(--ai-color); color:#000;" id="btn-gerar-rdo-ia" onclick="Relatorio.executarIAResumoRDO()"><i class="fa-solid fa-wand-magic-sparkles"></i> Processar RDOs e Gerar Quadro</button>
   </div>
 </div>
 <!-- MODAL: LISTA DE INSUMOS (IMPORTAÇÃO) -->
@@ -5638,7 +5643,6 @@ const PortalEncarregado = {
     return false;
   },
 
-  // SINCRONIZAÇÃO INTELIGENTE: Pega as frentes e gera o esqueleto de detalhamento
   syncDetalhes: () => {
       const mainText = document.getElementById('ext-rdo-texto').value;
       const detailEl = document.getElementById('ext-rdo-detalhe');
@@ -5646,7 +5650,6 @@ const PortalEncarregado = {
 
       const lines = mainText.split('\n').filter(l => l.trim() !== '');
       lines.forEach(line => {
-          // Remove numerações iniciais (ex: "1. Pavimentação" vira "Pavimentação")
           const cleanLine = line.replace(/^\d+[\.\-]\s*/, '').trim();
           if (cleanLine && !currentDetail.includes(cleanLine)) {
               currentDetail += (currentDetail ? '\n\n' : '') + `${cleanLine}:\n- `;
@@ -5696,7 +5699,7 @@ const PortalEncarregado = {
       
       textareas.forEach(ta => {
          const div = document.createElement('div');
-         div.style.cssText = "white-space: pre-wrap; font-size: 11px; color: #000; margin-bottom: 10px; border-bottom: 1px dashed #ccc; padding-bottom: 5px; line-height: 1.5;";
+         div.style.cssText = "white-space: pre-wrap; font-size: 13px; font-family: 'Montserrat'; color: #000; margin-bottom: 10px; border-bottom: 1px dashed #ccc; padding-bottom: 5px; line-height: 1.5;";
          div.textContent = ta.value || 'Nenhum apontamento.';
          ta.style.display = 'none';
          ta.parentNode.insertBefore(div, ta.nextSibling);
@@ -5705,62 +5708,50 @@ const PortalEncarregado = {
 
       elemento.querySelectorAll('.rdo-legenda-data').forEach(inp => {
          const div = document.createElement('div');
-         div.style.cssText = "font-size:9px; text-align:center; font-weight:700; margin-top:2px;";
+         div.style.cssText = "font-size:9px; text-align:center; font-weight:700; margin-top:2px; font-family: 'Montserrat';";
          div.textContent = inp.value || ' ';
          inp.style.display = 'none';
          inp.parentNode.insertBefore(div, inp.nextSibling);
          spansTemporarios.push({original: inp, fake: div});
       });
 
-      elemento.querySelectorAll('.no-print').forEach(el => el.style.display = 'none');
-      return { elemento, spansTemporarios };
+      return { spansTemporarios };
   },
 
-  restaurarImpressao: (spansTemporarios, elemento) => {
+  restaurarImpressao: (spansTemporarios) => {
       spansTemporarios.forEach(item => { item.fake.remove(); item.original.style.display = ''; });
-      elemento.querySelectorAll('.no-print').forEach(el => el.style.display = '');
   },
 
+  // NOVA ESTRATÉGIA NATIVA PARA BAIXAR/IMPRIMIR (Igual ao Relatório)
   baixarPDF: () => {
-      const { elemento, spansTemporarios } = PortalEncarregado.prepararParaImpressao();
-      const nomeObra = document.getElementById('ext-rdo-obra-id').value;
-      const dataHoje = document.getElementById('ext-rdo-data').value;
+      const { spansTemporarios } = PortalEncarregado.prepararParaImpressao();
       
-      const opt = { margin: 10, filename: `RDO_${nomeObra}_${dataHoje}.pdf`, image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2, useCORS: true }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' } };
+      const printStyle = document.createElement('style');
+      printStyle.innerHTML = `
+          @media print {
+              @page { size: A4 portrait !important; margin: 10mm !important; }
+              body, html { background: #fff !important; margin: 0 !important; padding: 0 !important; }
+              body > *:not(#view-rdo-externo) { display: none !important; }
+              #view-rdo-externo > *:not(#rdo-print-area) { display: none !important; }
+              
+              #rdo-print-area { box-shadow: none !important; margin: 0 !important; width: 100% !important; max-width: none !important; border-radius: 0 !important; }
+              .no-print { display: none !important; }
+          }
+      `;
+      document.head.appendChild(printStyle);
       
-      html2pdf().set(opt).from(elemento).save().then(() => {
-          PortalEncarregado.restaurarImpressao(spansTemporarios, elemento);
-      });
+      setTimeout(() => {
+          window.print();
+          printStyle.remove();
+          PortalEncarregado.restaurarImpressao(spansTemporarios);
+      }, 300);
   },
 
   compartilharWhatsApp: () => {
-      const btn = event.currentTarget;
-      const originalText = btn.innerHTML;
-      btn.innerHTML = `<div class="spinner" style="width:12px;height:12px;border-width:2px;border-color:#fff;border-top-color:transparent;"></div> Gerando...`;
-      
-      const { elemento, spansTemporarios } = PortalEncarregado.prepararParaImpressao();
-      const nomeObra = document.getElementById('ext-rdo-obra-id').value;
-      const dt = document.getElementById('ext-rdo-data').value;
-      
-      const opt = { margin: 10, filename: `RDO_${nomeObra}_${dt}.pdf`, image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2, useCORS: true }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' } };
-      
-      html2pdf().set(opt).from(elemento).outputPdf('blob').then(function(pdfBlob) {
-          PortalEncarregado.restaurarImpressao(spansTemporarios, elemento);
-          btn.innerHTML = originalText;
-          
-          const file = new File([pdfBlob], `RDO_${nomeObra}_${dt}.pdf`, { type: 'application/pdf' });
-          
-          if (navigator.canShare && navigator.canShare({ files: [file] })) {
-              navigator.share({
-                  title: 'RDO Diário',
-                  text: `Segue o RDO de hoje da obra.`,
-                  files: [file]
-              }).catch(err => console.log('Compartilhamento cancelado', err));
-          } else {
-              alert("Seu celular não suporta o envio direto. O PDF será baixado na sua pasta.");
-              PortalEncarregado.baixarPDF(); 
-          }
-      });
+      UI.toast("Gerando RDO. Na próxima tela, escolha 'Salvar como PDF' ou 'Compartilhar'.");
+      setTimeout(() => {
+          PortalEncarregado.baixarPDF();
+      }, 1000);
   },
 
   salvar: () => {
@@ -5787,7 +5778,7 @@ const PortalEncarregado = {
         id: Util.genId(), obra, data: dataStr, mesAno: dataStr.substring(0, 7), 
         clima: document.getElementById('ext-rdo-clima').value, 
         efetivo: document.getElementById('ext-rdo-efetivo').value, 
-        texto, detalhe, // Salvando o detalhamento
+        texto, detalhe, 
         avisoPlan: document.getElementById('ext-rdo-aviso-plan').value.trim(), 
         avisoSup: document.getElementById('ext-rdo-aviso-sup').value.trim(), 
         fotos: fotosData, 
@@ -5878,13 +5869,16 @@ const RDO = {
       });
    },
 
+   // NOVA ESTRATÉGIA NATIVA PARA LOTE (Acaba com o bug da página em branco)
    gerarPdfRdos: (rdosLote, callbackExclusao) => {
-      // 1. Contêiner ancorado ao topo e à esquerda da tela (Força o Chrome a renderizar o conteúdo real)
-      const tempDiv = document.createElement('div');
-      tempDiv.id = "temp-pdf-rdo";
-      tempDiv.style.cssText = 'width: 210mm; background: #ffffff; position: absolute; left: 0; top: 0; z-index: 10; font-family: "Montserrat", sans-serif;';
+      const printContainer = document.createElement('div');
+      printContainer.id = 'rdo-batch-print-container';
+      printContainer.style.cssText = 'width: 100%; max-width: 210mm; background: #fff; margin: 0 auto; padding: 0; box-sizing: border-box; font-family: "Montserrat", sans-serif;';
       
-      let html = '';
+      let html = `<div style="text-align:center; border-bottom:3px solid #0d3b1f; padding-bottom:10px; margin-bottom:20px; padding-top:20px;">
+         <h1 style="color:#0d3b1f; margin:0; font-size:24px; text-transform:uppercase;">RELATÓRIOS DIÁRIOS DE OBRA</h1>
+         <p style="margin:5px 0 0 0; color:#555; font-size:12px; font-weight:bold;">Exportação em Lote - ${rdosLote.length} Registros</p>
+      </div>`;
 
       rdosLote.forEach((d, idx) => {
           const dtBr = d.data.split('-').reverse().join('/');
@@ -5892,93 +5886,75 @@ const RDO = {
           
           let fotosHtml = '';
           if(d.fotos && d.fotos.length > 0) {
-              fotosHtml = `<h4 style="color:#0d3b1f; font-size:12px; margin-bottom:12px; border-bottom:1px solid #cccccc; padding-bottom:4px;">Relatório Fotográfico</h4><div style="display:flex; flex-wrap:wrap; gap:15px; margin-bottom:15px;">`;
+              fotosHtml = `<h4 style="font-size:12px; color:#0d3b1f; margin-bottom:10px;">Relatório Fotográfico</h4><div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:15px; page-break-inside: avoid;">`;
               d.fotos.forEach(f => {
                   const url = typeof f === 'string' ? f : f.url;
                   const leg = typeof f === 'string' ? '' : f.legenda;
-                  fotosHtml += `<div style="width:30%; text-align:center; border:1px solid #cccccc; border-radius:6px; padding:5px; background:#efefef; box-sizing:border-box;">
-                      <img src="${url}" style="width:100%; height:160px; object-fit:cover; border-radius:4px; margin-bottom:6px;">
-                      <div style="font-size:9px; font-weight:bold; color:#232323;">${leg||'-'}</div>
+                  fotosHtml += `<div style="width:31%; text-align:center; border:1px solid #ccc; border-radius:4px; padding:4px; page-break-inside: avoid;">
+                      <img src="${url}" style="width:100%; height:160px; object-fit:cover; border-radius:4px;">
+                      <div style="font-size:9px; margin-top:4px; font-family:'Montserrat';">${leg||'-'}</div>
                   </div>`;
               });
               fotosHtml += `</div>`;
-          } else {
-              fotosHtml = `<p style="font-size:11px; color:#777777;">Sem fotos anexadas.</p>`;
           }
 
           let alertasHtml = '';
           if (d.avisoPlan || d.avisoSup) {
-              alertasHtml = `<h4 style="color:#0d3b1f; font-size:12px; margin-bottom:8px; margin-top:15px; border-bottom:1px solid #cccccc; padding-bottom:4px;">Alertas do Encarregado</h4><div style="margin-bottom:15px;">`;
-              if (d.avisoPlan) alertasHtml += `<div style="background:#FEF3C7; padding:10px; border-radius:4px; border:1px solid #F59E0B; margin-bottom:8px;"><strong style="color:#92400E; font-size:11px;">⚠️ Aviso Planejamento:</strong> <span style="font-size:12px;">${d.avisoPlan}</span></div>`;
-              if (d.avisoSup) alertasHtml += `<div style="background:#e8f0e9; padding:10px; border-radius:4px; border:1px solid #24783d;"><strong style="color:#24783d; font-size:11px;">🛒 Aviso Suprimentos:</strong> <span style="font-size:12px;">${d.avisoSup}</span></div>`;
+              alertasHtml = `<div style="margin-top:10px; margin-bottom:15px; page-break-inside: avoid;">`;
+              if (d.avisoPlan) alertasHtml += `<div style="background:#FEF3C7; padding:8px; border-radius:4px; border:1px solid #F59E0B; margin-bottom:6px;"><strong style="color:#92400E; font-size:11px;">⚠️ Aviso Planejamento:</strong> <span style="font-size:11px;">${d.avisoPlan}</span></div>`;
+              if (d.avisoSup) alertasHtml += `<div style="background:#e8f0e9; padding:8px; border-radius:4px; border:1px solid #24783d;"><strong style="color:#24783d; font-size:11px;">🛒 Aviso Suprimentos:</strong> <span style="font-size:11px;">${d.avisoSup}</span></div>`;
               alertasHtml += `</div>`;
           }
 
-          // Apenas quebra página se não for o último RDO do lote
-          const pageBreak = idx < rdosLote.length - 1 ? 'page-break-after: always;' : '';
+          const borderStyle = idx < rdosLote.length - 1 ? 'page-break-after: always;' : '';
 
-          // Montagem exata da "telinha de detalhes" em HTML e Cores reais de Impressão (Hexadecimal puro)
           html += `
-             <div style="padding: 20px; ${pageBreak}">
-                <div style="text-align:center; border-bottom:2px solid #0d3b1f; padding-bottom:10px; margin-bottom:20px;">
-                    <h1 style="color:#0d3b1f; margin:0; font-size:20px; text-transform:uppercase;">RELATÓRIO DIÁRIO DE OBRA</h1>
+             <div style="${borderStyle} padding: 20px 0; font-family:'Montserrat';">
+                <div style="display:flex; justify-content:space-between; background:#e8f0e9; padding:15px; border-radius:6px; margin-bottom:20px; border-left:4px solid #0d3b1f;">
+                   <div><strong style="color:#0d3b1f; font-size:16px;">${obraNome}</strong><br><span style="font-size:12px; font-weight:bold; color:#24783d;">Data: ${dtBr}</span></div>
+                   <div style="text-align:right;"><strong style="font-size:14px; color:#232323;">Clima: ${d.clima}</strong><br><span style="font-size:12px; color:#555;">Efetivo: ${d.efetivo || 'Não informado'}</span></div>
                 </div>
                 
-                <div style="display:flex; justify-content:space-between; background:#e8f0e9; padding:15px; border-radius:6px; border:1px solid #24783d; margin-bottom:20px;">
-                   <div><strong style="font-size:16px; color:#0d3b1f;">${obraNome}</strong><br><span style="font-size:12px; font-weight:bold; color:#24783d;">Data: ${dtBr}</span></div>
-                   <div style="text-align:right;"><strong style="font-size:13px; color:#232323;">${d.clima}</strong><br><span style="font-size:11px; color:#777777;">Efetivo: ${d.efetivo || 'Não informado'}</span></div>
-                </div>
+                <strong style="font-size:12px; color:#0d3b1f;">Principais Frentes:</strong>
+                <div style="font-size:11px; margin-bottom:10px; line-height:1.5; color:#232323;">${RDO.formatarTextoLista(d.texto || '')}</div>
                 
-                <h4 style="color:#0d3b1f; font-size:12px; margin-bottom:8px; border-bottom:1px solid #cccccc; padding-bottom:4px;">Principais Frentes</h4>
-                <div style="font-size:13px; line-height:1.6; color:#232323; margin-bottom:15px; padding-left:10px;">
-                   ${RDO.formatarTextoLista(d.texto || '')}
-                </div>
-
-                <h4 style="color:#0d3b1f; font-size:12px; margin-bottom:8px; border-bottom:1px solid #cccccc; padding-bottom:4px;">Detalhamento das Frentes</h4>
-                <div style="font-size:13px; line-height:1.6; color:#232323; margin-bottom:15px; padding-left:10px;">
-                   ${RDO.formatarTextoLista(d.detalhe || 'Nenhum detalhamento registrado.')}
-                </div>
+                <strong style="font-size:12px; color:#0d3b1f;">Detalhamento das Frentes:</strong>
+                <div style="font-size:11px; margin-bottom:15px; line-height:1.5; color:#232323;">${RDO.formatarTextoLista(d.detalhe || 'Nenhum detalhamento registrado.')}</div>
                 
                 ${alertasHtml}
-                <div style="margin-top:20px;">${fotosHtml}</div>
+                ${fotosHtml}
              </div>
           `;
       });
       
-      tempDiv.innerHTML = html;
-      document.body.appendChild(tempDiv);
+      printContainer.innerHTML = html;
+      document.body.appendChild(printContainer);
       
-      // 2. Aciona a cortina de loading em Z-INDEX MAIOR que o tempDiv para esconder os bastidores do PDF gerando
-      const loader = document.getElementById('db-loader');
-      loader.style.display = 'flex';
-      loader.style.opacity = '1';
-      loader.style.zIndex = '999999';
-      loader.children[1].textContent = 'GERANDO PDF... AGUARDE';
-      
-      // 3. Rolagem pro topo: O HTML2Canvas corta pedaços da tela se o navegador estiver scrollado pra baixo
-      window.scrollTo(0, 0);
+      const printStyle = document.createElement('style');
+      printStyle.id = 'rdo-batch-print-style';
+      printStyle.innerHTML = `
+          @media print {
+              @page { size: A4 portrait !important; margin: 10mm !important; }
+              body, html { margin: 0 !important; padding: 0 !important; background: #fff !important; }
+              body { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+              
+              /* BLINDAGEM: Oculta tudo que não for o container de impressão */
+              body > *:not(#rdo-batch-print-container) { display: none !important; }
+              
+              #rdo-batch-print-container { display: block !important; position: static !important; width: 100% !important; margin: 0 !important; padding: 0 !important; }
+          }
+      `;
+      document.head.appendChild(printStyle);
 
-      const opt = { 
-          margin: 10, 
-          filename: rdosLote.length > 1 ? `Lote_RDOs_${rdosLote.length}_Registros.pdf` : `RDO_${rdosLote[0].data}.pdf`, 
-          image: { type: 'jpeg', quality: 0.98 }, 
-          html2canvas: { scale: 2, useCORS: true, scrollY: 0 }, 
-          jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' } 
-      };
-      
-      // 4. Delay de 800ms: Garante que as imagens grandes renderizem no DOM invisível antes de bater a foto do PDF
       setTimeout(() => {
-         html2pdf().set(opt).from(tempDiv).save().then(() => {
-             tempDiv.remove();
-             loader.style.opacity = '0';
-             setTimeout(() => { 
-                 loader.style.display = 'none'; 
-                 loader.children[1].textContent = 'Conectando ao Firebase...'; 
-             }, 500);
-             
-             if(callbackExclusao) callbackExclusao();
-         });
-      }, 800);
+         window.print();
+         
+         // Limpeza pós impressão
+         printContainer.remove();
+         printStyle.remove();
+         
+         if(callbackExclusao) callbackExclusao();
+      }, 500);
    },
 
    baixarSelecionados: () => {
