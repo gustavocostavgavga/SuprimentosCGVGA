@@ -537,13 +537,14 @@
     </div>
   </div>
 
-  <div style="max-width:600px; margin:20px auto 40px auto; display:flex; flex-direction:column; gap:10px;" class="no-print">
-     <button class="btn btn-success" style="width:100%; padding:15px; font-size:14px; font-weight:800;" onclick="PortalEncarregado.salvar()"><i class="fa-solid fa-cloud-arrow-up"></i> Salvar na Plataforma</button>
-     
-     <div style="display:flex; gap:10px; width:100%;">
-        <button class="btn btn-outline" style="flex:1; padding:15px; font-size:12px; background:var(--paper);" onclick="PortalEncarregado.baixarPDF()"><i class="fa-solid fa-file-pdf"></i> Só Baixar PDF</button>
-        <button class="btn btn-solid" style="flex:1; padding:15px; font-size:12px; background:#25D366; border:none; color:#fff;" onclick="PortalEncarregado.compartilharWhatsApp()"><i class="fa-brands fa-whatsapp" style="font-size:16px;"></i> Mandar no Zap</button>
-     </div>
+  <!-- BOTÕES ALINHADOS, RESTRITOS À LARGURA DO CARTÃO -->
+  <div style="max-width:600px; width: 92%; margin:20px auto 40px auto; display:flex; gap:10px; box-sizing:border-box; padding: 0;" class="no-print">
+      <button class="btn btn-success" style="flex:1; padding:15px 0; font-size:14px; font-weight:800; justify-content:center; box-sizing:border-box;" onclick="PortalEncarregado.salvar()"><i class="fa-solid fa-cloud-arrow-up"></i> Salvar na Plataforma</button>
+      
+      <button class="btn btn-outline" style="padding:15px 0; font-size:20px; background:var(--paper); width:60px; justify-content:center; box-sizing:border-box; flex-shrink:0;" onclick="PortalEncarregado.baixarPDF()" title="Baixar PDF"><i class="fa-solid fa-file-pdf"></i></button>
+      
+      <button class="btn btn-solid" style="padding:15px 0; font-size:20px; background:#25D366; border:none; color:#fff; width:60px; justify-content:center; box-sizing:border-box; flex-shrink:0;" onclick="PortalEncarregado.compartilharWhatsApp()" title="Compartilhar no WhatsApp"><i class="fa-brands fa-whatsapp"></i></button>
+  </div>
   </div>
 </div>
 
