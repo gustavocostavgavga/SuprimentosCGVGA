@@ -491,7 +491,7 @@
          <div class="field"><label>Data da Atividade</label><input type="date" id="ext-rdo-data" style="width:100%; padding:10px; height:auto;"></div>
          <div class="field"><label>Condição Climática</label>
             <select id="ext-rdo-clima" style="width:100%; padding:10px; height:auto; cursor:pointer;">
-               <option value="Bom">☀️ Tempo Bom</option>
+               <option value="Clima Bom">☀️ Clima Bom</option>
                <option value="Chuva Leve">🌦️ Chuva Leve (Parcial)</option>
                <option value="Chuva Forte">🌧️ Chuva Forte (Impediu)</option>
             </select>
@@ -504,9 +504,16 @@
       </div>
 
       <div class="field" style="margin-bottom:20px;">
-         <label><i class="fa-solid fa-list-ol" style="color:var(--navy); margin-right:6px;"></i> Principais Atividades (Dê 'Enter' para separar)</label>
-         <div style="font-size:10px; color:var(--muted); margin-bottom:6px;">Pressione a tecla "Enter" no teclado do celular para cada nova atividade. Elas serão numeradas automaticamente.</div>
-         <textarea id="ext-rdo-texto" rows="5" placeholder="1. Imprimação da rua A...&#10;2. Assentamento de tubos...&#10;3. Limpeza do canteiro..." style="width:100%; border:1px solid var(--line); border-radius:4px; padding:10px; font-family:'Montserrat'; font-size:13px; line-height:1.5;"></textarea>
+         <label><i class="fa-solid fa-list-ol" style="color:var(--navy); margin-right:6px;"></i> Principais Frentes (Dê 'Enter' para separar)</label>
+         <div style="font-size:10px; color:var(--muted); margin-bottom:6px;">Pressione a tecla "Enter" no teclado para cada nova frente.</div>
+         <textarea id="ext-rdo-texto" rows="3" placeholder="1. Pavimentação&#10;2. Elétrica&#10;3. Limpeza" style="width:100%; border:1px solid var(--line); border-radius:4px; padding:10px; font-family:'Montserrat'; font-size:13px; line-height:1.5;" onblur="PortalEncarregado.syncDetalhes()"></textarea>
+      </div>
+
+      <!-- Detalhamento de Atividades -->
+      <div class="field" style="margin-bottom:20px;">
+         <label style="color:var(--muted);"><i class="fa-solid fa-align-left" style="margin-right:6px;"></i> Detalhamento de Atividades</label>
+         <div style="font-size:10px; color:var(--muted); margin-bottom:6px;">Preencha com o detalhamento do que foi feito em cada frente.</div>
+         <textarea id="ext-rdo-detalhe" rows="5" placeholder="O sistema puxará as frentes automaticamente aqui..." style="width:100%; border:1px solid var(--line); border-radius:4px; padding:10px; font-family:'Montserrat'; font-size:13px; line-height:1.5;"></textarea>
       </div>
 
       <div class="field" style="margin-bottom:15px; background: #FEF3C7; padding: 15px; border-radius: 6px; border: 1px solid #F59E0B;">
@@ -523,7 +530,6 @@
          <label><i class="fa-solid fa-camera" style="color:var(--navy); margin-right:6px;"></i> Relatório Fotográfico</label>
          <input type="file" id="ext-rdo-upload" multiple accept="image/*" class="no-print" style="margin-bottom:10px; padding:8px; border:1px dashed var(--line); width:100%;" onchange="PortalEncarregado.adicionarFotos(event)">
          
-         <!-- GRID PARA 3 FOTOS POR LINHA -->
          <div id="ext-rdo-fotos-preview" style="display:grid; grid-template-columns: repeat(3, 1fr); gap:10px; align-items:start;">
              <!-- Fotos injetadas aqui -->
          </div>
@@ -531,13 +537,13 @@
     </div>
   </div>
 
-  <div style="max-width:600px; margin:20px auto 40px auto; display:flex; flex-direction:column; gap:10px;" class="no-print">
-     <button class="btn btn-success" style="width:100%; padding:15px; font-size:14px; font-weight:800;" onclick="PortalEncarregado.salvar()"><i class="fa-solid fa-cloud-arrow-up"></i> Salvar na Plataforma</button>
-     
-     <div style="display:flex; gap:10px; width:100%;">
-        <button class="btn btn-outline" style="flex:1; padding:15px; font-size:12px; background:var(--paper);" onclick="PortalEncarregado.baixarPDF()"><i class="fa-solid fa-file-pdf"></i> Só Baixar PDF</button>
-        <button class="btn btn-solid" style="flex:1; padding:15px; font-size:12px; background:#25D366; border:none; color:#fff;" onclick="PortalEncarregado.compartilharWhatsApp()"><i class="fa-brands fa-whatsapp" style="font-size:16px;"></i> Mandar no Zap</button>
-     </div>
+  <!-- BOTÕES ALINHADOS, RESTRITOS À LARGURA DO CARTÃO -->
+  <div style="max-width:600px; width: 92%; margin:20px auto 40px auto; display:flex; gap:10px; box-sizing:border-box; padding: 0;" class="no-print">
+      <button class="btn btn-success" style="flex:1; padding:15px 0; font-size:14px; font-weight:800; justify-content:center; box-sizing:border-box;" onclick="PortalEncarregado.salvar()"><i class="fa-solid fa-cloud-arrow-up"></i> Salvar na Plataforma</button>
+      
+      <button class="btn btn-outline" style="padding:15px 0; font-size:20px; background:var(--paper); width:60px; justify-content:center; box-sizing:border-box; flex-shrink:0;" onclick="PortalEncarregado.baixarPDF()" title="Baixar PDF"><i class="fa-solid fa-file-pdf"></i></button>
+      
+      <button class="btn btn-solid" style="padding:15px 0; font-size:20px; background:#25D366; border:none; color:#fff; width:60px; justify-content:center; box-sizing:border-box; flex-shrink:0;" onclick="PortalEncarregado.compartilharWhatsApp()" title="Compartilhar no WhatsApp"><i class="fa-brands fa-whatsapp"></i></button>
   </div>
 </div>
 
@@ -5659,6 +5665,9 @@ window.MapaPrecos = MapaPrecos; window.OC = OC; window.AI = AI; window.Email = E
 // ==================== MODULO: PORTAL DO ENCARREGADO (RDO) ====================
 let rdoFotosTemporarias = []; 
 
+// ==================== MODULO: PORTAL DO ENCARREGADO (RDO) ====================
+let rdoFotosTemporarias = []; 
+
 const PortalEncarregado = {
   verificarAcessoExterno: () => {
     const urlParams = new URLSearchParams(window.location.search);
@@ -5673,10 +5682,26 @@ const PortalEncarregado = {
       const hoje = new Date();
       const formatada = hoje.getFullYear() + '-' + String(hoje.getMonth() + 1).padStart(2, '0') + '-' + String(hoje.getDate()).padStart(2, '0');
       document.getElementById('ext-rdo-data').value = formatada;
-      document.getElementById('ext-rdo-fotos-preview').innerHTML = ''; // Limpa fotos
+      document.getElementById('ext-rdo-fotos-preview').innerHTML = ''; 
+      document.getElementById('ext-rdo-detalhe').value = '';
       return true; 
     }
     return false;
+  },
+
+  syncDetalhes: () => {
+      const mainText = document.getElementById('ext-rdo-texto').value;
+      const detailEl = document.getElementById('ext-rdo-detalhe');
+      let currentDetail = detailEl.value;
+
+      const lines = mainText.split('\n').filter(l => l.trim() !== '');
+      lines.forEach(line => {
+          const cleanLine = line.replace(/^\d+[\.\-]\s*/, '').trim();
+          if (cleanLine && !currentDetail.includes(cleanLine)) {
+              currentDetail += (currentDetail ? '\n\n' : '') + `${cleanLine}:\n- `;
+          }
+      });
+      detailEl.value = currentDetail;
   },
 
   adicionarFotos: (event) => {
@@ -5688,22 +5713,20 @@ const PortalEncarregado = {
               const img = new Image();
               img.onload = () => {
                   const canvas = document.createElement('canvas');
-                  // COMPRESSÃO AGRESSIVA (Para caber muitas fotos no Firebase)
                   const MAX_WIDTH = 500; 
                   let width = img.width; let height = img.height;
                   if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; }
                   canvas.width = width; canvas.height = height;
                   canvas.getContext('2d').drawImage(img, 0, 0, width, height);
-                  const dataUrl = canvas.toDataURL('image/jpeg', 0.5); // 50% qualidade, arquivo ínfimo!
+                  const dataUrl = canvas.toDataURL('image/jpeg', 0.5);
                   
-                  // Container da Foto + Legenda
                   const fotoWrapper = document.createElement('div');
                   fotoWrapper.className = 'rdo-foto-item';
                   fotoWrapper.style.cssText = "display:flex; flex-direction:column; gap:4px; position:relative;";
                   
                   fotoWrapper.innerHTML = `
                      <button class="no-print" onclick="this.parentElement.remove()" style="position:absolute; top:2px; right:2px; background:rgba(255,0,0,0.8); border:none; color:#fff; border-radius:50%; width:20px; height:20px; font-size:12px; cursor:pointer;">×</button>
-                     <img src="${dataUrl}" class="rdo-img-data" style="width:100%; aspect-ratio:1/1; object-fit:cover; border-radius:6px; border:1px solid var(--line);">
+                     <img src="${dataUrl}" class="rdo-img-data" style="width:100%; height:120px; object-fit:cover; border-radius:6px; border:1px solid var(--line);">
                      <input type="text" class="rdo-legenda-data" placeholder="Legenda..." style="font-size:9px; padding:4px; border:1px solid var(--line); border-radius:4px; width:100%; text-align:center; font-family:'Montserrat'; outline:none;">
                   `;
                   previewContainer.appendChild(fotoWrapper);
@@ -5712,7 +5735,7 @@ const PortalEncarregado = {
           };
           reader.readAsDataURL(files[i]);
       }
-      event.target.value = ''; // Reseta o input de arquivo
+      event.target.value = ''; 
   },
 
   prepararParaImpressao: () => {
@@ -5720,91 +5743,75 @@ const PortalEncarregado = {
       const textareas = elemento.querySelectorAll('textarea');
       const spansTemporarios = [];
       
-      // Converte textareas e inputs em texto estático
       textareas.forEach(ta => {
          const div = document.createElement('div');
-         div.style.cssText = "white-space: pre-wrap; font-size: 11px; color: #000; margin-bottom: 10px; border-bottom: 1px dashed #ccc; padding-bottom: 5px; line-height: 1.5;";
+         div.style.cssText = "white-space: pre-wrap; font-size: 13px; font-family: 'Montserrat'; color: #000; margin-bottom: 10px; border-bottom: 1px dashed #ccc; padding-bottom: 5px; line-height: 1.5;";
          div.textContent = ta.value || 'Nenhum apontamento.';
          ta.style.display = 'none';
          ta.parentNode.insertBefore(div, ta.nextSibling);
          spansTemporarios.push({original: ta, fake: div});
       });
 
-      // Converte as legendas das fotos
       elemento.querySelectorAll('.rdo-legenda-data').forEach(inp => {
          const div = document.createElement('div');
-         div.style.cssText = "font-size:9px; text-align:center; font-weight:700; margin-top:2px;";
+         div.style.cssText = "font-size:9px; text-align:center; font-weight:700; margin-top:2px; font-family: 'Montserrat';";
          div.textContent = inp.value || ' ';
          inp.style.display = 'none';
          inp.parentNode.insertBefore(div, inp.nextSibling);
          spansTemporarios.push({original: inp, fake: div});
       });
 
-      elemento.querySelectorAll('.no-print').forEach(el => el.style.display = 'none');
-      return { elemento, spansTemporarios };
+      return { spansTemporarios };
   },
 
-  restaurarImpressao: (spansTemporarios, elemento) => {
+  restaurarImpressao: (spansTemporarios) => {
       spansTemporarios.forEach(item => { item.fake.remove(); item.original.style.display = ''; });
-      elemento.querySelectorAll('.no-print').forEach(el => el.style.display = '');
   },
 
   baixarPDF: () => {
-      const { elemento, spansTemporarios } = PortalEncarregado.prepararParaImpressao();
-      const nomeObra = document.getElementById('ext-rdo-obra-id').value;
-      const dataHoje = document.getElementById('ext-rdo-data').value;
+      const { spansTemporarios } = PortalEncarregado.prepararParaImpressao();
       
-      const opt = { margin: 10, filename: `RDO_${nomeObra}_${dataHoje}.pdf`, image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2 }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' } };
+      const printStyle = document.createElement('style');
+      printStyle.innerHTML = `
+          @media print {
+              @page { size: A4 portrait !important; margin: 10mm !important; }
+              body, html { background: #fff !important; margin: 0 !important; padding: 0 !important; }
+              body > *:not(#view-rdo-externo) { display: none !important; }
+              #view-rdo-externo > *:not(#rdo-print-area) { display: none !important; }
+              
+              #rdo-print-area { box-shadow: none !important; margin: 0 !important; width: 100% !important; max-width: none !important; border-radius: 0 !important; }
+              .no-print { display: none !important; }
+          }
+      `;
+      document.head.appendChild(printStyle);
       
-      html2pdf().set(opt).from(elemento).save().then(() => {
-          PortalEncarregado.restaurarImpressao(spansTemporarios, elemento);
-      });
+      setTimeout(() => {
+          window.print();
+          printStyle.remove();
+          PortalEncarregado.restaurarImpressao(spansTemporarios);
+      }, 300);
   },
 
   compartilharWhatsApp: () => {
-      const btn = event.currentTarget;
-      const originalText = btn.innerHTML;
-      btn.innerHTML = `<div class="spinner" style="width:12px;height:12px;border-width:2px;border-color:#fff;border-top-color:transparent;"></div> Gerando...`;
-      
-      const { elemento, spansTemporarios } = PortalEncarregado.prepararParaImpressao();
-      const nomeObra = document.getElementById('ext-rdo-obra-id').value;
-      const dt = document.getElementById('ext-rdo-data').value;
-      
-      const opt = { margin: 10, filename: `RDO_${nomeObra}_${dt}.pdf`, image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2 }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' } };
-      
-      // Gera o PDF na memória (Blob) e aciona o compartilhamento nativo do celular
-      html2pdf().set(opt).from(elemento).outputPdf('blob').then(function(pdfBlob) {
-          PortalEncarregado.restaurarImpressao(spansTemporarios, elemento);
-          btn.innerHTML = originalText;
-          
-          const file = new File([pdfBlob], `RDO_${nomeObra}_${dt}.pdf`, { type: 'application/pdf' });
-          
-          if (navigator.canShare && navigator.canShare({ files: [file] })) {
-              navigator.share({
-                  title: 'RDO Diário',
-                  text: `Segue o RDO de hoje da obra.`,
-                  files: [file]
-              }).catch(err => console.log('Compartilhamento cancelado', err));
-          } else {
-              alert("Seu celular não suporta o envio direto. O PDF será baixado na sua pasta.");
-              PortalEncarregado.baixarPDF(); // Fallback se não for celular
-          }
-      });
+      UI.toast("Gerando RDO. Na próxima tela, escolha 'Salvar como PDF' ou 'Compartilhar'.");
+      setTimeout(() => {
+          PortalEncarregado.baixarPDF();
+      }, 1000);
   },
 
   salvar: () => {
     const obra = document.getElementById('ext-rdo-obra-id').value;
     const dataStr = document.getElementById('ext-rdo-data').value;
     const texto = document.getElementById('ext-rdo-texto').value.trim();
+    const detalhe = document.getElementById('ext-rdo-detalhe').value.trim();
 
-    if(!dataStr || !texto) return alert("Preencha a data e as atividades executadas.");
+    if(!dataStr || !texto) return alert("Preencha a data e as frentes executadas.");
 
     const btn = event.currentTarget;
     const originalText = btn.innerHTML;
     btn.innerHTML = `<div class="spinner" style="width:14px; height:14px; border-width:2px; display:inline-block;"></div> Enviando...`;
     btn.disabled = true;
 
-    // Coleta as fotos e legendas dinamicamente da tela
     const fotosData = [];
     document.querySelectorAll('.rdo-foto-item').forEach(item => {
         const img = item.querySelector('.rdo-img-data').src;
@@ -5816,9 +5823,10 @@ const PortalEncarregado = {
         id: Util.genId(), obra, data: dataStr, mesAno: dataStr.substring(0, 7), 
         clima: document.getElementById('ext-rdo-clima').value, 
         efetivo: document.getElementById('ext-rdo-efetivo').value, 
-        texto, avisoPlan: document.getElementById('ext-rdo-aviso-plan').value.trim(), 
+        texto, detalhe, 
+        avisoPlan: document.getElementById('ext-rdo-aviso-plan').value.trim(), 
         avisoSup: document.getElementById('ext-rdo-aviso-sup').value.trim(), 
-        fotos: fotosData, // Agora salva a foto E a legenda juntas!
+        fotos: fotosData, 
         criadoEm: Util.today() 
     };
 
@@ -5829,8 +5837,8 @@ const PortalEncarregado = {
         btn.innerHTML = originalText;
         btn.disabled = false;
         alert("RDO salvo com sucesso na plataforma!");
-        // Limpa apenas o texto e fotos, mantendo a data para facilitar
         document.getElementById('ext-rdo-texto').value = '';
+        document.getElementById('ext-rdo-detalhe').value = '';
         document.getElementById('ext-rdo-fotos-preview').innerHTML = '';
     }).catch(() => {
         btn.innerHTML = originalText;
