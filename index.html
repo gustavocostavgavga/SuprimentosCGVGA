@@ -1900,17 +1900,19 @@
            <button class="btn btn-outline" onclick="App.nav('escopos-lista')">← Voltar à Lista</button>
            <button class="btn btn-outline" onclick="document.getElementById('view-escopo').classList.toggle('escopo-fullscreen'); this.innerHTML = this.innerHTML.includes('Sair') ? '⛶ Tela Cheia' : '⛶ Sair da Tela Cheia';">⛶ Tela Cheia</button>
            <button class="btn btn-success" onclick="Escopo.salvar()">💾 Salvar Escopo</button>
-           <button class="btn" style="color: var(--muted); border: 1px solid var(--line); font-size: 16px; padding: 6px 12px; background: transparent; transition: 0.2s;" onmouseover="this.style.color='var(--navy)'; this.style.borderColor='var(--navy)';" onmouseout="this.style.color='var(--muted)'; this.style.borderColor='var(--line)';" onclick="Escopo.baixarPDF()" title="Gerar PDF em Alta Qualidade"><i class="fa-solid fa-download"></i></button>
+          <button class="btn" style="color: var(--muted); border: 1px solid var(--line); font-size: 16px; padding: 6px 12px; background: transparent; transition: 0.2s;" onmouseover="this.style.color='var(--navy)'; this.style.borderColor='var(--navy)';" onmouseout="this.style.color='var(--muted)'; this.style.borderColor='var(--line)';" onclick="imprimirEscopoNativo()" title="Gerar PDF em Alta Qualidade"><i class="fa-solid fa-download"></i></button>
         </div>
       </div>
 
       <div id="escopo-content-area" class="escopo-print-area">
-         
-         <div style="border: 2px solid var(--ink); padding: 15px; border-radius: 4px; text-align: center; margin-bottom: 20px;">
-            <h1 id="esc-titulo-wrapper" style="color: var(--ink); font-size: 18px; margin: 0; font-weight: 800; display: flex; justify-content: center; align-items: center; gap: 4px; text-transform: uppercase;">
-               ESCOPO DE OBRAS E SERVIÇOS N° <input type="text" id="esc-registro" placeholder="XXXX" class="escopo-input" style="font-weight: 800; width: 60px; text-align: center; font-size: 18px; color: var(--ink); border-bottom: 1px dashed var(--line); padding: 0;">
-            </h1>
-         </div>
+
+      <div id="esc-header-box" style="border: 2px solid var(--ink); padding: 12px 20px; border-radius: 4px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; min-height: 75px;">
+         <img id="esc-logo-grp" src="LogoGRP.png" style="height: 48px; width: auto; object-fit: contain;" onerror="this.style.display='none'">
+         <h1 id="esc-titulo-wrapper" style="color: var(--ink); font-size: 16px; margin: 0; font-weight: 800; display: flex; justify-content: center; align-items: center; gap: 4px; text-transform: uppercase; flex: 1; text-align: center;">
+            ESCOPO DE OBRAS E SERVIÇOS N° <input type="text" id="esc-registro" placeholder="XXXX" class="escopo-input" style="font-weight: 800; width: 65px; text-align: center; font-size: 16px; color: var(--ink); border-bottom: 1px dashed var(--line); padding: 0;">
+         </h1>
+         <img id="esc-logo-obra" src="" style="height: 48px; width: auto; object-fit: contain; display: none;" onerror="this.style.display='none'">
+      </div>
 
          <div style="font-size: 11px; color: var(--muted); text-align: right; margin-bottom: 20px; font-weight: 600;">
             Data de Registro: <span id="esc-data-registro" style="font-weight: 800; color: var(--ink);"></span>
@@ -7912,5 +7914,336 @@ window.Relatorio = Relatorio;
 window.Escopo = Escopo;
 window.onload = App.init;
 </script>
+<!-- INÍCIO DO MOTOR DE PAGINAÇÃO COM CONTROLE MANUAL DE QUEBRA -->
+<style>
+  #escopo-native-print-wrapper {
+      display: none;
+  }
+
+  /* Ajusta a linha vermelha guia na tela de edição para mostrar exatamente onde a folha útil (240mm) termina */
+  .escopo-print-area::after {
+      background-image: repeating-linear-gradient(
+          to bottom, 
+          transparent, 
+          transparent calc(242mm - 2px), 
+          rgba(239, 68, 68, 0.75) calc(242mm - 2px), 
+          rgba(239, 68, 68, 0.75) 242mm
+      ) !important;
+  }
+
+  /* Divisor manual de quebra de página que você vê na tela para controlar onde a folha muda */
+  .escopo-page-break-marker {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      margin: 18px 0;
+      padding: 6px 12px;
+      background: #fff1f2;
+      border: 1px dashed #e11d48;
+      border-radius: 4px;
+      color: #be123c;
+      font-size: 10px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      cursor: pointer;
+      user-select: none;
+  }
+  .escopo-page-break-marker:hover {
+      background: #ffe4e6;
+  }
+
+  /* Botão discreto no canto de cada seção para você forçar quebra acima dela quando quiser */
+  .escopo-secao-ctrl {
+      position: relative;
+  }
+  .btn-break-here {
+      position: absolute;
+      right: -135px;
+      top: 0;
+      font-size: 9px;
+      font-weight: 700;
+      padding: 4px 8px;
+      border: 1px dashed var(--line);
+      border-radius: 4px;
+      background: var(--paper);
+      color: var(--muted);
+      cursor: pointer;
+      opacity: 0.5;
+      transition: 0.2s;
+  }
+  .btn-break-here:hover {
+      opacity: 1;
+      border-color: #e11d48;
+      color: #e11d48;
+  }
+
+  @media print {
+      body.printing-escopo-mode > *:not(#escopo-native-print-wrapper) {
+          display: none !important;
+      }
+
+      body.printing-escopo-mode {
+          background: #FFFFFF !important;
+          margin: 0 !important;
+          padding: 0 !important;
+          -webkit-print-color-adjust: exact !important;
+          print-color-adjust: exact !important;
+      }
+
+      @page {
+          size: A4 portrait;
+          margin: 10mm 15mm 15mm 15mm;
+      }
+
+      #escopo-native-print-wrapper {
+          display: block !important;
+          width: 100% !important;
+          font-family: 'Montserrat', sans-serif !important;
+          color: #232323 !important;
+      }
+
+      .escopo-print-master-table {
+          width: 100% !important;
+          border-collapse: collapse !important;
+          border: none !important;
+      }
+
+      .escopo-print-master-table > thead {
+          display: table-header-group !important;
+      }
+
+      .escopo-print-master-table > tfoot {
+          display: table-footer-group !important;
+      }
+
+      .escopo-print-master-table > thead > tr > td,
+      .escopo-print-master-table > tbody > tr > td,
+      .escopo-print-master-table > tfoot > tr > td {
+          border: none !important;
+          padding: 0 !important;
+      }
+
+      .escopo-header-repeat-space {
+          padding-bottom: 5mm !important;
+      }
+
+      .escopo-footer-repeat-space {
+          height: 13mm !important;
+      }
+
+      .escopo-native-footer-fixed {
+          position: fixed !important;
+          bottom: 0 !important;
+          left: 0 !important;
+          right: 0 !important;
+          border: 2px solid #232323 !important;
+          border-radius: 4px !important;
+          padding: 8px 15px !important;
+          background: #FFFFFF !important;
+          display: flex !important;
+          justify-content: space-between !important;
+          align-items: center !important;
+          font-family: 'Montserrat', sans-serif !important;
+          z-index: 9999 !important;
+      }
+
+      /* CORREÇÃO DO ESPAÇO EM BRANCO: 
+         Agora APENAS fotos individuais e linhas individuais da tabela evitam corte. 
+         As seções de texto fluem até o fim da página aproveitando 100% do espaço! */
+      #escopo-native-print-wrapper .esc-img-block,
+      #escopo-native-print-wrapper table.items tr {
+          page-break-inside: avoid !important;
+          break-inside: avoid !important;
+      }
+
+      /* Faz o cabeçalho da tabela de materiais repetir caso a tabela passe para a próxima folha */
+      #escopo-native-print-wrapper table.items thead {
+          display: table-header-group !important;
+      }
+
+      /* Quando encontrar um marcador manual seu, força a mudança de página naquele ponto exato */
+      .escopo-print-forced-break {
+          page-break-before: always !important;
+          break-before: page !important;
+          height: 0 !important;
+          margin: 0 !important;
+          padding: 0 !important;
+          border: none !important;
+      }
+  }
+</style>
+
+<script>
+  window.atualizarLogoObraEscopo = (val) => {
+      const img = document.getElementById('esc-logo-obra');
+      if (!img) return;
+      const v = (val || '').toLowerCase();
+      if (v.includes('mirante') || v.includes('bocaiuva') || v.includes('bocaiúva')) {
+          img.src = 'LogoMiranteLagoa.png'; img.style.display = 'block';
+      } else if (v.includes('joaquim') || v.includes('jleme') || v.includes('ituiutaba')) {
+          img.src = 'LogoJoaquimLeme.png'; img.style.display = 'block';
+      } else if (v.includes('parque') || v.includes('nações') || v.includes('nacoes') || v.includes('mife')) {
+          img.src = 'LogoPqNações.png'; img.style.display = 'block';
+      } else if (v.includes('cidade nova') || v.includes('nazareno')) {
+          img.src = 'LogoCidadeNova.png'; img.style.display = 'block';
+      } else {
+          img.style.display = 'none';
+      }
+  };
+
+  document.addEventListener('input', (e) => {
+      if (e.target && e.target.id === 'esc-obra') {
+          window.atualizarLogoObraEscopo(e.target.value);
+      }
+  });
+
+  // Injeta automaticamente os botões "✂️ Quebrar Página Aqui" ao lado direito de cada seção do Escopo
+  window.ativarBotoesQuebraEscopo = () => {
+      const area = document.getElementById('escopo-content-area');
+      if (!area) return;
+
+      Array.from(area.children).forEach((child, idx) => {
+          if (idx < 2) return; // Ignora cabeçalho e data
+          if (child.classList.contains('no-print') || child.classList.contains('escopo-page-break-marker')) return;
+          if (child.querySelector('.btn-break-here')) return;
+
+          child.classList.add('escopo-secao-ctrl');
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = 'btn-break-here no-print';
+          btn.innerHTML = '✂️ Quebrar Página Acima';
+          btn.title = 'Forçar que esta seção comece no topo da próxima página do PDF';
+          btn.onclick = () => window.inserirQuebraManualEscopo(child);
+          child.appendChild(btn);
+      });
+  };
+
+  window.inserirQuebraManualEscopo = (elementoAlvo) => {
+      // Se já houver uma quebra logo acima, não duplica
+      if (elementoAlvo.previousElementSibling && elementoAlvo.previousElementSibling.classList.contains('escopo-page-break-marker')) {
+          return;
+      }
+      const marker = document.createElement('div');
+      marker.className = 'escopo-page-break-marker';
+      marker.innerHTML = '<span>✂️ QUEBRA DE PÁGINA MANUAL (Clique aqui para remover)</span>';
+      marker.onclick = function() { this.remove(); };
+      elementoAlvo.parentNode.insertBefore(marker, elementoAlvo);
+  };
+
+  window.addEventListener('load', () => {
+      setTimeout(window.ativarBotoesQuebraEscopo, 800);
+  });
+
+  window.imprimirEscopoNativo = () => {
+      const sourceArea = document.getElementById('escopo-content-area');
+      if (!sourceArea) return;
+
+      const numEscopo = document.getElementById('esc-registro')?.value || 'XXXX';
+      const obraVal = document.getElementById('esc-obra')?.value || '';
+      window.atualizarLogoObraEscopo(obraVal);
+
+      let wrapper = document.getElementById('escopo-native-print-wrapper');
+      if (wrapper) wrapper.remove();
+
+      wrapper = document.createElement('div');
+      wrapper.id = 'escopo-native-print-wrapper';
+
+      const clone = sourceArea.cloneNode(true);
+      clone.className = '';
+      clone.style.cssText = 'width: 100%; margin: 0; padding: 0; background: transparent; box-shadow: none;';
+
+      // Converte os marcadores manuais vermelhos em quebras de página reais no PDF
+      clone.querySelectorAll('.escopo-page-break-marker').forEach(m => {
+          const brk = document.createElement('div');
+          brk.className = 'escopo-print-forced-break';
+          m.parentNode.replaceChild(brk, m);
+      });
+
+      clone.querySelectorAll('.no-print, .del-btn, .btn-break-here, input[type="range"], input[type="file"]').forEach(el => el.remove());
+
+      const origFields = sourceArea.querySelectorAll('input, textarea');
+      const cloneFields = clone.querySelectorAll('input, textarea');
+      cloneFields.forEach((cField, idx) => {
+          const oField = origFields[idx];
+          const val = oField ? oField.value : cField.value;
+
+          if (cField.id === 'esc-registro') {
+              const spanReg = document.createElement('span');
+              spanReg.textContent = val || 'XXXX';
+              spanReg.style.cssText = 'font-weight: 800; font-size: inherit; color: inherit;';
+              cField.parentNode.replaceChild(spanReg, cField);
+              return;
+          }
+
+          const textReplacement = document.createElement('div');
+          textReplacement.textContent = val || '-';
+          textReplacement.style.cssText = window.getComputedStyle(oField || cField).cssText;
+          textReplacement.style.border = 'none';
+          textReplacement.style.borderBottom = cField.classList.contains('escopo-input') ? '1px dashed #cccccc' : 'none';
+          textReplacement.style.height = 'auto';
+          textReplacement.style.minHeight = 'unset';
+          textReplacement.style.whiteSpace = 'pre-wrap';
+          textReplacement.style.wordBreak = 'break-word';
+          textReplacement.style.overflow = 'visible';
+          cField.parentNode.replaceChild(textReplacement, cField);
+      });
+
+      const headerBox = clone.querySelector('#esc-header-box') || clone.firstElementChild;
+      let headerHTML = '';
+      if (headerBox) {
+          headerBox.style.marginBottom = '0';
+          headerHTML = headerBox.outerHTML;
+          headerBox.remove();
+      }
+
+      wrapper.innerHTML = `
+          <table class="escopo-print-master-table">
+              <thead>
+                  <tr>
+                      <td>
+                          <div class="escopo-header-repeat-space">
+                              ${headerHTML}
+                          </div>
+                      </td>
+                  </tr>
+              </thead>
+              <tbody>
+                  <tr>
+                      <td id="escopo-print-body-cell"></td>
+                  </tr>
+              </tbody>
+              <tfoot>
+                  <tr>
+                      <td>
+                          <div class="escopo-footer-repeat-space"></div>
+                      </td>
+                  </tr>
+              </tfoot>
+          </table>
+
+          <div class="escopo-native-footer-fixed">
+              <span style="font-size: 11px; font-weight: 800; color: #232323; text-transform: uppercase; letter-spacing: 0.5px;">
+                  ESCOPO DE OBRAS E SERVIÇOS
+              </span>
+              <span style="font-size: 11px; font-weight: 700; color: #777777; text-transform: uppercase;">
+                  ESCOPO N° ${numEscopo} ${obraVal ? '• ' + obraVal : ''}
+              </span>
+          </div>
+      `;
+
+      wrapper.querySelector('#escopo-print-body-cell').appendChild(clone);
+      document.body.appendChild(wrapper);
+      document.body.classList.add('printing-escopo-mode');
+
+      setTimeout(() => {
+          window.print();
+          document.body.classList.remove('printing-escopo-mode');
+          wrapper.remove();
+      }, 250);
+  };
+</script>
+<!-- FIM DO MOTOR DE PAGINAÇÃO DO ESCOPO -->
 </body>
 </html>
