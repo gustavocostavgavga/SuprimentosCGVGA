@@ -432,6 +432,15 @@
   #view-escopo.escopo-fullscreen .doc-head {
       max-width: 210mm; margin: 0 auto 28px auto;
   }
+
+/* REGRAS DE PAGINAÇÃO INTELIGENTE DO ESCOPO */
+  .escopo-secao-bloco, 
+  #esc-imagens-container > div, 
+  #esc-materiais-body tr {
+      page-break-inside: avoid !important;
+      break-inside: avoid !important;
+  }
+
 </style>
 </head>
 <body>
@@ -1906,19 +1915,22 @@
 
       <div id="escopo-content-area" class="escopo-print-area">
          
-         <div style="border: 2px solid var(--ink); padding: 15px; border-radius: 4px; text-align: center; margin-bottom: 20px;">
-            <h1 id="esc-titulo-wrapper" style="color: var(--ink); font-size: 18px; margin: 0; font-weight: 800; display: flex; justify-content: center; align-items: center; gap: 4px; text-transform: uppercase;">
-               ESCOPO DE OBRAS E SERVIÇOS N° <input type="text" id="esc-registro" placeholder="XXXX" class="escopo-input" style="font-weight: 800; width: 60px; text-align: center; font-size: 18px; color: var(--ink); border-bottom: 1px dashed var(--line); padding: 0;">
+         <!-- CABEÇALHO DO ESCOPO COM LOGOTIPOS -->
+         <div id="esc-header-box" style="border: 2px solid var(--ink); padding: 12px 20px; border-radius: 4px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; min-height: 75px;">
+            <img id="esc-logo-grp" src="LogoGRP.png" style="height: 48px; width: auto; object-fit: contain;" onerror="this.style.display='none'">
+            <h1 id="esc-titulo-wrapper" style="color: var(--ink); font-size: 16px; margin: 0; font-weight: 800; display: flex; justify-content: center; align-items: center; gap: 4px; text-transform: uppercase; flex: 1; text-align: center;">
+               ESCOPO DE OBRAS E SERVIÇOS N° <input type="text" id="esc-registro" placeholder="XXXX" class="escopo-input" style="font-weight: 800; width: 65px; text-align: center; font-size: 16px; color: var(--ink); border-bottom: 1px dashed var(--line); padding: 0;">
             </h1>
+            <img id="esc-logo-obra" src="" style="height: 48px; width: auto; object-fit: contain; display: none;">
          </div>
 
          <div style="font-size: 11px; color: var(--muted); text-align: right; margin-bottom: 20px; font-weight: 600;">
             Data de Registro: <span id="esc-data-registro" style="font-weight: 800; color: var(--ink);"></span>
          </div>
 
-         <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 15px;">
+         <div class="escopo-secao-bloco" style="display: flex; gap: 10px; align-items: center; margin-bottom: 15px;">
             <strong style="white-space: nowrap; font-size: 13px; color: var(--ink);"><i class="fa-solid fa-building" style="color: var(--muted); margin-right: 6px;"></i>OBRA:</strong>
-            <input type="text" id="esc-obra" placeholder="Ex: Mirante da Lagoa" class="escopo-input" style="font-weight: 700;">
+            <input type="text" id="esc-obra" placeholder="Ex: Mirante da Lagoa" class="escopo-input" style="font-weight: 700;" oninput="Escopo.atualizarLogoObra(this.value)">
          </div>
 
          <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 15px;">
@@ -4543,96 +4555,169 @@ const MapaPrecos = {
     });
   },
 
- baixarPDF: () => {
-      const p = DB.getProcess(currentPID);
-      if(!p) return;
+atualizarLogoObra: (val) => {
+      const img = document.getElementById('esc-logo-obra');
+      if (!img) return;
+      const v = (val || '').toLowerCase();
+      if (v.includes('mirante') || v.includes('bocaiuva') || v.includes('bocaiúva')) {
+          img.src = 'LogoMiranteLagoa.png'; img.style.display = 'block';
+      } else if (v.includes('joaquim') || v.includes('jleme') || v.includes('ituiutaba')) {
+          img.src = 'LogoJoaquimLeme.png'; img.style.display = 'block';
+      } else if (v.includes('parque') || v.includes('nações') || v.includes('nacoes') || v.includes('mife')) {
+          img.src = 'LogoPqNações.png'; img.style.display = 'block';
+      } else if (v.includes('cidade nova') || v.includes('nazareno')) {
+          img.src = 'LogoCidadeNova.png'; img.style.display = 'block';
+      } else {
+          img.style.display = 'none';
+      }
+   },
 
-      const elementoOriginal = document.getElementById('map-table');
-      if(!elementoOriginal) return;
+   baixarPDF: async () => {
+      const area = document.getElementById('escopo-content-area');
+      if (!area) return;
 
-      const containerMapa = elementoOriginal.parentElement; // A div com overflow-x:auto
-
-      // 1. Mostrar o Loader Escuro (que esconde a tela enquanto modificamos a tabela real)
       const loader = document.getElementById('db-loader');
       loader.style.display = 'flex';
       loader.style.opacity = '1';
-      loader.children[1].textContent = 'GERANDO MAPA EM PDF...';
+      loader.children[1].textContent = 'PAGINANDO E GERANDO ESCOPO EM PDF...';
 
-      // 2. Modificar a tabela original
-      const originalOverflow = containerMapa.style.overflowX;
-      containerMapa.style.overflowX = 'visible'; // Libera a barra de rolagem (deixa tudo visível)
-      containerMapa.style.width = 'max-content'; // Estica a div
-      
-      // Adiciona título temporário no topo da tabela
-      const divHeader = document.createElement('div');
-      divHeader.className = 'temp-pdf-header';
-      divHeader.innerHTML = `
-          <div style="text-align:center; margin-bottom:20px; font-family:'Montserrat', sans-serif;">
-              <h2 style="margin:0; color:#0d3b1f; font-size:18px; font-weight:800; text-transform:uppercase;">MAPA DE PREÇOS E EQUALIZAÇÃO</h2>
-              <p style="margin:5px 0 0 0; font-size:12px; color:#555; font-weight:700;">PROCESSO: ${p.id} - ${p.req.cat || 'GERAL'}</p>
-          </div>
-      `;
-      containerMapa.insertBefore(divHeader, elementoOriginal);
+      const numEscopo = document.getElementById('esc-registro').value || 'XXXX';
+      const obraVal = document.getElementById('esc-obra').value || '';
+      Escopo.atualizarLogoObra(obraVal);
 
-      // Esconder botões e elementos indesejados (lápis, botões de ação)
-      const elementosParaEsconder = elementoOriginal.querySelectorAll('button, small');
-      elementosParaEsconder.forEach(el => el.style.display = 'none');
-
-      // Substituir Inputs por Textos Reais (Spans)
-      const inputs = elementoOriginal.querySelectorAll('input');
-      const spansTemporarios = [];
-      inputs.forEach(inp => {
-          const span = document.createElement('span');
-          span.className = 'temp-pdf-span';
-          span.textContent = inp.value || '-';
-          span.style.fontFamily = "'Montserrat', sans-serif";
-          
-          if(inp.classList.contains('best-price')) {
-              span.style.color = '#24783d';
-              span.style.fontWeight = '800';
-          } else {
-              span.style.color = '#000000';
-              span.style.fontWeight = inp.style.fontWeight || '600';
-          }
-          inp.style.display = 'none';
-          inp.parentNode.insertBefore(span, inp.nextSibling);
-          spansTemporarios.push(span);
-      });
-
-      // 3. Configuração do PDF
-      const opt = {
-          margin:       [10, 10, 10, 10],
-          filename:     `Mapa_Precos_${p.id}.pdf`,
-          image:        { type: 'jpeg', quality: 1 },
-          html2canvas:  { scale: 2, useCORS: true },
-          // Formato A3 Paisagem para garantir que o mapa inteiro caiba!
-          jsPDF:        { unit: 'mm', format: 'a3', orientation: 'landscape' }
+      // Converte as imagens das logos para Base64 para o jsPDF estampar em cada página
+      const getImgBase64 = (imgEl) => {
+          return new Promise((resolve) => {
+              if (!imgEl || imgEl.style.display === 'none' || !imgEl.src) return resolve(null);
+              const img = new Image();
+              img.crossOrigin = "Anonymous";
+              img.onload = () => {
+                  const c = document.createElement('canvas');
+                  c.width = img.width; c.height = img.height;
+                  c.getContext('2d').drawImage(img, 0, 0);
+                  resolve({ data: c.toDataURL('image/png'), w: img.width, h: img.height });
+              };
+              img.onerror = () => resolve(null);
+              img.src = imgEl.src;
+          });
       };
 
-      // 4. Dá 300ms para o navegador "desenhar" as alterações atrás do loader, gera o PDF e Desfaz.
+      const logoGrpData = await getImgBase64(document.getElementById('esc-logo-grp'));
+      const logoObraData = await getImgBase64(document.getElementById('esc-logo-obra'));
+
+      // 1. Oculta o cabeçalho HTML (pois será desenhado de forma fixa pelo jsPDF no topo de cada folha)
+      const headerBox = document.getElementById('esc-header-box');
+      if (headerBox) headerBox.style.display = 'none';
+
+      // 2. Esconde botões de edição (.no-print) e prepara o container
+      area.classList.add('gerando-pdf');
+      const originalPadding = area.style.padding;
+      area.style.padding = '0'; // As margens agora são controladas pelo jsPDF
+      const noPrintEls = area.querySelectorAll('.no-print');
+      noPrintEls.forEach(el => el.style.display = 'none');
+
+      // 3. Transforma inputs e textareas em blocos de texto fluídos para quebra de página limpa
+      const tempReplacements = [];
+      area.querySelectorAll('input.escopo-input, textarea.escopo-textarea, #esc-materiais-body input').forEach(inp => {
+          if (inp.id === 'esc-registro') return;
+          const div = document.createElement('div');
+          div.textContent = inp.value || '-';
+          div.style.cssText = window.getComputedStyle(inp).cssText;
+          div.style.border = 'none';
+          div.style.borderBottom = inp.classList.contains('escopo-input') ? '1px solid #eee' : 'none';
+          div.style.height = 'auto';
+          div.style.minHeight = 'unset';
+          div.style.whiteSpace = 'pre-wrap';
+          div.style.wordBreak = 'break-word';
+          div.style.color = '#232323';
+          div.style.padding = '2px 0';
+          inp.style.display = 'none';
+          inp.parentNode.insertBefore(div, inp.nextSibling);
+          tempReplacements.push({ original: inp, fake: div });
+      });
+
+      // 4. Configura margens em milímetros: [Topo: 38mm, Esquerda: 15mm, Base: 25mm, Direita: 15mm]
+      const opt = {
+          margin:       [38, 15, 25, 15],
+          filename:     `Escopo_${numEscopo}_${obraVal.replace(/\s+/g, '_') || 'Obra'}.pdf`,
+          image:        { type: 'jpeg', quality: 0.98 },
+          html2canvas:  { scale: 2, useCORS: true, scrollY: 0 },
+          jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' },
+          pagebreak:    { mode: ['css', 'legacy'] }
+      };
+
       setTimeout(() => {
-          html2pdf().set(opt).from(containerMapa).save().then(() => {
-              
-              // RESTAURAR TUDO AO ESTADO ORIGINAL
-              containerMapa.style.overflowX = originalOverflow;
-              containerMapa.style.width = 'auto';
-              
-              const tempHeader = containerMapa.querySelector('.temp-pdf-header');
-              if(tempHeader) tempHeader.remove();
+          html2pdf().set(opt).from(area).toPdf().get('pdf').then((pdf) => {
+              const totalPages = pdf.internal.getNumberOfPages();
+              const pageWidth = pdf.internal.pageSize.getWidth();   // 210mm
+              const pageHeight = pdf.internal.pageSize.getHeight(); // 297mm
 
-              spansTemporarios.forEach(span => span.remove());
-              inputs.forEach(inp => inp.style.display = '');
-              elementosParaEsconder.forEach(el => el.style.display = '');
+              for (let i = 1; i <= totalPages; i++) {
+                  pdf.setPage(i);
 
-              // Ocultar Loader
+                  // === DESENHA O RETÂNGULO DO CABEÇALHO NO TOPO DA PÁGINA ===
+                  pdf.setDrawColor(35, 35, 35);
+                  pdf.setLineWidth(0.5);
+                  pdf.setFillColor(255, 255, 255);
+                  pdf.roundedRect(15, 10, pageWidth - 30, 20, 1.5, 1.5, 'FD');
+
+                  // Logo GRP à esquerda
+                  if (logoGrpData) {
+                      const ratio = logoGrpData.w / logoGrpData.h;
+                      const h = 12;
+                      const w = Math.min(h * ratio, 35);
+                      pdf.addImage(logoGrpData.data, 'PNG', 19, 14, w, h);
+                  }
+
+                  // Título Centralizado
+                  pdf.setFont('helvetica', 'bold');
+                  pdf.setFontSize(12);
+                  pdf.setTextColor(13, 59, 31);
+                  pdf.text(`ESCOPO DE OBRAS E SERVIÇOS N° ${numEscopo}`, pageWidth / 2, 21.5, { align: 'center' });
+
+                  // Logo da Obra à direita
+                  if (logoObraData) {
+                      const ratio = logoObraData.w / logoObraData.h;
+                      const h = 12;
+                      const w = Math.min(h * ratio, 35);
+                      pdf.addImage(logoObraData.data, 'PNG', pageWidth - 19 - w, 14, w, h);
+                  }
+
+                  // === DESENHA O RETÂNGULO DO RODAPÉ NA BORDA INFERIOR ===
+                  const footerY = pageHeight - 17;
+                  pdf.setDrawColor(180, 180, 180);
+                  pdf.setLineWidth(0.3);
+                  pdf.setFillColor(248, 250, 248);
+                  pdf.roundedRect(15, footerY, pageWidth - 30, 9, 1, 1, 'FD');
+
+                  // Texto à esquerda: "escopo de obras e serviços"
+                  pdf.setFont('helvetica', 'bold');
+                  pdf.setFontSize(8.5);
+                  pdf.setTextColor(100, 100, 100);
+                  pdf.text('escopo de obras e serviços', 20, footerY + 5.8);
+
+                  // Numeração à direita: "Página X de Y"
+                  pdf.text(`Página ${i} de ${totalPages}`, pageWidth - 20, footerY + 5.8, { align: 'right' });
+              }
+          }).save().then(() => {
+              // 5. Restaura a tela para o modo de edição normal
+              if (headerBox) headerBox.style.display = 'flex';
+              area.classList.remove('gerando-pdf');
+              area.style.padding = originalPadding;
+              noPrintEls.forEach(el => el.style.display = '');
+              tempReplacements.forEach(item => {
+                  item.fake.remove();
+                  item.original.style.display = '';
+              });
+
               loader.style.opacity = '0';
-              setTimeout(()=> {
+              setTimeout(() => {
                   loader.style.display = 'none';
                   loader.children[1].textContent = 'Conectando ao Firebase...';
-              }, 500);
+              }, 400);
           });
       }, 300);
-  }
+   }
 };
 
 // ==================== MODULO: ORDEM DE COMPRA ====================
