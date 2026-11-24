@@ -8141,7 +8141,8 @@ window.onload = App.init;
       if (!sourceArea) return;
 
       const numEscopo = document.getElementById('esc-registro')?.value || 'XXXX';
-      const obraVal = document.getElementById('esc-obra')?.value || '';
+      const obraEl = document.getElementById('esc-obra');
+      const obraVal = obraEl ? (obraEl.tagName === 'SELECT' ? (obraEl.options[obraEl.selectedIndex]?.text || obraEl.value) : obraEl.value) : '';
       window.atualizarLogoObraEscopo(obraVal);
 
       let wrapper = document.getElementById('escopo-native-print-wrapper');
@@ -8154,7 +8155,21 @@ window.onload = App.init;
       clone.className = '';
       clone.style.cssText = 'width: 100%; margin: 0; padding: 0; background: transparent; box-shadow: none;';
 
-      // Converte os marcadores manuais vermelhos em quebras de página reais no PDF
+      // 1. PRIMEIRO: Copia o valor real de cada campo enquanto original e cópia são 100% idênticos
+      const origFields = sourceArea.querySelectorAll('input, textarea, select');
+      const cloneFields = clone.querySelectorAll('input, textarea, select');
+      cloneFields.forEach((cField, idx) => {
+          const oField = origFields[idx];
+          if (!oField) return;
+          if (oField.tagName === 'SELECT') {
+              cField.dataset.printVal = oField.options[oField.selectedIndex]?.text || '';
+          } else {
+              cField.dataset.printVal = oField.value || '';
+          }
+          cField.dataset.printCss = window.getComputedStyle(oField).cssText;
+      });
+
+      // 2. DEPOIS: Remove botões, controles de tamanho (range = 100) e inputs de upload
       clone.querySelectorAll('.escopo-page-break-marker').forEach(m => {
           const brk = document.createElement('div');
           brk.className = 'escopo-print-forced-break';
@@ -8163,11 +8178,9 @@ window.onload = App.init;
 
       clone.querySelectorAll('.no-print, .del-btn, .btn-break-here, input[type="range"], input[type="file"]').forEach(el => el.remove());
 
-      const origFields = sourceArea.querySelectorAll('input, textarea');
-      const cloneFields = clone.querySelectorAll('input, textarea');
-      cloneFields.forEach((cField, idx) => {
-          const oField = origFields[idx];
-          const val = oField ? oField.value : cField.value;
+      // 3. POR FIM: Converte apenas os campos restantes usando o valor já gravado em cada um
+      clone.querySelectorAll('input, textarea, select').forEach((cField) => {
+          const val = cField.dataset.printVal || '';
 
           if (cField.id === 'esc-registro') {
               const spanReg = document.createElement('span');
@@ -8179,7 +8192,7 @@ window.onload = App.init;
 
           const textReplacement = document.createElement('div');
           textReplacement.textContent = val || '-';
-          textReplacement.style.cssText = window.getComputedStyle(oField || cField).cssText;
+          textReplacement.style.cssText = cField.dataset.printCss || '';
           textReplacement.style.border = 'none';
           textReplacement.style.borderBottom = cField.classList.contains('escopo-input') ? '1px dashed #cccccc' : 'none';
           textReplacement.style.height = 'auto';
@@ -8228,7 +8241,7 @@ window.onload = App.init;
                   ESCOPO DE OBRAS E SERVIÇOS
               </span>
               <span style="font-size: 11px; font-weight: 700; color: #777777; text-transform: uppercase;">
-                  ESCOPO N° ${numEscopo} ${obraVal ? '• ' + obraVal : ''}
+                  ESCOPO N° ${numEscopo} ${obraVal && !obraVal.includes('Selecione') ? '• ' + obraVal : ''}
               </span>
           </div>
       `;
